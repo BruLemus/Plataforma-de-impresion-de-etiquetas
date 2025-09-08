@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable",
+      "scripthost"
+    ],
+    "baseUrl": "./",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    },
+    "types": [
+      "node"             // Recomendado si trabajas con Node.js
+    ],
+    "strict": true,       // Opcional, habilita comprobaciones estrictas
+    "esModuleInterop": true,
+    "skipLibCheck": true, // Evita errores en bibliotecas externas
+    "forceConsistentCasingInFileNames": true
+  },
+ 
+  "exclude": [
+    "node_modules",
+    "**/*.vue"
+  ]
+}
+
