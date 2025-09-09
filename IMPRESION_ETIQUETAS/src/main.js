@@ -1,5 +1,5 @@
-import { createApp } from "vue";
-import App from "./App.vue";
-import router from "./router/router_etiquetas";  // 
+import { createApp } from 'vue';
+import App from './App.vue';
+import router from './router/router_etiquetas.js';
 
-createApp(App).use(router).mount("#app");
+createApp(App).use(router).mount('#app');
