@@ -19,7 +19,21 @@
         </div>
 
         <!-- Formulario -->
-        <input v-model="username" type="text" placeholder="Ingresa tu nombre" class="login-input" />
+        <input
+          v-model="username"
+          type="text"
+          placeholder="Ingresa tu nombre"
+          class="login-input"
+        />
+
+        <!-- Selección de Mesa -->
+        <select v-model="mesa" class="login-select">
+          <option disabled value="">Selecciona la mesa</option>
+          <option v-for="n in 10" :key="n" :value="n">
+            Mesa {{ n }}
+          </option>
+        </select>
+
         <button @click="login" class="login-btn">Ingresar</button>
       </div>
     </div>
@@ -32,11 +46,12 @@ export default {
   data() {
     return {
       username: "",
+      mesa: "",
       carouselImages: [
         require("@/assets/e1.png"),
         require("@/assets/e2.png"),
         require("@/assets/e3.png"),
-        require("@/assets/e4.png")
+        require("@/assets/e4.png"),
       ],
       currentSlide: 0,
     };
@@ -49,7 +64,11 @@ export default {
   methods: {
     login() {
       if (!this.username.trim()) return alert("Ingresa tu nombre");
+      if (!this.mesa) return alert("Selecciona una mesa");
+
       localStorage.setItem("username", this.username);
+      localStorage.setItem("mesa", this.mesa);
+
       this.$router.push("/etiquetas");
     },
   },
@@ -75,7 +94,7 @@ export default {
   max-width: 700px;
   width: 90%;
   text-align: center;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
   position: relative;
   transition: all 0.3s ease;
 }
@@ -105,8 +124,9 @@ export default {
   transition: opacity 0.5s ease-in-out;
 }
 
-/* Input y botón */
-.login-input {
+/* Input y select */
+.login-input,
+.login-select {
   width: 90%;
   padding: 14px;
   margin-bottom: 20px;
@@ -115,6 +135,12 @@ export default {
   font-size: 1.2rem;
 }
 
+.login-select {
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+/* Botón */
 .login-btn {
   width: 60%;
   padding: 14px;
@@ -156,7 +182,8 @@ export default {
   .carousel {
     height: 180px;
   }
-  .login-input {
+  .login-input,
+  .login-select {
     font-size: 1rem;
   }
   .login-btn {
@@ -175,7 +202,8 @@ export default {
   .carousel {
     height: 150px;
   }
-  .login-input {
+  .login-input,
+  .login-select {
     font-size: 0.95rem;
   }
   .login-btn {

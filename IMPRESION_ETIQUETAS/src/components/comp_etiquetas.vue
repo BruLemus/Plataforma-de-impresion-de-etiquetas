@@ -1,3 +1,4 @@
+<!-- src/components/CompEtiquetas.vue -->
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Barra superior -->
@@ -28,15 +29,6 @@
       <div class="mb-3">
         <label class="crud-label">Número de Cajas:</label>
         <input v-model.number="numCajas" type="number" min="0" class="crud-input" placeholder="Ej: 3" />
-      </div>
-
-      <div class="mb-3">
-        <label class="crud-label">Tamaño de Etiqueta:</label>
-        <select v-model="medidaEtiqueta" class="crud-input">
-          <option value="pequeña">Pequeña</option>
-          <option value="mediana">Mediana</option>
-          <option value="grande">Grande</option>
-        </select>
       </div>
 
       <!-- Selección de Paquetería -->
@@ -77,20 +69,26 @@
         v-for="(caja, index) in numCajas"
         :key="'etiqueta-' + index"
         class="etiqueta"
-        :class="medidaEtiqueta"
       >
         <div class="contenido">
           <div class="logo-wrapper">
             <img :src="paqueteriaSeleccionada.logo" :alt="paqueteriaSeleccionada.nombre + ' Logo'" class="logo-etiqueta" />
           </div>
-
           <div class="etiqueta-content">
             <div class="etiqueta-datos">
-              <div class="dato"><strong>Factura:</strong> {{ factura || '—' }}</div>
-              <div class="dato"><strong>Caja:</strong> {{ index + 1 }} de {{ numCajas }}</div>
-              <div class="dato"><strong>Piezas:</strong> {{ piezas[index] || 0 }}</div>
+              <div class="dato">
+                <strong>Factura:</strong>
+                <div class="dato-valor">{{ factura || '—' }}</div>
+              </div>
+              <div class="dato">
+                <strong>Caja:</strong>
+                <div class="dato-valor">{{ index + 1 }} de {{ numCajas }}</div>
+              </div>
+              <div class="dato">
+                <strong>Piezas:</strong>
+                <div class="dato-valor">{{ piezas[index] || 0 }}</div>
+              </div>
             </div>
-
             <div class="etiqueta-qr">
               <qrcode-vue :value="generateQR(index)" :size="qrSize" level="H" />
             </div>
@@ -111,7 +109,6 @@ const username = ref(localStorage.getItem("username") || null);
 const factura = ref("");
 const numCajas = ref(0);
 const piezas = ref([]);
-const medidaEtiqueta = ref("mediana");
 
 watch(numCajas, (n) => {
   const N = Number(n) || 0;
@@ -146,51 +143,20 @@ Paquetería: ${paqueteriaSeleccionada.value.nombre}
 Usuario: ${username.value || '-'}`;
 }
 
-const qrSize = computed(() => {
-  if (medidaEtiqueta.value === "pequeña") return 80;
-  if (medidaEtiqueta.value === "mediana") return 120;
-  return 160;
-});
+const qrSize = computed(() => 160);
 
 async function imprimir() {
   if (!numCajas.value || numCajas.value <= 0) {
     return alert("No hay etiquetas para imprimir");
   }
-
   await nextTick();
-  if (window.BrowserPrint) {
-    window.BrowserPrint.getDefaultDevice("printer", function(printer) {
-      if (!printer) return alert("No se encontró impresora Zebra.");
-      piezas.value.forEach((_, index) => {
-        const etiqueta = `
-          ^XA
-          ^PW800
-          ^LL600
-          ^FO50,50
-          ^A0N,50,50
-          ^FDFactura: ${factura.value}^FS
-          ^FO50,120
-          ^FDCaja: ${index + 1} de ${numCajas.value}^FS
-          ^FO50,190
-          ^FDPiezas: ${piezas.value[index] || 0}^FS
-          ^FO50,260
-          ^BQN,2,5
-          ^FDLA,${generateQR(index)}^FS
-          ^XZ
-        `;
-        printer.send(etiqueta, undefined, undefined);
-      });
-    });
-  } else {
-    setTimeout(() => window.print(), 250);
-  }
+  setTimeout(() => window.print(), 250);
 }
 
 function reiniciar() {
   factura.value = "";
   numCajas.value = 0;
   piezas.value = [];
-  medidaEtiqueta.value = "mediana";
 }
 
 function login() {
@@ -210,7 +176,6 @@ function logout() {
 </script>
 
 <style scoped>
-/* Barra superior */
 .header {
   background: linear-gradient(to right, #1e3a8a, #3b82f6);
   color: white;
@@ -227,20 +192,8 @@ function logout() {
 }
 .logo { font-size: 1.2rem; font-weight: bold; }
 .user-info { font-weight: bold; font-size: 1rem; color: white; }
-.btn-logout {
-  background: #dc2626;
-  color: white; border: none; padding: 4px 10px;
-  border-radius: 6px; cursor: pointer;
-}
+.btn-logout { background: #dc2626; color: white; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
 
-.logo-etiqueta {
-  max-width: 90%;       /* No más del 30% del ancho de la etiqueta */
-  max-height: 60px;     /* Altura máxima */
-  object-fit: contain;   /* Mantiene proporción sin deformar */
-}
-
-
-/* Login */
 .login-card {
   max-width: 400px;
   margin: 160px auto 20px auto;
@@ -253,7 +206,6 @@ function logout() {
 .login-input { width: 80%; padding: 8px; margin-bottom: 12px; border-radius: 6px; border: 1px solid #ccc; }
 .btn-login { background: #2563eb; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; }
 
-/* CRUD */
 .crud-card {
   background: white;
   border-radius: 10px;
@@ -279,79 +231,128 @@ function logout() {
 .paq-btn { padding: 6px 12px; border-radius: 6px; background: #e0e0e0; color: #111; font-weight: 600; cursor: pointer; }
 .paq-btn-active { background: #facc15; }
 
-/* Etiquetas */
-.labels-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  margin: 20px auto;
-  padding-bottom: 30px;
-}
+.labels-container { display: flex; flex-direction: column; align-items: center; gap: 20px; margin: 20px auto; padding-bottom: 30px; }
+
+/* VISTA NORMAL → HORIZONTAL */
 .etiqueta {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  page-break-after: always;
-  position: relative;
-
-  /* Tamaño para impresión (horizontal) */
-  width: 12cm;
-  height: 7cm;
-}
-.etiqueta.pequeña { width: 9cm; height: 6cm; }
-.etiqueta.mediana { width: 12cm; height: 7cm; }
-.etiqueta.grande { width: 15cm; height: 9cm; }
-
-.contenido {
+  width: 15cm;
+  height: 10cm;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 100%;
-  transform: rotate(0deg); /* horizontal por defecto */
+  justify-content: center;
+  padding: 20px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
-
+.logo-wrapper { margin-bottom: 15px; }
+.logo-etiqueta { max-width: 98%; height: auto; }
+.etiqueta-content { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 15px; }
 .dato { font-size: 1.2rem; margin-bottom: 4px; }
-.etiqueta-qr canvas, .etiqueta-qr svg { max-width: 100px; max-height: 100px; }
+.etiqueta-qr { flex-shrink: 0; }
 
 @media print {
-  @page { size: A4 portrait; margin: 1.5cm; }
-  body * { visibility: hidden !important; }
-  .labels-container, .labels-container * { visibility: visible !important; }
-  .header, .crud-card, .login-card { display: none !important; }
-  .labels-container { justify-content: center !important; align-items: center !important; }
-  .etiqueta { page-break-after: always !important; border: 2px solid #000; }
-}
-/* Contenido de la etiqueta - solo en pantalla */
-@media screen {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .labels-container, .labels-container * {
+    visibility: visible !important;
+  }
+
+  .header, .crud-card, .login-card {
+    display: none !important;
+  }
+
+  /* Contenedor de etiquetas: centrado horizontal, cada etiqueta en su propia etiqueta de la Zebra */
+  .labels-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important; /* centrado horizontal */
+    margin: 0 !important;
+    padding: 10 !important;
+    width: 100vw !important;
+  }
+
+  /* Etiqueta: tamaño real de la Zebra */
   .etiqueta {
-    width: 7cm;   /* ancho menor que alto */
-    height: 12cm; /* alto mayor que ancho */
+    width: 10cm !important;
+    height: 15cm !important;
+    padding: 0mm !important;
+    border: none !important;
+    margin: 0 !important; /* ← Solo esta línea para margen */
+    background: #fff !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    page-break-after: always !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    position: relative !important;
+    font-size: 15pt !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-family: Arial, sans-serif !important;
+    color: #000 !important;
+    visibility: visible !important;
+    overflow: hidden !important;
   }
 
-  .contenido {
-    transform: rotate(0deg);
-    transform-origin: center center;
+  
+  .etiqueta-content {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 50% !important;
+    gap: 2mm !important; /* Espacio entre datos y QR */
   }
-}
 
-/* En impresión, quitar la rotación */
-@media print {
-  @page { size: A4 portrait; margin: 1.5cm; }
-  body * { visibility: hidden !important; }
-  .labels-container, .labels-container * { visibility: visible !important; }
-  .header, .crud-card, .login-card { display: none !important; }
-  .labels-container { justify-content: center !important; align-items: center !important; }
-  .etiqueta { page-break-after: always !important; border: 2px solid #000; }
+    .dato {
+    font-size: 15pt !important; /* Título de los datos más grande */
+  }
 
-  /* Contenido horizontal en impresión */
-  .contenido {
-    transform: rotate(90deg);
+  .etiqueta-datos {
+    font-size: 14pt !important; /* Datos más grandes */
+  }
+
+   .dato-valor {
+    font-size: 14pt !important; /* Valor de los datos más grande */
+  }
+  .etiqueta-qr {
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .logo-wrapper img {
+  margin-top: 0 !important; /* ← Elimina cualquier margen superior */
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+
+  .logo-etiqueta {
+    max-width: 40mm !important;
+    height: auto !important;
+  }
+
+   .etiqueta.mediana {
+    width: 10cm !important; 
+    height: 15cm !important;
+  }
+
+  .etiqueta-qr canvas,
+  .etiqueta-qr svg {
+    max-width: 5mm !important; /* QR más pequeño */
+    height: auto !important;
   }
 }
 
