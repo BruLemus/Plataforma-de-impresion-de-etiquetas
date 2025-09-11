@@ -1,3 +1,4 @@
+<!-- src/components/UserLogin.vue -->
 <template>
   <div class="login-wrapper">
     <div class="login-background">
@@ -6,16 +7,9 @@
         <!-- Título -->
         <h1 class="login-title">Bienvenido</h1>
 
-        <!-- Carrusel -->
-        <div class="carousel">
-          <div
-            class="carousel-slide"
-            v-for="(img, idx) in carouselImages"
-            :key="idx"
-            v-show="currentSlide === idx"
-          >
-            <img :src="img" alt="Slide" />
-          </div>
+        <!-- Imagen fija -->
+        <div class="login-image">
+          <img src="@/assets/img_login.png" alt="Login Imagen" />
         </div>
 
         <!-- Formulario -->
@@ -35,7 +29,7 @@
         </select>
 
         <button @click="login" class="login-btn">Ingresar</button>
-      </div>
+      </div>      
     </div>
   </div>
 </template>
@@ -46,20 +40,8 @@ export default {
   data() {
     return {
       username: "",
-      mesa: "",
-      carouselImages: [
-        require("@/assets/e1.png"),
-        require("@/assets/e2.png"),
-        require("@/assets/e3.png"),
-        require("@/assets/e4.png"),
-      ],
-      currentSlide: 0,
+      mesa: ""
     };
-  },
-  mounted() {
-    setInterval(() => {
-      this.currentSlide = (this.currentSlide + 1) % this.carouselImages.length;
-    }, 3000);
   },
   methods: {
     login() {
@@ -82,7 +64,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(to right, #1e3a8a, #3b82f6);
+  background: linear-gradient(to right, #bfc4d6, #9cacc4);
   padding: 20px;
 }
 
@@ -108,20 +90,20 @@ export default {
   line-height: 1.2;
 }
 
-/* Carrusel */
-.carousel {
+/* Imagen */
+.login-image {
   height: 250px;
   margin-bottom: 30px;
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.carousel-slide img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: opacity 0.5s ease-in-out;
+.login-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
 }
 
 /* Input y select */
@@ -146,7 +128,7 @@ export default {
   padding: 14px;
   border-radius: 10px;
   border: none;
-  background: #2563eb;
+  background: #0fa8cb;
   color: white;
   font-weight: bold;
   font-size: 1.2rem;
@@ -155,7 +137,7 @@ export default {
 }
 
 .login-btn:hover {
-  background: #1d4ed8;
+  background: #a9b8e2;
 }
 
 /* ===== Media Queries ===== */
@@ -166,7 +148,7 @@ export default {
   .login-title {
     font-size: 2.5rem;
   }
-  .carousel {
+  .login-image {
     height: 200px;
   }
 }
@@ -179,7 +161,7 @@ export default {
   .login-title {
     font-size: 2rem;
   }
-  .carousel {
+  .login-image {
     height: 180px;
   }
   .login-input,
@@ -199,7 +181,7 @@ export default {
   .login-title {
     font-size: 1.7rem;
   }
-  .carousel {
+  .login-image {
     height: 150px;
   }
   .login-input,
