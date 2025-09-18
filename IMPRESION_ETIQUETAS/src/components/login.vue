@@ -3,7 +3,6 @@
   <div class="login-wrapper">
     <div class="login-background">
       <div class="login-card">
-
         <!-- Título -->
         <h1 class="login-title">Bienvenido</h1>
 
@@ -12,7 +11,7 @@
           <img src="@/assets/img_login.png" alt="Login Imagen" />
         </div>
 
-        <!-- Formulario -->
+        <!-- Usuario -->
         <input
           v-model="username"
           type="text"
@@ -20,16 +19,32 @@
           class="login-input"
         />
 
-        <!-- Selección de Mesa -->
-        <select v-model="mesa" class="login-select">
+        <!-- Selección de Rol -->
+        <select v-model="rol" class="login-select">
+          <option disabled value="">Selecciona tu rol</option>
+          <option value="Practicante">Practicante</option>
+          <option value="Coordinador">Coordinador</option>
+        </select>
+
+        <!-- Solo Practicante ve la mesa -->
+        <select v-if="rol === 'Practicante'" v-model="mesa" class="login-select">
           <option disabled value="">Selecciona la mesa</option>
           <option v-for="n in 10" :key="n" :value="n">
             Mesa {{ n }}
           </option>
         </select>
 
+        <!-- Solo Coordinador ve la contraseña -->
+        <input
+          v-if="rol === 'Coordinador'"
+          v-model="password"
+          type="password"
+          placeholder="Ingresa tu contraseña"
+          class="login-input"
+        />
+
         <button @click="login" class="login-btn">Ingresar</button>
-      </div>      
+      </div>
     </div>
   </div>
 </template>
@@ -40,22 +55,60 @@ export default {
   data() {
     return {
       username: "",
-      mesa: ""
+      mesa: "",
+      rol: "",
+      password: "" // solo coordinador
     };
   },
   methods: {
     login() {
-      if (!this.username.trim()) return alert("Ingresa tu nombre");
-      if (!this.mesa) return alert("Selecciona una mesa");
+      if (!this.username || !this.rol) {
+        alert("Debes ingresar usuario y seleccionar rol");
+        return;
+      }
 
-      localStorage.setItem("username", this.username);
-      localStorage.setItem("mesa", this.mesa);
+      if (this.rol === "Practicante") {
+        if (!this.mesa) {
+          alert("Debes seleccionar una mesa");
+          return;
+        }
+        // Guardar datos
+        localStorage.setItem("username", this.username);
+        localStorage.setItem("mesaSeleccionada", this.mesa);
+        localStorage.setItem("rol", this.rol);
 
-      this.$router.push("/etiquetas");
-    },
-  },
+        if (!localStorage.getItem("horaEntrada")) {
+          localStorage.setItem("horaEntrada", new Date().toLocaleString());
+        }
+        this.$router.push("/etiquetas");
+      }
+
+      if (this.rol === "Coordinador") {
+        if (!this.password) {
+          alert("Debes ingresar la contraseña");
+          return;
+        }
+
+        // Aquí podrías validar la contraseña real con backend
+        if (this.password !== "1234") {
+          alert("Contraseña incorrecta");
+          return;
+        }
+
+        // Guardar datos
+        localStorage.setItem("username", this.username);
+        localStorage.setItem("rol", this.rol);
+
+        if (!localStorage.getItem("horaEntrada")) {
+          localStorage.setItem("horaEntrada", new Date().toLocaleString());
+        }
+        this.$router.push("/historial");
+      }
+    }
+  }
 };
 </script>
+
 
 <style scoped>
 /* Fondo y centrado */

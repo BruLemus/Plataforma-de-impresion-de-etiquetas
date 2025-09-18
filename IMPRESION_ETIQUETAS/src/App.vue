@@ -1,20 +1,37 @@
 <template>
-  <router-view />
+  <div id="app" class="flex min-h-screen">
+    <!-- Contenido principal -->
+    <main class="flex-1 bg-gray-50">
+      <router-view />
+    </main>
+  </div>
 </template>
 
 <script>
 export default {
-  name: "App"
+  computed: {
+    isAuthenticated() {
+      return !!localStorage.getItem("username");
+    },
+  },
 };
 </script>
 
-
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
-  margin: 20px;
+.sidebar {
+  width: 220px;
+  background: #1f2937;
+  color: white;
+  padding: 20px;
+}
+.sidebar a {
+  display: block;
+  padding: 10px;
+  color: #d1d5db;
+  text-decoration: none;
+}
+.sidebar a.router-link-active {
+  background: #374151;
+  border-radius: 6px;
 }
 </style>
