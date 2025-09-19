@@ -1,35 +1,35 @@
 <template>
   <div class="crud-card">
-    <!-- Título -->
-    <h2 class="crud-subtitle">Registro de Roles</h2>
+    <h2 class="crud-subtitle">Registro de Coordinador</h2>
 
-    <!-- Formulario -->
     <form @submit.prevent="guardarDatos">
-      <!-- Select de Rol -->
+      <!-- Nombre -->
       <div class="form-group">
-        <label for="rol">Rol</label>
-        <select v-model="form.rol" id="rol" required>
-          <option disabled value="">Seleccione un rol</option>
-          <option v-for="opcion in rolesDisponibles" :key="opcion" :value="opcion">
-            {{ opcion }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Usuario -->
-      <div class="form-group">
-        <label for="usuario">Usuario</label>
+        <label for="nombre">Nombre</label>
         <input
-          v-model="form.usuario"
+          v-model="form.nombre"
           type="text"
-          nombre="usuario"
+          id="nombre"
           required
-          placeholder="Ingrese el usuario"
+          placeholder="Ingrese el nombre"
         />
       </div>
 
-      <!-- Botón Guardar -->
+      <!-- Contraseña -->
+      <div class="form-group">
+        <label for="contrasena">Contraseña</label>
+        <input
+          v-model="form.contrasena"
+          type="password"
+          id="contrasena"
+          required
+          placeholder="Ingrese la contraseña"
+        />
+      </div>
+
       <button type="submit" class="btn-guardar">Guardar</button>
+
+      <router-link to="/" class="btn-cancelar">Ya tengo una cuenta</router-link>
     </form>
   </div>
 </template>
@@ -38,42 +38,38 @@
 import axios from "axios";
 
 export default {
-  name: "RegistroRol",
+  name: "RegistroCoordinador",
   data() {
     return {
       form: {
-        UserRol: "",
-        usuario: "",
+        nombre: "",
+        contrasena: "",
       },
-      rolesDisponibles: [
-        "Practicante",
-        "Coordinador",
-       
-      ],
     };
   },
   methods: {
     async guardarDatos() {
       try {
-        // Obtener número de mesa desde el login
-        const numeroMesa = localStorage.getItem("numeroMesa");
-
         const payload = {
-          rol: this.form.rol,
-          usuario: this.form.usuario,
-          mesa: numeroMesa, 
+          nombre: this.form.nombre,
+          UserRol: "Coordinador",
+          contrasena: this.form.contrasena,
+          mesa_trabajo: this.mesaTrabajo || "",
+          salida: this.salida || null
         };
 
-        await axios.post("http://127.0.0.1:8000/rols/", payload);
+        console.log("Payload a enviar:", payload);
 
-        alert("Registro guardado correctamente ✅");
+        await axios.post("http://127.0.0.1:8000/user_rols/", payload);
+
+        alert("Coordinador registrado correctamente ✅");
 
         // Limpiar formulario
-        this.form.rol = "";
-        this.form.usuario = "";
+        this.form.nombre = "";
+        this.form.contrasena = "";
       } catch (error) {
-        console.error("Error al guardar:", error);
-        alert("❌ Error al guardar el registro");
+        console.error("Error al guardar:", error.response?.data || error);
+        alert("❌ Error al registrar el coordinador");
       }
     },
   },
@@ -108,9 +104,24 @@ export default {
   font-weight: 600;
   color: #444;
 }
+.btn-cancelar {
+  display: inline-block;
+  margin-top: 10px;
+  text-align: center;
+  width: 50%;
+  padding: 10px;
+  background: #7d997e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: none;
+  
+}
 
-.form-group input,
-.form-group select {
+.form-group input {
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
@@ -120,7 +131,7 @@ export default {
 .btn-guardar {
   width: 100%;
   padding: 10px;
-  background: #4caf50;
+  background: #0fa8cb;
   color: white;
   border: none;
   border-radius: 8px;

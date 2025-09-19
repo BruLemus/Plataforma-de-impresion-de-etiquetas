@@ -21,16 +21,16 @@ class UserRoleEnum(str, Enum):
     Coordinador = "Coordinador"
     
 class mesaTrabajoEnum(str, Enum):
-    MESA1 = "Mesa 1"
-    MESA2 = "Mesa 2"
-    MESA3 = "Mesa 3"
-    MESA4 = "Mesa 4"
-    MESA5 = "Mesa 5"
-    MESA6 = "Mesa 6"
-    MESA7 = "Mesa 7"
-    MESA8 = "Mesa 8"
-    MESA9 = "Mesa 9"
-    MESA10 = "Mesa 10"
+    MESA1 = "1"
+    MESA2 = "2"
+    MESA3 = "3"
+    MESA4 = "4"
+    MESA5 = "5"
+    MESA6 = "6"
+    MESA7 = "7"
+    MESA8 = "8"
+    MESA9 = "9"
+    MESA10 = "10"
     
     
 

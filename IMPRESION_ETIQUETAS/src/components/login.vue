@@ -1,15 +1,20 @@
-<!-- src/components/UserLogin.vue -->
 <template>
   <div class="login-wrapper">
     <div class="login-background">
       <div class="login-card">
-        <!-- Título -->
         <h1 class="login-title">Bienvenido</h1>
 
-        <!-- Imagen fija -->
         <div class="login-image">
           <img src="@/assets/img_login.png" alt="Login Imagen" />
         </div>
+
+        <!-- Selección de Rol -->
+        <select v-model="rol" class="login-select">
+          <option disabled value="">Selecciona tu rol</option>
+          <option value="Practicante">Practicante</option>
+          <option value="Coordinador">Coordinador</option>
+        </select>
+
 
         <!-- Usuario -->
         <input
@@ -19,19 +24,12 @@
           class="login-input"
         />
 
-        <!-- Selección de Rol -->
-        <select v-model="rol" class="login-select">
-          <option disabled value="">Selecciona tu rol</option>
-          <option value="Practicante">Practicante</option>
-          <option value="Coordinador">Coordinador</option>
-        </select>
+        
 
         <!-- Solo Practicante ve la mesa -->
         <select v-if="rol === 'Practicante'" v-model="mesa" class="login-select">
           <option disabled value="">Selecciona la mesa</option>
-          <option v-for="n in 10" :key="n" :value="n">
-            Mesa {{ n }}
-          </option>
+          <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
         </select>
 
         <!-- Solo Coordinador ve la contraseña -->
@@ -44,6 +42,8 @@
         />
 
         <button @click="login" class="login-btn">Ingresar</button>
+        <button v-if="rol === 'Coordinador'" @click="registrarCoordinador" class="registrar-btn">Registrar</button>
+
       </div>
     </div>
   </div>
@@ -72,11 +72,11 @@ export default {
           alert("Debes seleccionar una mesa");
           return;
         }
-        // Guardar datos
+
+        // Guardar datos del practicante
         localStorage.setItem("username", this.username);
         localStorage.setItem("mesaSeleccionada", this.mesa);
         localStorage.setItem("rol", this.rol);
-
         if (!localStorage.getItem("horaEntrada")) {
           localStorage.setItem("horaEntrada", new Date().toLocaleString());
         }
@@ -89,25 +89,31 @@ export default {
           return;
         }
 
-        // Aquí podrías validar la contraseña real con backend
-        if (this.password !== "1234") {
-          alert("Contraseña incorrecta");
-          return;
-        }
-
-        // Guardar datos
-        localStorage.setItem("username", this.username);
-        localStorage.setItem("rol", this.rol);
-
-        if (!localStorage.getItem("horaEntrada")) {
-          localStorage.setItem("horaEntrada", new Date().toLocaleString());
-        }
-        this.$router.push("/historial");
+        // Validación con backend
+        this.$axios.post("http://127.0.0.1:8000/login-coordinador/", {
+          nombre: this.username,
+          contrasena: this.password
+        })
+        .then(res => {
+          localStorage.setItem("username", res.data.nombre);
+          localStorage.setItem("rol", "Coordinador");
+          localStorage.setItem("token", res.data.token); // si usas JWT
+          this.$router.push("/historial");
+        })
+        .catch(err => {
+          alert(err.response?.data?.detail || "Error al ingresar");
+        });
       }
+    },
+
+    registrarCoordinador() {
+      // Redirige a la vista de registro de coordinador
+      this.$router.push("/registro");
     }
   }
 };
 </script>
+
 
 
 <style scoped>
@@ -182,6 +188,20 @@ export default {
   border-radius: 10px;
   border: none;
   background: #0fa8cb;
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.registrar-btn {
+  width: 50%;
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: #afb7ac;
   color: white;
   font-weight: bold;
   font-size: 1.2rem;

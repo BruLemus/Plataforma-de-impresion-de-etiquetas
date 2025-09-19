@@ -5,7 +5,7 @@ from app.db import database
 from app.api.routes import caja as caja  # para registrar tablas
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import tarima
-from app.api.routes import user_rol
+from app.api.routes import user_practicante
 
 
 app = FastAPI(title="API de Etiquetas - Cajas")
@@ -15,7 +15,7 @@ database.Base.metadata.create_all(bind=database.engine)
 
 app.include_router(caja.router, prefix="/cajas", tags=["Cajas"])
 app.include_router(tarima.router, prefix="/tarimas", tags=["Tarimas"])
-app.include_router(user_rol.router, prefix="/user_rols", tags=["UserRols"])
+app.include_router(user_practicante.router, prefix="/user_practicantes", tags=["Usuarios Practicantes"])
 
 # Configuración de CORS
 origins = [
