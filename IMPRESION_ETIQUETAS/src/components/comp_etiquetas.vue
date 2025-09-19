@@ -4,7 +4,7 @@
     <!-- BARRA SUPERIOR -->
     <header class="header no-print">
       <div class="header-content">
-        <h1 class="logo">📦 Proceso de Embalaje - Cajas</h1>
+        <h1 class="logo">📦 Proceso de Embalaje</h1>
         <div class="user-info"> 🚹
           {{ username }} |
           <strong v-if="mesaSeleccionada">💻 Mesa de trabajo: {{ mesaSeleccionada }}</strong> |
@@ -22,7 +22,6 @@
           <ul>
             <li :class="{active: currentView === 'caja'}" @click="setView('caja')">📦 Etiquetas por Caja</li>
             <li :class="{active: currentView === 'tarima'}" @click="setView('tarima')">📦 Etiquetas por Tarima</li>
-            <li :class="{active: currentView === 'historial'}" @click="setView('historial')">📇 Historial</li>
             <li :class="{active: currentView === 'info'}" @click="setView('info')">💻 Info</li>
           </ul>
         </nav>

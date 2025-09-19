@@ -4,9 +4,10 @@ from pydantic import BaseModel
 
 class UserPracticanteBase(BaseModel):
     nombre: str
-    mesa_trabajo: str | None = None
+    mesa_trabajo: int | None = None
     entrada: int | None = None
-    salida: int | None = None
+
+    
 
 class UserPracticanteCreate(UserPracticanteBase):
     pass
@@ -25,7 +26,7 @@ class UserPracticanteResponse(BaseModel):
     nombre: str
     mesa_trabajo: str | None = None
     entrada: int | None = None
-    salida: int | None = None
+class Config:
+        from_attributes = True
 
-    class Config:
-        orm_mode = True
+  

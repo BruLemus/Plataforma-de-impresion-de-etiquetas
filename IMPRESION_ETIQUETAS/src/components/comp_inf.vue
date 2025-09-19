@@ -3,6 +3,6 @@
 <template>
   <div class="p-6">
     <h2 class="text-xl font-bold">Programador / Información</h2>
-    <p>En construcción...</p>
+    <p>Hola </p>
   </div>
 </template>

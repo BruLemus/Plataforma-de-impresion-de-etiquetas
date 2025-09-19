@@ -1,36 +1,41 @@
 <template>
-  <div class="crud-card">
-    <h2 class="crud-subtitle">Registro de Coordinador</h2>
+  <div class="register-wrapper">
+    <div class="register-background">
+      <div class="register-card">
+        <h1 class="register-title">Registro de Coordinador</h1>
 
-    <form @submit.prevent="guardarDatos">
-      <!-- Nombre -->
-      <div class="form-group">
-        <label for="nombre">Nombre</label>
+        <div class="register-image">
+          <img src="@/assets/e1.png" alt="Registro Imagen" />
+        </div>
+
+        <!-- Nombre -->
         <input
-          v-model="form.nombre"
+          v-model="nombre"
           type="text"
-          id="nombre"
-          required
-          placeholder="Ingrese el nombre"
+          placeholder="Ingresa tu nombre"
+          class="register-input"
         />
-      </div>
 
-      <!-- Contraseña -->
-      <div class="form-group">
-        <label for="contrasena">Contraseña</label>
+        <!-- contrasena -->
         <input
-          v-model="form.contrasena"
+          v-model="contrasena"
           type="password"
-          id="contrasena"
-          required
-          placeholder="Ingrese la contraseña"
+          placeholder="Ingresa tu contrasena"
+          class="register-input"
         />
+
+        <!-- Código secreto -->
+        <input
+          v-model="codigoSecreto"
+          type="password"
+          placeholder="Ingresa el código secreto"
+          class="register-input"
+        />
+
+        <button @click="registrar" class="register-btn">Registrar</button>
+        <button @click="volverLogin" class="volver-btn">Volver al login</button>
       </div>
-
-      <button type="submit" class="btn-guardar">Guardar</button>
-
-      <router-link to="/" class="btn-cancelar">Ya tengo una cuenta</router-link>
-    </form>
+    </div>
   </div>
 </template>
 
@@ -38,109 +43,174 @@
 import axios from "axios";
 
 export default {
-  name: "RegistroCoordinador",
+  name: "UserCoordinadorRegister",
   data() {
     return {
-      form: {
-        nombre: "",
-        contrasena: "",
-      },
+      nombre: "",
+      contrasena: "",
+      codigoSecreto: ""
     };
   },
   methods: {
-    async guardarDatos() {
+    async registrar() {
+      if (!this.nombre || !this.contrasena || !this.codigoSecreto) {
+        alert("Todos los campos son obligatorios");
+        return;
+      }
+
       try {
         const payload = {
-          nombre: this.form.nombre,
-          UserRol: "Coordinador",
-          contrasena: this.form.contrasena,
-          mesa_trabajo: this.mesaTrabajo || "",
-          salida: this.salida || null
+          nombre: this.nombre,
+          contrasena: this.contrasena,
+          codigo_secreto: this.codigoSecreto
         };
 
-        console.log("Payload a enviar:", payload);
+        const res = await axios.post(
+          "http://127.0.0.1:8000/user_coordinadors/",
+          payload
+        );
 
-        await axios.post("http://127.0.0.1:8000/user_rols/", payload);
-
-        alert("Coordinador registrado correctamente ✅");
-
-        // Limpiar formulario
-        this.form.nombre = "";
-        this.form.contrasena = "";
+        alert(`Coordinador ${res.data.nombre} registrado correctamente`);
+        this.$router.push("/");
       } catch (error) {
-        console.error("Error al guardar:", error.response?.data || error);
-        alert("❌ Error al registrar el coordinador");
+        alert(error.response?.data?.detail || "Error al registrar coordinador");
       }
     },
-  },
+    volverLogin() {
+      this.$router.push("/");
+    }
+  }
 };
 </script>
 
 <style scoped>
-.crud-card {
-  max-width: 400px;
-  margin: auto;
+/* Fondo y centrado */
+.register-wrapper {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to right, #bfc4d6, #9cacc4);
   padding: 20px;
+}
+
+/* Tarjeta */
+.register-card {
+  background: white;
+  border-radius: 16px;
+  padding: 60px 40px;
+  max-width: 700px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Título */
+.register-title {
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 25px;
+  color: #1e3a8a;
+  line-height: 1.2;
+}
+
+/* Imagen */
+.register-image {
+  height: 250px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.register-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  background: #fff;
 }
 
-.crud-subtitle {
-  text-align: center;
+/* Input */
+.register-input {
+  width: 90%;
+  padding: 14px;
   margin-bottom: 20px;
-  font-size: 22px;
-  font-weight: bold;
-  color: #333;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 1.2rem;
 }
 
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 600;
-  color: #444;
-}
-.btn-cancelar {
-  display: inline-block;
-  margin-top: 10px;
-  text-align: center;
-  width: 50%;
-  padding: 10px;
-  background: #7d997e;
-  color: white;
+/* Botones */
+.register-btn {
+  width: 60%;
+  padding: 14px;
+  border-radius: 10px;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  font-weight: bold;
-  text-decoration: none;
-  
-}
-
-.form-group input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-
-.btn-guardar {
-  width: 100%;
-  padding: 10px;
   background: #0fa8cb;
   color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
   font-weight: bold;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-bottom: 10px;
 }
 
-.btn-guardar:hover {
-  background: #43a047;
+.volver-btn {
+  width: 50%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: #afb7ac;
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.register-btn:hover {
+  background: #a9b8e2;
+}
+
+/* ===== Media Queries ===== */
+@media (max-width: 768px) {
+  .register-card {
+    padding: 40px 25px;
+    width: 95%;
+  }
+  .register-title {
+    font-size: 2rem;
+  }
+  .register-image {
+    height: 180px;
+  }
+  .register-input {
+    font-size: 1rem;
+  }
+  .register-btn, .volver-btn {
+    font-size: 1rem;
+    width: 70%;
+  }
+}
+
+@media (max-width: 480px) {
+  .register-card {
+    padding: 30px 20px;
+  }
+  .register-title {
+    font-size: 1.7rem;
+  }
+  .register-image {
+    height: 150px;
+  }
+  .register-input {
+    font-size: 0.95rem;
+  }
+  .register-btn, .volver-btn {
+    font-size: 0.95rem;
+    width: 80%;
+  }
 }
 </style>

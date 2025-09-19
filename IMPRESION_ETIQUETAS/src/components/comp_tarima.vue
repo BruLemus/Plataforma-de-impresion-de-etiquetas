@@ -100,10 +100,38 @@ export default {
     },
   },
   methods: {
-    imprimir() {
-      if (!this.numTarimas || this.numTarimas <= 0) return alert("No hay etiquetas para imprimir");
-      this.$nextTick(() => setTimeout(() => window.print(), 200));
+    // --- AJUSTE: Imprimir directamente a la impresora de red ---
+    async imprimir() {
+      if (!this.numTarimas || this.numTarimas <= 0)
+        return alert("No hay etiquetas para imprimir");
+
+      // Construir contenido a imprimir (puedes personalizar formato)
+      const contenido = `
+Paquetería: ${this.paqueteriaSeleccionada}
+Factura: ${this.factura}
+Número de Tarimas: ${this.numTarimas}
+Tipo de Embalaje: ${this.tipoEmbalaje}
+Clave Producto: ${this.claveProducto}
+Total piezas: ${this.totalPiezas}
+`;
+
+      try {
+        const res = await fetch("http://127.0.0.1:8000/imprimir/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contenido })
+        });
+
+        const data = await res.json();
+        if (data.status === "ok") alert("Se envió a imprimir correctamente");
+        else alert("Error al imprimir: " + data.message);
+
+      } catch (err) {
+        console.error(err);
+        alert("Ocurrió un error al enviar la impresión");
+      }
     },
+
     reiniciar() {
       this.factura = "";
       this.numTarimas = 0;
@@ -115,13 +143,13 @@ export default {
       this.alto = 0;
       this.piezas = [];
     },
+
     async guardarDatos() {
       if (!this.factura || !this.paqueteriaSeleccionada || !this.tipoEmbalaje || !this.numTarimas) {
         return alert("Factura, Paquetería, Tipo de Embalaje y Número de Tarimas son obligatorios");
       }
 
       try {
-        // Preparar payload respetando tipos de API
         const payload = {
           paqueteria: this.paqueteriaSeleccionada,
           numero_factura: this.factura,

@@ -15,7 +15,6 @@
           <option value="Coordinador">Coordinador</option>
         </select>
 
-
         <!-- Usuario -->
         <input
           v-model="username"
@@ -23,8 +22,6 @@
           placeholder="Ingresa tu nombre"
           class="login-input"
         />
-
-        
 
         <!-- Solo Practicante ve la mesa -->
         <select v-if="rol === 'Practicante'" v-model="mesa" class="login-select">
@@ -42,14 +39,21 @@
         />
 
         <button @click="login" class="login-btn">Ingresar</button>
-        <button v-if="rol === 'Coordinador'" @click="registrarCoordinador" class="registrar-btn">Registrar</button>
-
+        <button
+          v-if="rol === 'Coordinador'"
+          @click="registrarCoordinador"
+          class="registrar-btn"
+        >
+          Registrar
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "UserLogin",
   data() {
@@ -67,53 +71,63 @@ export default {
         return;
       }
 
+      // === Practicante ===
       if (this.rol === "Practicante") {
         if (!this.mesa) {
           alert("Debes seleccionar una mesa");
           return;
         }
 
-        // Guardar datos del practicante
         localStorage.setItem("username", this.username);
         localStorage.setItem("mesaSeleccionada", this.mesa);
-        localStorage.setItem("rol", this.rol);
+        localStorage.setItem("rol", "Practicante");
         if (!localStorage.getItem("horaEntrada")) {
           localStorage.setItem("horaEntrada", new Date().toLocaleString());
         }
-        this.$router.push("/etiquetas");
+
+        axios
+          .post("http://127.0.0.1:8000/user_practicantes", {
+            nombre: this.username,
+            mesa_trabajo: this.mesa,
+            entrada: new Date().getTime(),
+            salida: null
+          })
+          .then(res => console.log("Practicante guardado:", res.data))
+          .catch(err => console.error("Error al guardar practicante:", err.response?.data || err));
+
+        this.$router.push("/practicante/");
       }
 
+      // === Coordinador ===
       if (this.rol === "Coordinador") {
         if (!this.password) {
           alert("Debes ingresar la contraseña");
           return;
         }
 
-        // Validación con backend
-        this.$axios.post("http://127.0.0.1:8000/login-coordinador/", {
-          nombre: this.username,
-          contrasena: this.password
-        })
-        .then(res => {
-          localStorage.setItem("username", res.data.nombre);
-          localStorage.setItem("rol", "Coordinador");
-          localStorage.setItem("token", res.data.token); // si usas JWT
-          this.$router.push("/historial");
-        })
-        .catch(err => {
-          alert(err.response?.data?.detail || "Error al ingresar");
-        });
+        axios
+          .post("http://127.0.0.1:8000/coordinador/", {
+            nombre: this.username,
+            contrasena: this.password
+          })
+          .then(res => {
+            localStorage.setItem("username", res.data.nombre);
+            localStorage.setItem("rol", "Coordinador");
+            localStorage.setItem("token", res.data.token);
+
+            // 🔹 Aquí se redirige correctamente usando el nombre de la ruta
+            this.$router.push({ name: "dashboard_coordinador" });
+          })
+          .catch(err => alert(err.response?.data?.detail || "Error al ingresar"));
       }
     },
 
     registrarCoordinador() {
-      // Redirige a la vista de registro de coordinador
       this.$router.push("/registro");
     }
   }
 };
 </script>
-
 
 
 <style scoped>
@@ -181,7 +195,7 @@ export default {
   cursor: pointer;
 }
 
-/* Botón */
+/* Botones */
 .login-btn {
   width: 60%;
   padding: 14px;

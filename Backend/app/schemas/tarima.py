@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel  
 from typing import Optional
 from datetime import datetime
 from app.db.models.tarima import PaqueteriaEnum, TipoEmbalajeEnum
@@ -19,4 +19,4 @@ class TarimaRead(TarimaCreate):
     fecha_creacion: datetime
 
     class Config:
-        from_attributes = True  # Reemplaza orm_mode en Pydantic v2
+       from_attributes = True 
