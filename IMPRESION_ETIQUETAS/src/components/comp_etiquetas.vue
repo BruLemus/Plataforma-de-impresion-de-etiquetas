@@ -22,7 +22,7 @@
           <ul>
             <li :class="{active: currentView === 'caja'}" @click="setView('caja')">📦 Etiquetas por Caja</li>
             <li :class="{active: currentView === 'tarima'}" @click="setView('tarima')">📦 Etiquetas por Tarima</li>
-            <li :class="{active: currentView === 'info'}" @click="setView('info')">💻 Info</li>
+            <li :class="{active: currentView === 'info'}" @click="setView('info')">💻 Acerca de . . .</li>
           </ul>
         </nav>
       </aside>
@@ -103,7 +103,9 @@
             <div class="crud-total">Total de piezas: {{ totalPiezas }}</div>
 
             <div class="crud-actions no-print">
-              <button @click="imprimir" class="btn btn-print">🖨️ Imprimir</button>
+              <button @click="imprimir" class="btn btn-print">🖨️ Imprimir en Navegador</button>
+              <button @click="imprimirRemoto" class="btn btn-print">🌐 Imprimir en Servidor</button>
+              <input type="file" @change="onFileChange" class="crud-input" />
               <button @click="reiniciar" class="btn btn-reset">🔄 Reiniciar</button>
               <button @click="guardarDatos" class="btn btn-save">💾 Guardar</button>
             </div>
@@ -159,6 +161,7 @@
 </template>
 
 <script>
+import axios from "axios";
 import QrcodeVue from "qrcode.vue";
 import comp_tarima from "@/components/comp_tarima.vue";
 import comp_historial from "@/components/comp_historial.vue";
@@ -189,7 +192,8 @@ export default {
       anchoCaja: "",
       altoCaja: "",
       largoCaja: "",
-      qrSize: 80
+      qrSize: 130,
+      file: null, // 🔹 para archivo a imprimir
     };
   },
   created() {
@@ -247,6 +251,31 @@ export default {
       if (!this.numCajas || this.numCajas <= 0) return alert("No hay etiquetas para imprimir");
       this.$nextTick(() => setTimeout(() => window.print(), 200));
     },
+    // 🔹 manejar archivo seleccionado (se queda por si quieres)
+    onFileChange(event) {
+      this.file = event.target.files[0];
+    },
+    // 🔹 enviar etiquetas generadas al backend para impresión
+    async imprimirRemoto() {
+      if (!this.numCajas || this.numCajas <= 0) {
+        return alert("No hay etiquetas para imprimir");
+      }
+
+      try {
+        for (let i = 0; i < this.numCajas; i++) {
+          const etiquetaTexto = this.generateQR(i); // usamos el mismo contenido que QR
+          const payload = { content: etiquetaTexto };
+
+          await axios.post("http://127.0.0.1:8000/print_label/", payload, {
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        alert("Todas las etiquetas fueron enviadas al servidor para impresión");
+      } catch (error) {
+        console.error("Error al imprimir en servidor:", error);
+        alert("Error al enviar etiquetas al servidor");
+      }
+    },
     reiniciar() {
       this.factura = "";
       this.numCajas = 0;
@@ -257,54 +286,48 @@ export default {
       this.anchoCaja = "";
       this.altoCaja = "";
       this.largoCaja = "";
+      this.file = null;
     },
     async guardarDatos() {
-  if (!this.factura || !this.paqueteriaSeleccionada.nombre || !this.tipoEmbalaje || !this.numCajas) {
-    return alert("Factura, Paquetería, Tipo de Embalaje y Número de Cajas son obligatorios");
-  }
-
-  try {
-    // 🔹 Sumar todas las piezas para enviarlas como cantidad_piezas
-    const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
-
-    const payload = {
-      paqueteria: this.paqueteriaSeleccionada.nombre, // debe coincidir con PaqueteriaEnum
-      numero_factura: this.factura,
-      numero_cajas: Number(this.numCajas),
-      tipo_embalaje: Number(this.tipoEmbalaje), // coincide con TipoEmbalajeEnum
-      cantidad_piezas: totalPiezas,
-      clave_producto: this.claveProducto || "N/A",
-      ancho: this.anchoCaja ? Number(this.anchoCaja) : 0,
-      alto: this.altoCaja ? Number(this.altoCaja) : 0,
-      largo: this.largoCaja ? Number(this.largoCaja) : 0,
-      peso: this.pesoCaja ? Number(this.pesoCaja) : 0
-    };
-
-    console.log("Payload a enviar:", payload); // para depuración
-
-    const response = await fetch('http://127.0.0.1:8000/cajas/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Error API:", errorData);
-      throw new Error("Error al guardar en la base de datos");
+      if (!this.factura || !this.paqueteriaSeleccionada.nombre || !this.tipoEmbalaje || !this.numCajas) {
+        return alert("Factura, Paquetería, Tipo de Embalaje y Número de Cajas son obligatorios");
+      }
+      try {
+        const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
+        const payload = {
+          paqueteria: this.paqueteriaSeleccionada.nombre,
+          numero_factura: this.factura,
+          numero_cajas: Number(this.numCajas),
+          tipo_embalaje: Number(this.tipoEmbalaje),
+          cantidad_piezas: totalPiezas,
+          clave_producto: this.claveProducto || "N/A",
+          ancho: this.anchoCaja ? Number(this.anchoCaja) : 0,
+          alto: this.altoCaja ? Number(this.altoCaja) : 0,
+          largo: this.largoCaja ? Number(this.largoCaja) : 0,
+          peso: this.pesoCaja ? Number(this.pesoCaja) : 0
+        };
+        console.log("Payload a enviar:", payload);
+        const response = await fetch('http://127.0.0.1:8000/cajas/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Error API:", errorData);
+          throw new Error("Error al guardar en la base de datos");
+        }
+        alert("Datos guardados correctamente");
+        this.reiniciar();
+      } catch (err) {
+        console.error(err);
+        alert("Ocurrió un error al guardar los datos");
+      }
     }
-
-    alert("Datos guardados correctamente");
-    this.reiniciar();
-
-  } catch (err) {
-    console.error(err);
-    alert("Ocurrió un error al guardar los datos");
-  }
-}
   }
 };
 </script>
+
 
 <style scoped>
 /* ==== LAYOUT GENERAL ==== */
@@ -353,21 +376,56 @@ export default {
 .btn-save { background: #3b82f6; color: white; }
 
 /* ETIQUETAS */
-.labels-container { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 20px; }
-.etiqueta { background: #ffffff; border-radius: 10px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); width: 200px; page-break-inside: avoid; }
-.etiqueta-content { display: flex; justify-content: space-between; align-items: center; }
-.logo-etiqueta { width: 50px; margin-bottom: 8px; }
-.etiqueta-datos { font-size: 0.85rem; }
-.etiqueta-datos .dato { margin-bottom: 4px; }
-.etiqueta-qr { margin-left: 6px; }
+.labels-container { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 20px; width: 100%; }
+.etiqueta { 
+  background: #ffffff; 
+  border-radius: 10px; 
+  padding: 14px; 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+  page-break-inside: avoid;
+  width: 100%;   
+}
+.etiqueta-content { 
+  display: flex; 
+  justify-content: flex-start; /* 🔹 de space-between a flex-start */
+  align-items: center; 
+  gap: 50px; /* 🔹 controlamos la distancia entre datos y QR */
+
+}
+.logo-etiqueta { width: 120px; margin-bottom: 8px; }
+.etiqueta-datos { font-size: 1rem; }
+.etiqueta-datos .dato { margin-bottom: 12px; }
+.etiqueta-qr { margin-left:0px; }
+
 
 /* ===== ESTILOS DE IMPRESIÓN ===== */
 @media print {
-  @page { size: auto; margin: 5mm; }  
-  body * { visibility: hidden; }
-  .labels-container, .labels-container * { visibility: visible; }
-  .labels-container { position: absolute; top: 0; left: 0; width: 90%; }
-  .etiqueta { display: inline-block; margin: 15px; }  
+  @page { size: auto; margin: 0; }
+
+  body { background: none !important; }
+  body * { visibility: hidden; background: none !important; box-shadow: none !important; }
+
+  .labels-container, .labels-container * { 
+    visibility: visible; 
+    background: none !important; 
+    box-shadow: none !important; 
+    color: black !important;
+  }
+
+  .labels-container { 
+    position: absolute; 
+    top: 0; left: 0; 
+    width: 100%;  
+  }
+
+  .etiqueta { 
+    display: block; 
+    margin: 0; 
+    width: 100%; 
+    background: none !important; 
+    box-shadow: none !important;
+  }  
+
   .no-print { display: none !important; }
 }
 </style>
