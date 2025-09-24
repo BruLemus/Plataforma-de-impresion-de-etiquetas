@@ -5,9 +5,11 @@ import comp_historial from "../components/comp_historial.vue";
 import comp_inf from "../components/comp_inf.vue";
 import comp_registro from "../components/comp_registro.vue";
 
+
 // Dashboards
 import comp_etiquetas from "../components/comp_etiquetas.vue"; // Practicante
 import CoordinadorDashboard from "../components/comp_inf.vue"; // Coordinador, usa tu componente real si es otro
+import comp_otras_etiquetas from "../components/comp_otras_etiquetas.vue"
 
 const routes = [
   { path: "/", name: "login", component: login },
@@ -15,6 +17,7 @@ const routes = [
   { path: "/historial", name: "comp_historial", component: comp_historial },
   { path: "/inf", name: "comp_inf", component: comp_inf },
   { path: "/registro", name: "registro", component: comp_registro },
+  { path: "/otrasetiquetas", name: "comp_otras_etiquetas", component: comp_otras_etiquetas},
 
   // Dashboard Practicante
   {

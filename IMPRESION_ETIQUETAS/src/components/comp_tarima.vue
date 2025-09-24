@@ -200,8 +200,8 @@ Total piezas: ${this.totalPiezas}
 .crud-input-small { border: 1px solid #9ca3af; border-radius: 6px; width: 60px; padding: 6px; font-size: 0.9rem; text-align: center; }
 .crud-actions { display: flex; gap: 12px; margin-top: 16px; }
 .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-.btn-print { background: #22c55e; color: white; }
-.btn-reset { background: #fbbf24; color: white; }
-.btn-save { background: #3b82f6; color: white; }
+.btn-print { background: #126330; color: white; }
+.btn-reset { background: #cd981c; color: white; }
+.btn-save { background: #2559ac; color: white; }
 .crud-total { font-weight: bold; margin-top: 10px; color: #1e40af; }
 </style>

@@ -8,13 +8,15 @@
         <div class="user-info"> 🚹
           {{ username }} |
           <strong v-if="mesaSeleccionada">💻 Mesa de trabajo: {{ mesaSeleccionada }}</strong> |
-          🕖 Entrada: <strong v-if="horaEntrada">{{ horaEntrada }}</strong>
+          🕖 Entrada: <strong v-if="horaEntrada">{{ horaEntrada }}</strong> |
           <button class="btn-logout" @click="logout">Salir</button>
         </div>
       </div>
     </header>
 
-    <!-- LAYOUT CON SIDEBAR Y CONTENIDO -->
+   
+
+    <!-- LAYOUT -->
     <div class="layout">
       <!-- SIDEBAR -->
       <aside class="sidebar no-print">
@@ -22,6 +24,7 @@
           <ul>
             <li :class="{active: currentView === 'caja'}" @click="setView('caja')">📦 Etiquetas por Caja</li>
             <li :class="{active: currentView === 'tarima'}" @click="setView('tarima')">📦 Etiquetas por Tarima</li>
+            <li :class="{active: currentView === 'otrasetiquetas'}" @click="setView('otras_etiquetas')"> ⚠️  Otras Etiquetas</li>
             <li :class="{active: currentView === 'info'}" @click="setView('info')">💻 Acerca de . . .</li>
           </ul>
         </nav>
@@ -77,12 +80,10 @@
                 <label class="crud-label">Ancho de la Caja (cm)</label>
                 <input v-model.number="anchoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 40" />
               </div>
-
               <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
                 <label class="crud-label">Alto de la Caja (cm)</label>
                 <input v-model.number="altoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 60" />
               </div>
-
               <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
                 <label class="crud-label">Largo de la Caja (cm)</label>
                 <input v-model.number="largoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 50" />
@@ -98,20 +99,28 @@
                   <input v-model.number="piezas[n-1]" type="number" min="0" class="crud-input-small" placeholder="0" />
                 </div>
               </div>
+
+              
+            </div>
+             <!-- 🔹 ESTATUS DE IMPRESORA -->
+            <div class="printer-status no-print">
+              🖨️ Estado de Impresora:
+              <span :class="{ online: impresoraOnline, offline: !impresoraOnline }">
+                {{ impresoraOnline ? "En línea ✅" : "Desconectada ❌" }}
+              </span>
             </div>
 
-            <div class="crud-total">Total de piezas: {{ totalPiezas }}</div>
 
             <div class="crud-actions no-print">
               <button @click="imprimir" class="btn btn-print">🖨️ Imprimir en Navegador</button>
               <button @click="imprimirRemoto" class="btn btn-print">🌐 Imprimir en Servidor</button>
-              <input type="file" @change="onFileChange" class="crud-input" />
+              <button @click="imprimirEtiquetaEspecial" class="btn btn-print" v-if="etiquetaExtra">⚠️ Imprimir Extra</button>
               <button @click="reiniciar" class="btn btn-reset">🔄 Reiniciar</button>
               <button @click="guardarDatos" class="btn btn-save">💾 Guardar</button>
             </div>
           </div>
 
-          <!-- ETIQUETAS -->
+          <!-- ETIQUETAS DE CAJA -->
           <div class="labels-container print-only" v-if="numCajas > 0">
             <div v-for="n in numCajas" :key="'etiqueta-' + n" class="etiqueta">
               <div class="contenido">
@@ -131,7 +140,6 @@
                       <div class="dato"><strong>Largo:</strong> {{ largoCaja || 0 }} cm</div>
                     </div>
                   </div>
-
                   <div class="etiqueta-qr">
                     <qrcode-vue :value="generateQR(n-1)" :size="qrSize" level="H" />
                   </div>
@@ -146,9 +154,9 @@
           <comp_tarima />
         </section>
 
-        <!-- HISTORIAL -->
-        <section v-if="currentView === 'historial'">
-          <comp_historial />
+        <!-- OTRAS ETIQUETAS -->
+        <section v-if="currentView === 'otras_etiquetas'">
+          <comp_otras_etiquetas />
         </section>
 
         <!-- INFO -->
@@ -164,11 +172,12 @@
 import axios from "axios";
 import QrcodeVue from "qrcode.vue";
 import comp_tarima from "@/components/comp_tarima.vue";
-import comp_historial from "@/components/comp_historial.vue";
 import comp_inf from "@/components/comp_inf.vue";
+import comp_otras_etiquetas from "./comp_otras_etiquetas.vue";
 
 export default {
-  components: { QrcodeVue, comp_tarima, comp_historial, comp_inf },
+  name: "CompEtiquetas",
+  components: { QrcodeVue, comp_tarima, comp_inf, comp_otras_etiquetas },
   data() {
     return {
       username: localStorage.getItem("username") || "",
@@ -177,7 +186,7 @@ export default {
       currentView: "caja",
       paqueterias: [
         { nombre: "Paquetexpress", logo: new URL("@/assets/pExp.png", import.meta.url).href },
-        { nombre: "FedEx", logo: new URL("@/assets/fedex.png", import.meta.url).href }, 
+        { nombre: "FedEx", logo: new URL("@/assets/fedex.png", import.meta.url).href },
         { nombre: "DHL", logo: new URL("@/assets/dhl.png", import.meta.url).href },
         { nombre: "Estafeta", logo: new URL("@/assets/estafeta.png", import.meta.url).href },
         { nombre: "Mercado Libre", logo: new URL("@/assets/mercadolibre.png", import.meta.url).href },
@@ -193,38 +202,28 @@ export default {
       altoCaja: "",
       largoCaja: "",
       qrSize: 130,
-      file: null, // 🔹 para archivo a imprimir
+      impresoraOnline: false,
+
+     
     };
   },
   created() {
     const hora = new Date().toLocaleString();
     localStorage.setItem("horaEntrada", hora);
     this.horaEntrada = hora;
+    this.checkPrinterStatus();
+    setInterval(this.checkPrinterStatus, 5000);
   },
   computed: {
     totalPiezas() {
       return this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
-    }
-  },
-  watch: {
-    numCajas(newVal) {
-      const N = Number(newVal) || 0;
-      if (N > this.piezas.length) {
-        for (let i = this.piezas.length; i < N; i++) this.piezas.push(0);
-      } else {
-        this.piezas.splice(N);
-      }
-    }
+    },
+    
   },
   methods: {
     logout() {
-      localStorage.removeItem("username");
-      localStorage.removeItem("mesaSeleccionada");
-      localStorage.removeItem("horaEntrada");
-      this.username = "";
-      this.mesaSeleccionada = "";
-      this.horaEntrada = "";
-      this.$router.push('/'); 
+      localStorage.clear();
+      this.$router.push('/');
     },
     setView(view) {
       this.currentView = view;
@@ -251,31 +250,21 @@ export default {
       if (!this.numCajas || this.numCajas <= 0) return alert("No hay etiquetas para imprimir");
       this.$nextTick(() => setTimeout(() => window.print(), 200));
     },
-    // 🔹 manejar archivo seleccionado (se queda por si quieres)
-    onFileChange(event) {
-      this.file = event.target.files[0];
-    },
-    // 🔹 enviar etiquetas generadas al backend para impresión
     async imprimirRemoto() {
-      if (!this.numCajas || this.numCajas <= 0) {
-        return alert("No hay etiquetas para imprimir");
-      }
-
+      if (!this.numCajas) return alert("No hay etiquetas para imprimir");
       try {
         for (let i = 0; i < this.numCajas; i++) {
-          const etiquetaTexto = this.generateQR(i); // usamos el mismo contenido que QR
+          const etiquetaTexto = this.generateQR(i);
           const payload = { content: etiquetaTexto };
-
-          await axios.post("http://127.0.0.1:8000/print_label/", payload, {
-            headers: { "Content-Type": "application/json" }
-          });
+          await axios.post("http://127.0.0.1:8000/print_label/", payload);
         }
         alert("Todas las etiquetas fueron enviadas al servidor para impresión");
       } catch (error) {
-        console.error("Error al imprimir en servidor:", error);
+        console.error(error);
         alert("Error al enviar etiquetas al servidor");
       }
     },
+
     reiniciar() {
       this.factura = "";
       this.numCajas = 0;
@@ -286,42 +275,43 @@ export default {
       this.anchoCaja = "";
       this.altoCaja = "";
       this.largoCaja = "";
-      this.file = null;
+      this.etiquetaExtra = "";
+      this.cantidadExtra = 1;
     },
     async guardarDatos() {
       if (!this.factura || !this.paqueteriaSeleccionada.nombre || !this.tipoEmbalaje || !this.numCajas) {
         return alert("Factura, Paquetería, Tipo de Embalaje y Número de Cajas son obligatorios");
       }
       try {
-        const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
         const payload = {
           paqueteria: this.paqueteriaSeleccionada.nombre,
           numero_factura: this.factura,
           numero_cajas: Number(this.numCajas),
           tipo_embalaje: Number(this.tipoEmbalaje),
-          cantidad_piezas: totalPiezas,
+          cantidad_piezas: this.totalPiezas,
           clave_producto: this.claveProducto || "N/A",
-          ancho: this.anchoCaja ? Number(this.anchoCaja) : 0,
-          alto: this.altoCaja ? Number(this.altoCaja) : 0,
-          largo: this.largoCaja ? Number(this.largoCaja) : 0,
-          peso: this.pesoCaja ? Number(this.pesoCaja) : 0
+          ancho: Number(this.anchoCaja || 0),
+          alto: Number(this.altoCaja || 0),
+          largo: Number(this.largoCaja || 0),
         };
-        console.log("Payload a enviar:", payload);
-        const response = await fetch('http://127.0.0.1:8000/cajas/', {
+        await fetch('http://127.0.0.1:8000/cajas/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Error API:", errorData);
-          throw new Error("Error al guardar en la base de datos");
-        }
         alert("Datos guardados correctamente");
         this.reiniciar();
       } catch (err) {
         console.error(err);
-        alert("Ocurrió un error al guardar los datos");
+        alert("Error al guardar");
+      }
+    },
+    async checkPrinterStatus() {
+      try {
+        const res = await axios.get("http://127.0.0.1:8000/print_label/status");
+        this.impresoraOnline = res.data.online;
+      } catch {
+        this.impresoraOnline = false;
       }
     }
   }
@@ -371,9 +361,9 @@ export default {
 .crud-subtitle { font-weight: 600; margin-bottom: 12px; color: #1e40af; font-size: 1.05rem; }
 .crud-actions { display: flex; gap: 12px; margin-top: 16px; }
 .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-.btn-print { background: #22c55e; color: white; }
-.btn-reset { background: #fbbf24; color: white; }
-.btn-save { background: #3b82f6; color: white; }
+.btn-print { background: #126330; color: white; }
+.btn-reset { background: #cd981c; color: white; }
+.btn-save { background: #2559ac; color: white; }
 
 /* ETIQUETAS */
 .labels-container { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 20px; width: 100%; }
@@ -390,12 +380,30 @@ export default {
   justify-content: flex-start; /* 🔹 de space-between a flex-start */
   align-items: center; 
   gap: 50px; /* 🔹 controlamos la distancia entre datos y QR */
-
 }
 .logo-etiqueta { width: 120px; margin-bottom: 8px; }
 .etiqueta-datos { font-size: 1rem; }
 .etiqueta-datos .dato { margin-bottom: 12px; }
 .etiqueta-qr { margin-left:0px; }
+
+.printer-status {
+  background: #f3f4f6;
+  color: #111827;
+  font-weight: bold;
+  text-align: center;
+  padding: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.online {
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.offline {
+  color: #ef4444;
+  font-weight: bold;
+}
 
 
 /* ===== ESTILOS DE IMPRESIÓN ===== */
@@ -428,4 +436,7 @@ export default {
 
   .no-print { display: none !important; }
 }
+
+
+
 </style>
