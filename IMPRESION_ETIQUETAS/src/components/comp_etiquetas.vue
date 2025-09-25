@@ -14,8 +14,6 @@
       </div>
     </header>
 
-   
-
     <!-- LAYOUT -->
     <div class="layout">
       <!-- SIDEBAR -->
@@ -99,10 +97,9 @@
                   <input v-model.number="piezas[n-1]" type="number" min="0" class="crud-input-small" placeholder="0" />
                 </div>
               </div>
-
-              
             </div>
-             <!-- 🔹 ESTATUS DE IMPRESORA -->
+
+            <!-- 🔹 ESTATUS DE IMPRESORA -->
             <div class="printer-status no-print">
               🖨️ Estado de Impresora:
               <span :class="{ online: impresoraOnline, offline: !impresoraOnline }">
@@ -110,11 +107,9 @@
               </span>
             </div>
 
-
             <div class="crud-actions no-print">
-              <button @click="imprimir" class="btn btn-print">🖨️ Imprimir en Navegador</button>
-              <button @click="imprimirRemoto" class="btn btn-print">🌐 Imprimir en Servidor</button>
-              <button @click="imprimirEtiquetaEspecial" class="btn btn-print" v-if="etiquetaExtra">⚠️ Imprimir Extra</button>
+            <button @click="imprimirZebra" class="btn btn-print">🖨️ Imprimir en Zebra</button>
+              <button @click="imprimirRemoto" class="btn btn-print">🌐 Imprimir en Servidor (ZPL)</button>
               <button @click="reiniciar" class="btn btn-reset">🔄 Reiniciar</button>
               <button @click="guardarDatos" class="btn btn-save">💾 Guardar</button>
             </div>
@@ -203,8 +198,6 @@ export default {
       largoCaja: "",
       qrSize: 130,
       impresoraOnline: false,
-
-     
     };
   },
   created() {
@@ -218,7 +211,6 @@ export default {
     totalPiezas() {
       return this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
     },
-    
   },
   methods: {
     logout() {
@@ -254,17 +246,31 @@ export default {
       if (!this.numCajas) return alert("No hay etiquetas para imprimir");
       try {
         for (let i = 0; i < this.numCajas; i++) {
-          const etiquetaTexto = this.generateQR(i);
-          const payload = { content: etiquetaTexto };
-          await axios.post("http://127.0.0.1:8000/print_label/", payload);
+          // Genera ZPL para cada etiqueta
+          const zpl = this.generateZPL(i);
+          await axios.post("http://127.0.0.1:8000/print_label/", { zpl });
         }
-        alert("Todas las etiquetas fueron enviadas al servidor para impresión");
+        alert("Todas las etiquetas fueron enviadas al servidor en formato ZPL");
       } catch (error) {
         console.error(error);
-        alert("Error al enviar etiquetas al servidor");
+        alert("Error al enviar etiquetas ZPL al servidor");
       }
     },
-
+    generateZPL(index) {
+      // Formato ZPL básico
+      return `
+^XA
+^FO50,50^ADN,36,20^FDFactura: ${this.factura || '-'}^FS
+^FO50,100^ADN,36,20^FDCaja: ${index + 1} de ${this.numCajas}^FS
+^FO50,150^ADN,36,20^FDPiezas: ${this.piezas[index] || 0}^FS
+^FO50,200^ADN,36,20^FDTotal: ${this.totalPiezas}^FS
+^FO50,250^ADN,36,20^FDPaquetería: ${this.paqueteriaSeleccionada.nombre || '-'}^FS
+^FO50,300^ADN,36,20^FDEmbalaje: ${this.tipoEmbalaje || '-'}^FS
+^FO50,350^ADN,36,20^FDClave: ${this.claveProducto || '-'}^FS
+^FO50,400^BQN,2,5^FDLA,${this.generateQR(index)}^FS
+^XZ
+      `;
+    },
     reiniciar() {
       this.factura = "";
       this.numCajas = 0;
@@ -275,8 +281,6 @@ export default {
       this.anchoCaja = "";
       this.altoCaja = "";
       this.largoCaja = "";
-      this.etiquetaExtra = "";
-      this.cantidadExtra = 1;
     },
     async guardarDatos() {
       if (!this.factura || !this.paqueteriaSeleccionada.nombre || !this.tipoEmbalaje || !this.numCajas) {
@@ -317,6 +321,7 @@ export default {
   }
 };
 </script>
+
 
 
 <style scoped>
