@@ -13,7 +13,12 @@ class UserCoordinadorLogin(BaseModel):
     nombre: str
     contrasena: str
     
+class UserCoordinadorUpdate(BaseModel):
+    nombre: str | None = None
+    contrasena: str | None = None
+    codigo_secreto: str
     
+     
 class UserCoordinadorResponse(UserCoordinadorBase):
     id: int
     nombre: str

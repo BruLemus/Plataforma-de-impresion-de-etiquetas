@@ -1,18 +1,7 @@
 <!-- src/components/comp_historial.vue -->
 <template>
   <div class="app-container">
-    <!-- BARRA SUPERIOR -->
-    <header class="header">
-      <div class="header-content">
-        <h1 class="logo">📑 Historial de Etiquetas Generadas</h1>
-        <div class="user-info">
-          🚹 {{ username }} |
-          <strong v-if="mesaSeleccionada">💻 Mesa de trabajo: {{ mesaSeleccionada }}</strong> |
-          🕖 Entrada: <strong v-if="horaEntrada">{{ horaEntrada }}</strong>
-          <button class="btn-logout" @click="logout">Salir</button>
-        </div>
-      </div>
-    </header>
+   
 
     <!-- CONTENIDO -->
     <main class="content">

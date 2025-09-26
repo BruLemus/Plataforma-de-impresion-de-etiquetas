@@ -1,3 +1,4 @@
+
 <template>
   <div class="login-wrapper">
     <div class="login-background">
@@ -99,27 +100,29 @@ export default {
       }
 
       // === Coordinador ===
-      if (this.rol === "Coordinador") {
-        if (!this.password) {
-          alert("Debes ingresar la contraseña");
-          return;
-        }
+     // === Coordinador ===
+if (this.rol === "Coordinador") {
+  if (!this.password) {
+    alert("Debes ingresar la contraseña");
+    return;
+  }
 
-        axios
-          .post("http://127.0.0.1:8000/coordinador/", {
-            nombre: this.username,
-            contrasena: this.password
-          })
-          .then(res => {
-            localStorage.setItem("username", res.data.nombre);
-            localStorage.setItem("rol", "Coordinador");
-            localStorage.setItem("token", res.data.token);
+  const formData = new URLSearchParams();
+  formData.append("nombre", this.username);
+  formData.append("contrasena", this.password);
 
-            // 🔹 Aquí se redirige correctamente usando el nombre de la ruta
-            this.$router.push({ name: "dashboard_coordinador" });
-          })
-          .catch(err => alert(err.response?.data?.detail || "Error al ingresar"));
-      }
+  axios
+    .post("http://127.0.0.1:8000/user_coordinadors/login", formData)
+    .then(res => {
+      localStorage.setItem("username", res.data.nombre);
+      localStorage.setItem("rol", "Coordinador");
+      localStorage.setItem("token", res.data.token);
+
+      this.$router.push("/coordinador/");
+    })
+    .catch(err => alert(err.response?.data?.detail || "Error al ingresar"));
+}
+
     },
 
     registrarCoordinador() {

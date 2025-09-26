@@ -7,8 +7,8 @@ import comp_registro from "../components/comp_registro.vue";
 
 
 // Dashboards
-import comp_etiquetas from "../components/comp_etiquetas.vue"; // Practicante
-import CoordinadorDashboard from "../components/comp_inf.vue"; // Coordinador, usa tu componente real si es otro
+import comp_etiquetas_practicantes from "../components/comp_etiquetas_practicantes.vue"; //Practicantes 
+import comp_etiquetas_coordinador from "../components/comp_etiquetas_coordinador.vue" //coordinadores
 import comp_otras_etiquetas from "../components/comp_otras_etiquetas.vue"
 
 const routes = [
@@ -23,14 +23,16 @@ const routes = [
   {
     path: "/practicante",
     name: "dashboard_practicante",
-    component: comp_etiquetas,
+    component: comp_etiquetas_practicantes,
   },
 
   // Dashboard Coordinador
   {
     path: "/coordinador",
-    name: "dashboard_coordinador",
-    component: CoordinadorDashboard,
+    name: "dashboard_coordinadores",
+    component: comp_etiquetas_coordinador,
+    meta: { requiresAuth: true }
+
   },
 ];
 
@@ -41,15 +43,14 @@ const router = createRouter({
 
 // Protección de rutas opcional
 router.beforeEach((to, from, next) => {
-  const rol = localStorage.getItem("rol");
-
-  if (to.name === "dashboard_practicante" && rol !== "Practicante") {
-    next("/"); // Solo practicantes
-  } else if (to.name === "dashboard_coordinador" && rol !== "Coordinador") {
-    next("/"); // Solo coordinadores
-  } else {
-    next();
+  if (to.meta.requiresAuth) {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Debes iniciar sesión para acceder");
+      return next("/");
+    }
   }
+  next();
 });
 
 export default router;

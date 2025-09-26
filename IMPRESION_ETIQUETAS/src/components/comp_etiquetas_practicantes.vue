@@ -20,6 +20,7 @@
       <aside class="sidebar no-print">
         <nav class="menu">
           <ul>
+            <h2>  Practicante</h2>
             <li :class="{active: currentView === 'caja'}" @click="setView('caja')">📦 Etiquetas por Caja</li>
             <li :class="{active: currentView === 'tarima'}" @click="setView('tarima')">📦 Etiquetas por Tarima</li>
             <li :class="{active: currentView === 'otrasetiquetas'}" @click="setView('otras_etiquetas')"> ⚠️  Otras Etiquetas</li>
