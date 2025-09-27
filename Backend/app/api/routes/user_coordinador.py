@@ -35,7 +35,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_CODE = "UPPER"  # Código para registrar coordinadores
 SECRET_KEY = "SUPER_SECRET_KEY"  # Clave JWT (usar distinta en producción)
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1,440
+ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
 token = "TU_TOKEN_AQUI"
 

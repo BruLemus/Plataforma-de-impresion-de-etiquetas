@@ -94,7 +94,7 @@
                 <input v-model="claveProducto" type="text" class="crud-input" placeholder="Clave del producto" />
               </div>
 
-              <!-- Solo Estafeta -->
+              <!-- SOLO PARA ESTAFETA -->
               <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
                 <label class="crud-label">Ancho de la Caja (cm)</label>
                 <input v-model.number="anchoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 40" />
@@ -106,6 +106,12 @@
               <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
                 <label class="crud-label">Largo de la Caja (cm)</label>
                 <input v-model.number="largoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 50" />
+              </div>
+
+              <!-- PESO SOLO PARA PAQUETEXPRESS Y ESTAFETA -->
+              <div v-if="paqueteriaSeleccionada.nombre === 'Paquetexpress' || paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
+                <label class="crud-label">Peso (kg)</label>
+                <input v-model.number="peso" type="number" min="0" step="0.01" class="crud-input" placeholder="Ej: 2.5" />
               </div>
             </div>
 
@@ -152,6 +158,9 @@
                       <div class="dato"><strong>Ancho:</strong> {{ anchoCaja || 0 }} cm</div>
                       <div class="dato"><strong>Alto:</strong> {{ altoCaja || 0 }} cm</div>
                       <div class="dato"><strong>Largo:</strong> {{ largoCaja || 0 }} cm</div>
+                    </div>
+                    <div v-if="paqueteriaSeleccionada.nombre === 'Paquetexpress' || paqueteriaSeleccionada.nombre === 'Estafeta'">
+                      <div class="dato"><strong>Peso:</strong> {{ peso || 0 }} kg</div>
                     </div>
                   </div>
                   <div class="etiqueta-qr">
@@ -208,6 +217,7 @@ export default {
       anchoCaja: "",
       altoCaja: "",
       largoCaja: "",
+      peso: "",
       qrSize: 130,
       impresoraOnline: false,
     };
@@ -229,43 +239,28 @@ export default {
     setView(view) { this.currentView = view; },
     openEditUserModal() { this.showEditUserModal = true; this.editUser.nombre = this.username; },
     closeEditUserModal() { this.showEditUserModal = false; },
-async saveUser() {
-  try {
-    const payload = {
-      nombre: this.editUser.nombre,
-      contrasena: this.editUser.contrasena,
-    };
-
-    const token = localStorage.getItem("token"); // tu JWT
-
-    await axios.put("http://127.0.0.1:8000/user_coordinadors/perfil",
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    async saveUser() {
+      try {
+        const payload = { nombre: this.editUser.nombre, contrasena: this.editUser.contrasena };
+        const token = localStorage.getItem("token");
+        await axios.put("http://127.0.0.1:8000/user_coordinadors/perfil", payload, { headers: { Authorization: `Bearer ${token}` } });
+        this.username = this.editUser.nombre;
+        localStorage.setItem("username", this.username);
+        alert("Perfil actualizado correctamente");
+        this.closeEditUserModal();
+      } catch (err) {
+        console.error(err);
+        if (err.response && err.response.status === 401) alert("Token inválido o expirado. Por favor, inicia sesión de nuevo.");
+        else alert("Error al actualizar el perfil");
       }
-    );
-
-    this.username = this.editUser.nombre;
-    localStorage.setItem("username", this.username);
-
-    alert("Perfil actualizado correctamente");
-    this.closeEditUserModal();
-  } catch (err) {
-    console.error(err);
-    if (err.response && err.response.status === 401) {
-      alert("Token inválido o expirado. Por favor, inicia sesión de nuevo.");
-    } else {
-      alert("Error al actualizar el perfil");
-    }
-  }
-},
-
+    },
     generateQR(index) {
       let data = [`Factura: ${this.factura || '-'}`, `Caja: ${index + 1} de ${this.numCajas || 0}`, `Piezas: ${this.piezas[index] || 0}`, `Total: ${this.totalPiezas}`, `Paquetería: ${this.paqueteriaSeleccionada.nombre || '-'}`, `Embalaje: ${this.tipoEmbalaje || '-'}`, `Clave: ${this.claveProducto || '-'}`];
       if (this.paqueteriaSeleccionada.nombre === "Estafeta") {
         data.push(`Ancho: ${this.anchoCaja || 0} cm`, `Alto: ${this.altoCaja || 0} cm`, `Largo: ${this.largoCaja || 0} cm`);
+      }
+      if (this.paqueteriaSeleccionada.nombre === "Paquetexpress" || this.paqueteriaSeleccionada.nombre === "Estafeta") {
+        data.push(`Peso: ${this.peso || 0} kg`);
       }
       return data.join("\n");
     },
@@ -285,32 +280,63 @@ async saveUser() {
 ^FO50,250^ADN,36,20^FDPaquetería: ${this.paqueteriaSeleccionada.nombre || '-'}^FS
 ^FO50,300^ADN,36,20^FDEmbalaje: ${this.tipoEmbalaje || '-'}^FS
 ^FO50,350^ADN,36,20^FDClave: ${this.claveProducto || '-'}^FS
-^FO50,400^BQN,2,5^FDLA,${this.generateQR(index)}^FS
+^FO50,400^ADN,36,20^FDPeso: ${this.peso || 0} kg^FS
+^FO50,450^BQN,2,5^FDLA,${this.generateQR(index)}^FS
 ^XZ`;
     },
-    reiniciar() { this.factura = ""; this.numCajas = 0; this.piezas = []; this.paqueteriaSeleccionada = { nombre: "", logo: "" }; this.tipoEmbalaje = ""; this.claveProducto = ""; this.anchoCaja = ""; this.altoCaja = ""; this.largoCaja = ""; },
-    async guardarDatos() {
-      if (!this.factura || !this.paqueteriaSeleccionada.nombre || !this.tipoEmbalaje || !this.numCajas) return alert("Factura, Paquetería, Tipo de Embalaje y Número de Cajas son obligatorios");
-      try {
-        const payload = {
-          paqueteria: this.paqueteriaSeleccionada.nombre,
-          numero_factura: this.factura,
-          numero_cajas: Number(this.numCajas),
-          tipo_embalaje: Number(this.tipoEmbalaje),
-          cantidad_piezas: this.totalPiezas,
-          clave_producto: this.claveProducto || "N/A",
-          ancho: Number(this.anchoCaja || 0),
-          alto: Number(this.altoCaja || 0),
-          largo: Number(this.largoCaja || 0),
-        };
-        await fetch('http://127.0.0.1:8000/cajas/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        alert("Datos guardados correctamente"); this.reiniciar();
-      } catch (err) { console.error(err); alert("Error al guardar"); }
-    },
-    async checkPrinterStatus() { try { const res = await axios.get("http://127.0.0.1:8000/print_label/status"); this.impresoraOnline = res.data.online; } catch { this.impresoraOnline = false; } }
+    reiniciar() { this.factura = ""; this.numCajas = 0; this.piezas = []; this.tipoEmbalaje = ""; this.claveProducto = ""; this.anchoCaja = ""; this.altoCaja = ""; this.largoCaja = ""; this.peso = ""; },
+   async guardarDatos() {
+  if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada.nombre || !this.claveProducto) {
+    return alert("Completa todos los campos obligatorios");
   }
+
+  // Sumar las piezas para enviar en cantidad_piezas
+  const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
+
+  try {
+    const payload = {
+      paqueteria: this.paqueteriaSeleccionada.nombre,
+      numero_factura: this.factura,
+      tipo_embalaje: Number(this.tipoEmbalaje),
+      numero_cajas: Number(this.numCajas),
+      cantidad_piezas: totalPiezas,
+      clave_producto: this.claveProducto,
+      ancho: this.anchoCaja ? Number(this.anchoCaja) : 0,
+      alto: this.altoCaja ? Number(this.altoCaja) : 0,
+      largo: this.largoCaja ? Number(this.largoCaja) : 0,
+      peso: this.peso ? Number(this.peso) : 0
+    };
+
+    const response = await fetch('http://127.0.0.1:8000/cajas/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      console.error("Error API:", data);
+      throw new Error("Error al guardar en la base de datos");
+    }
+
+    alert("Datos guardados correctamente");
+    this.reiniciar();
+
+  } catch (err) {
+    console.error(err);
+    alert("Ocurrió un error al guardar los datos");
+  }
+},
+    checkPrinterStatus() {
+      // Aquí podrías hacer ping a la impresora o simular estado
+      this.impresoraOnline = true; 
+    },
+  },
 };
 </script>
+
+
+
 
 <style scoped>
 /* ==== LAYOUT GENERAL ==== */

@@ -283,34 +283,48 @@ export default {
       this.altoCaja = "";
       this.largoCaja = "";
     },
-    async guardarDatos() {
-      if (!this.factura || !this.paqueteriaSeleccionada.nombre || !this.tipoEmbalaje || !this.numCajas) {
-        return alert("Factura, Paquetería, Tipo de Embalaje y Número de Cajas son obligatorios");
-      }
-      try {
-        const payload = {
-          paqueteria: this.paqueteriaSeleccionada.nombre,
-          numero_factura: this.factura,
-          numero_cajas: Number(this.numCajas),
-          tipo_embalaje: Number(this.tipoEmbalaje),
-          cantidad_piezas: this.totalPiezas,
-          clave_producto: this.claveProducto || "N/A",
-          ancho: Number(this.anchoCaja || 0),
-          alto: Number(this.altoCaja || 0),
-          largo: Number(this.largoCaja || 0),
-        };
-        await fetch('http://127.0.0.1:8000/cajas/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        alert("Datos guardados correctamente");
-        this.reiniciar();
-      } catch (err) {
-        console.error(err);
-        alert("Error al guardar");
-      }
-    },
+   async guardarDatos() {
+  if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada.nombre || !this.claveProducto) {
+    return alert("Completa todos los campos obligatorios");
+  }
+
+  // Sumar las piezas para enviar en cantidad_piezas
+  const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
+
+  try {
+    const payload = {
+      paqueteria: this.paqueteriaSeleccionada.nombre,
+      numero_factura: this.factura,
+      tipo_embalaje: Number(this.tipoEmbalaje),
+      numero_cajas: Number(this.numCajas),
+      cantidad_piezas: totalPiezas,
+      clave_producto: this.claveProducto,
+      ancho: this.anchoCaja ? Number(this.anchoCaja) : 0,
+      alto: this.altoCaja ? Number(this.altoCaja) : 0,
+      largo: this.largoCaja ? Number(this.largoCaja) : 0,
+      peso: this.peso ? Number(this.peso) : 0
+    };
+
+    const response = await fetch('http://127.0.0.1:8000/cajas/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      console.error("Error API:", data);
+      throw new Error("Error al guardar en la base de datos");
+    }
+
+    alert("Datos guardados correctamente");
+    this.reiniciar();
+
+  } catch (err) {
+    console.error(err);
+    alert("Ocurrió un error al guardar los datos");
+  }
+},
     async checkPrinterStatus() {
       try {
         const res = await axios.get("http://127.0.0.1:8000/print_label/status");

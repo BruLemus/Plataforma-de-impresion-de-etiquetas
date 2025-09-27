@@ -2,11 +2,13 @@ from app.api.routes import caja
 from app.db import database
 from app.api.routes import caja as caja  # para registrar tablas
 from app.api.routes import tarima
+from app.api.routes import registro
 from app.api.routes import user_practicante
 from app.api.routes import user_coordinador
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
 import win32print
 import win32ui
 
@@ -34,6 +36,7 @@ app.include_router(caja.router, prefix="/cajas", tags=["Cajas"])
 app.include_router(tarima.router, prefix="/tarimas", tags=["Tarimas"])
 app.include_router(user_practicante.router, prefix="/user_practicantes", tags=["Usuarios Practicantes"])
 app.include_router(user_coordinador.router, prefix="/user_coordinadors", tags=["Usuarios Coordinadores"])
+app.include_router(registro.router, prefix="/historial", tags=["Historial"])
 
 # ========= Servidor de impresión integrado =========
 class PrintPayload(BaseModel):
