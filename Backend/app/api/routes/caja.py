@@ -1,18 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from app.db.database import SessionLocal
 from app.schemas.caja import CajaCreate, CajaRead
 from typing import Optional, List
 from app.services import caja_service
+from app.db.database import get_db
+
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+
 
 
 # ✅ Crear caja

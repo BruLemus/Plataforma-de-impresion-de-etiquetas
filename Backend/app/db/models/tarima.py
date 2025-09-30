@@ -3,6 +3,7 @@ from sqlalchemy import Column, Integer, String, Float, Enum, DateTime
 from sqlalchemy.sql import func
 from app.db.database import Base  
 
+
 # 🔹 Enums
 class PaqueteriaEnum(str, enum.Enum):
     PAQUETEXPRESS = "Paquetexpress"

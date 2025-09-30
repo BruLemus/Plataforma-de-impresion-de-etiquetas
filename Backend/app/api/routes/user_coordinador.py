@@ -15,18 +15,14 @@ from fastapi import APIRouter, HTTPException
 from fastapi import APIRouter, HTTPException
 from app.schemas.user_coordinador import UserCoordinadorUpdate
 from jose import jwt, JWTError
+from app.db.database import get_db
+
 
 
 
 router = APIRouter()
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 # ---------------------------
 # Seguridad y Hash

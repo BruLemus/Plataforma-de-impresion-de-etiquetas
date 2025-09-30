@@ -5,14 +5,13 @@ from app.db.database import SessionLocal
 from app.schemas.user_practicante import UserPracticanteCreate, UserPracticanteUpdate
 from app.schemas.user_practicante import UserPracticanteResponse
 from app.services import user_practicante
+from app.db.database import get_db
+
+
+
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+
         
 @router.post("/", response_model=UserPracticanteResponse)
 def create_user_practicante_endpoint(payload: UserPracticanteCreate, db: Session = Depends(get_db)):

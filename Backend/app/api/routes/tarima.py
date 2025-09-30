@@ -4,15 +4,12 @@ from typing import Optional, List
 from app.db.database import SessionLocal
 from app.schemas.tarima import TarimaCreate, TarimaRead
 from app.services import tarima_services
+from app.db.database import get_db
+
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+
 
 
 @router.post("/", response_model=TarimaRead)
