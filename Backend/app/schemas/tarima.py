@@ -17,6 +17,8 @@ class TarimaCreate(BaseModel):
 class TarimaRead(TarimaCreate):
     tarima_id: int
     fecha_creacion: datetime
+    coordinador_nombre: Optional[str] = None  
+    practicante_nombre: Optional[str] = None  
 
     class Config:
-       from_attributes = True 
+        from_attributes = True

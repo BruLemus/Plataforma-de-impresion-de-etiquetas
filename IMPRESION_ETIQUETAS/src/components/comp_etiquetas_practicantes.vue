@@ -20,10 +20,10 @@
       <aside class="sidebar no-print">
         <nav class="menu">
           <ul>
-            <h2>  Practicante</h2>
+            <h2>Practicante</h2>
             <li :class="{active: currentView === 'caja'}" @click="setView('caja')">📦 Etiquetas por Caja</li>
             <li :class="{active: currentView === 'tarima'}" @click="setView('tarima')">📦 Etiquetas por Tarima</li>
-            <li :class="{active: currentView === 'otrasetiquetas'}" @click="setView('otras_etiquetas')"> ⚠️  Otras Etiquetas</li>
+            <li :class="{active: currentView === 'otrasetiquetas'}" @click="setView('otras_etiquetas')"> ⚠️ Otras Etiquetas</li>
             <li :class="{active: currentView === 'info'}" @click="setView('info')">💻 Acerca de . . .</li>
           </ul>
         </nav>
@@ -74,6 +74,12 @@
                 <input v-model="claveProducto" type="text" class="crud-input" placeholder="Clave del producto" />
               </div>
 
+              <!-- 🔹 Peso -->
+              <div class="form-field">
+                <label class="crud-label">Peso de la Caja (kg)</label>
+                <input v-model.number="peso" type="number" min="0" class="crud-input" placeholder="Ej: 15" />
+              </div>
+
               <!-- 🔹 SOLO SI ES ESTAFETA -->
               <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
                 <label class="crud-label">Ancho de la Caja (cm)</label>
@@ -109,10 +115,10 @@
             </div>
 
             <div class="crud-actions no-print">
-            <button @click="imprimirZebra" class="btn btn-print">🖨️ Imprimir en Zebra</button>
+              <button @click="imprimirZebra" class="btn btn-print">🖨️ Imprimir en Zebra</button>
               <button @click="imprimirRemoto" class="btn btn-print">🌐 Imprimir en Servidor (ZPL)</button>
               <button @click="reiniciar" class="btn btn-reset">🔄 Reiniciar</button>
-              <button @click="guardarDatos" class="btn btn-save">💾 Guardar</button>
+              <button @click="guardarDatosPracticante" class="btn btn-save">💾 Guardar</button>
             </div>
           </div>
 
@@ -128,8 +134,7 @@
                     <div class="dato"><strong>Factura:</strong> {{ factura || '—' }}</div>
                     <div class="dato"><strong>Caja:</strong> {{ n }} de {{ numCajas }}</div>
                     <div class="dato"><strong>Piezas:</strong> {{ piezas[n-1] || 0 }}</div>
-
-                    <!-- 🔹 Medidas solo si es Estafeta -->
+                    <div class="dato"><strong>Peso:</strong> {{ peso || 0 }} kg</div>
                     <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'">
                       <div class="dato"><strong>Ancho:</strong> {{ anchoCaja || 0 }} cm</div>
                       <div class="dato"><strong>Alto:</strong> {{ altoCaja || 0 }} cm</div>
@@ -197,6 +202,7 @@ export default {
       anchoCaja: "",
       altoCaja: "",
       largoCaja: "",
+      peso: "",  // 🔹 NUEVO CAMPO
       qrSize: 130,
       impresoraOnline: false,
     };
@@ -226,6 +232,7 @@ export default {
         `Factura: ${this.factura || '-'}`,
         `Caja: ${index + 1} de ${this.numCajas || 0}`,
         `Piezas: ${this.piezas[index] || 0}`,
+        `Peso: ${this.peso || 0} kg`,
         `Total: ${this.totalPiezas}`,
         `Paquetería: ${this.paqueteriaSeleccionada.nombre || '-'}`,
         `Embalaje: ${this.tipoEmbalaje || '-'}`,
@@ -239,15 +246,10 @@ export default {
       }
       return data.join("\n");
     },
-    imprimir() {
-      if (!this.numCajas || this.numCajas <= 0) return alert("No hay etiquetas para imprimir");
-      this.$nextTick(() => setTimeout(() => window.print(), 200));
-    },
     async imprimirRemoto() {
       if (!this.numCajas) return alert("No hay etiquetas para imprimir");
       try {
         for (let i = 0; i < this.numCajas; i++) {
-          // Genera ZPL para cada etiqueta
           const zpl = this.generateZPL(i);
           await axios.post("http://127.0.0.1:8000/print_label/", { zpl });
         }
@@ -258,17 +260,17 @@ export default {
       }
     },
     generateZPL(index) {
-      // Formato ZPL básico
       return `
 ^XA
 ^FO50,50^ADN,36,20^FDFactura: ${this.factura || '-'}^FS
 ^FO50,100^ADN,36,20^FDCaja: ${index + 1} de ${this.numCajas}^FS
 ^FO50,150^ADN,36,20^FDPiezas: ${this.piezas[index] || 0}^FS
-^FO50,200^ADN,36,20^FDTotal: ${this.totalPiezas}^FS
-^FO50,250^ADN,36,20^FDPaquetería: ${this.paqueteriaSeleccionada.nombre || '-'}^FS
-^FO50,300^ADN,36,20^FDEmbalaje: ${this.tipoEmbalaje || '-'}^FS
-^FO50,350^ADN,36,20^FDClave: ${this.claveProducto || '-'}^FS
-^FO50,400^BQN,2,5^FDLA,${this.generateQR(index)}^FS
+^FO50,200^ADN,36,20^FDPeso: ${this.peso || 0} kg^FS
+^FO50,250^ADN,36,20^FDTotal: ${this.totalPiezas}^FS
+^FO50,300^ADN,36,20^FDPaquetería: ${this.paqueteriaSeleccionada.nombre || '-'}^FS
+^FO50,350^ADN,36,20^FDEmbalaje: ${this.tipoEmbalaje || '-'}^FS
+^FO50,400^ADN,36,20^FDClave: ${this.claveProducto || '-'}^FS
+^FO50,450^BQN,2,5^FDLA,${this.generateQR(index)}^FS
 ^XZ
       `;
     },
@@ -277,54 +279,54 @@ export default {
       this.numCajas = 0;
       this.piezas = [];
       this.paqueteriaSeleccionada = { nombre: "", logo: "" };
-      this.tipoEmbalaje = "";
+      this.tipoEmbalaje = 1;
       this.claveProducto = "";
       this.anchoCaja = "";
       this.altoCaja = "";
       this.largoCaja = "";
+      this.peso = ""; // 🔹 reinicia peso
     },
-   async guardarDatos() {
-  if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada.nombre || !this.claveProducto) {
-    return alert("Completa todos los campos obligatorios");
-  }
+    async guardarDatosPracticante() {
+      if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada.nombre || !this.claveProducto) {
+        return alert("Completa todos los campos obligatorios");
+      }
 
-  // Sumar las piezas para enviar en cantidad_piezas
-  const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
-
-  try {
-    const payload = {
-      paqueteria: this.paqueteriaSeleccionada.nombre,
-      numero_factura: this.factura,
-      tipo_embalaje: Number(this.tipoEmbalaje),
-      numero_cajas: Number(this.numCajas),
-      cantidad_piezas: totalPiezas,
-      clave_producto: this.claveProducto,
-      ancho: this.anchoCaja ? Number(this.anchoCaja) : 0,
-      alto: this.altoCaja ? Number(this.altoCaja) : 0,
-      largo: this.largoCaja ? Number(this.largoCaja) : 0,
-      peso: this.peso ? Number(this.peso) : 0
+      try {
+       const payload = {
+      paqueteria: String(this.paqueteriaSeleccionada.nombre),
+      numero_factura: String(this.factura),
+      numero_cajas: Number(this.numCajas) || 0,
+      tipo_embalaje: String(this.tipoEmbalaje), 
+      cantidad_piezas: this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0),
+      clave_producto: String(this.claveProducto),
+      ancho: Number(this.anchoCaja) || 0,
+      alto: Number(this.altoCaja) || 0,
+      largo: Number(this.largoCaja) || 0,
+      peso: Number(this.peso) || 0
     };
 
-    const response = await fetch('http://127.0.0.1:8000/cajas/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+        console.log("Payload enviado:", JSON.stringify(payload, null, 2));
 
-    const data = await response.json();
-    if (!response.ok) {
-      console.error("Error API:", data);
-      throw new Error("Error al guardar en la base de datos");
-    }
+        const response = await fetch("http://127.0.0.1:8000/cajas/?role=practicante", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          
+        });
 
-    alert("Datos guardados correctamente");
-    this.reiniciar();
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Error en API:", errorData);
+          alert("Error en API: " + JSON.stringify(errorData, null, 2));
+          throw new Error("Error al guardar en la base de datos");
+        }
 
-  } catch (err) {
-    console.error(err);
-    alert("Ocurrió un error al guardar los datos");
-  }
-},
+        alert("✅ Datos guardados correctamente");
+        this.reiniciar();
+      } catch (err) {
+        console.error(err);
+        alert("Ocurrió un error al guardar los datos");
+      }
+    },
     async checkPrinterStatus() {
       try {
         const res = await axios.get("http://127.0.0.1:8000/print_label/status");
@@ -336,6 +338,7 @@ export default {
   }
 };
 </script>
+
 
 
 

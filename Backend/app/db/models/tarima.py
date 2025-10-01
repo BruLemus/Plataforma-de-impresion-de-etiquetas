@@ -34,6 +34,7 @@ class Tarima(Base):
     cantidad_piezas = Column(Integer, nullable=True)
     clave_producto = Column(String(100), nullable=False)
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
+    
 
     coordinador_id = Column(Integer, ForeignKey("user_coordinadores.id"), nullable=True)
     practicante_id = Column(Integer, ForeignKey("user_practicantes.user_id"), nullable=True)

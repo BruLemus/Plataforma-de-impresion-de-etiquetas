@@ -20,6 +20,10 @@ class Caja(Base):
     peso = Column(Float, nullable=False)
     cantidad_piezas = Column(Integer, nullable=True)
     clave_producto = Column(String(50), nullable=False)
+    coordinador_nombre = Column(String(255), nullable=True)
+    practicante_nombre = Column(String(255), nullable=True)
+    coordinador_id = Column(Integer, nullable=True)
+    practicante_id = Column(Integer, nullable=True)
 
     # Fecha y hora de creación automática
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())

@@ -285,55 +285,61 @@ export default {
 ^XZ`;
     },
     reiniciar() { this.factura = ""; this.numCajas = 0; this.piezas = []; this.tipoEmbalaje = ""; this.claveProducto = ""; this.anchoCaja = ""; this.altoCaja = ""; this.largoCaja = ""; this.peso = ""; },
-   async guardarDatos() {
+    
+    // 🔹 Función actualizar: guardarDatos solo con los campos necesarios
+async guardarDatos() {
   if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada.nombre || !this.claveProducto) {
     return alert("Completa todos los campos obligatorios");
   }
 
-  // Sumar las piezas para enviar en cantidad_piezas
-  const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
-
   try {
+    const token = localStorage.getItem("token");
+
     const payload = {
-      paqueteria: this.paqueteriaSeleccionada.nombre,
-      numero_factura: this.factura,
-      tipo_embalaje: Number(this.tipoEmbalaje),
-      numero_cajas: Number(this.numCajas),
-      cantidad_piezas: totalPiezas,
-      clave_producto: this.claveProducto,
-      ancho: this.anchoCaja ? Number(this.anchoCaja) : 0,
-      alto: this.altoCaja ? Number(this.altoCaja) : 0,
-      largo: this.largoCaja ? Number(this.largoCaja) : 0,
-      peso: this.peso ? Number(this.peso) : 0
+      paqueteria: String(this.paqueteriaSeleccionada.nombre),
+      numero_factura: String(this.factura),
+      numero_cajas: Number(this.numCajas) || 0,
+      tipo_embalaje: String(this.tipoEmbalaje), 
+      cantidad_piezas: this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0),
+      clave_producto: String(this.claveProducto),
+      ancho: Number(this.anchoCaja) || 0,
+      alto: Number(this.altoCaja) || 0,
+      largo: Number(this.largoCaja) || 0,
+      peso: Number(this.peso) || 0
     };
 
-    const response = await fetch('http://127.0.0.1:8000/cajas/', {
+    const response = await fetch('http://127.0.0.1:8000/cajas/?role=coordinador', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'token': token // tu FastAPI usa 'token' en header
+      },
       body: JSON.stringify(payload)
     });
 
-    const data = await response.json();
     if (!response.ok) {
-      console.error("Error API:", data);
+      const errorData = await response.json();
+      console.error("Error en API:", errorData);
       throw new Error("Error al guardar en la base de datos");
     }
 
     alert("Datos guardados correctamente");
     this.reiniciar();
-
   } catch (err) {
     console.error(err);
     alert("Ocurrió un error al guardar los datos");
   }
 },
+
+
+
     checkPrinterStatus() {
-      // Aquí podrías hacer ping a la impresora o simular estado
       this.impresoraOnline = true; 
     },
   },
 };
 </script>
+
 
 
 
