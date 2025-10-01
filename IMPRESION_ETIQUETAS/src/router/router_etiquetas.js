@@ -14,8 +14,8 @@ import comp_otras_etiquetas from "../components/comp_otras_etiquetas.vue"
 const routes = [
   { path: "/", name: "login", component: login },
   { path: "/tarima", name: "comp_tarima", component: comp_tarima },
-  { path: "/historial", name: "comp_historial", component: comp_historial },
-  { path: "/inf", name: "comp_inf", component: comp_inf },
+  { path: "/historial", name: "comp_historial", component: comp_historial, meta: { requiresAuth: true }},
+  { path: "/inf", name: "comp_inf", component: comp_inf, },
   { path: "/registro", name: "registro", component: comp_registro },
   { path: "/otrasetiquetas", name: "comp_otras_etiquetas", component: comp_otras_etiquetas},
 

@@ -2,7 +2,8 @@ import enum
 from sqlalchemy import Column, Integer, String, Float, Enum, DateTime
 from sqlalchemy.sql import func
 from app.db.database import Base  
-
+from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy.orm import relationship
 
 # 🔹 Enums
 class PaqueteriaEnum(str, enum.Enum):
@@ -33,3 +34,9 @@ class Tarima(Base):
     cantidad_piezas = Column(Integer, nullable=True)
     clave_producto = Column(String(100), nullable=False)
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
+
+    coordinador_id = Column(Integer, ForeignKey("user_coordinadores.id"), nullable=True)
+    practicante_id = Column(Integer, ForeignKey("user_practicantes.user_id"), nullable=True)
+
+    coordinador = relationship("UserCoordinador", back_populates="tarimas")
+    practicante = relationship("UserPracticante", back_populates="tarimas")

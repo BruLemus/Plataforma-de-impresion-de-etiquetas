@@ -10,8 +10,6 @@ from app.db.database import get_db
 router = APIRouter()
 
 
-
-
 @router.post("/", response_model=TarimaRead)
 def create_tarima_endpoint(payload: TarimaCreate, db: Session = Depends(get_db)):
     return tarima_services.create_tarima(db, payload)

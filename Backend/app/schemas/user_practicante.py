@@ -19,7 +19,7 @@ class UserPracticanteInDB(UserPracticanteBase):
     user_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         
 class UserPracticanteResponse(BaseModel):
     user_id: int

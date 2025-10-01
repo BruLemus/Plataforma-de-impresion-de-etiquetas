@@ -6,6 +6,7 @@ from app.services import caja_service
 from app.db.database import get_db
 
 
+
 router = APIRouter()
 
 
