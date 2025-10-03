@@ -2,7 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "mysql+mysqlconnector://root:1234@localhost/bd_etiqueta"
+DATABASE_URL = "mysql+mysqlconnector://root:1234@localhost/bd_etiqueta_GDL"
+
+
 
 # Para MySQL NO se necesita check_same_thread
 engine = create_engine(DATABASE_URL)

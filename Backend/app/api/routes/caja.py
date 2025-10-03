@@ -4,7 +4,7 @@ from app.schemas.caja import CajaCreate, CajaRead
 from typing import Optional, List
 from app.services import caja_service
 from app.db.database import get_db
-from app.core.security import get_current_user  # <-- Devuelve objeto UserCoordinador o UserPracticante
+from app.core.security import get_current_user  
 
 router = APIRouter()
 
@@ -13,9 +13,10 @@ router = APIRouter()
 def create_caja_endpoint(
     payload: CajaCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)  # <-- current_user ya es un objeto
+    current_user = Depends(get_current_user)  
 ):
     return caja_service.create_caja(db, payload, current_user)
+
 
 # ✅ Listar cajas con filtros opcionales
 @router.get("/", response_model=List[CajaRead])
@@ -23,14 +24,15 @@ def list_cajas(
     skip: int = 0,
     limit: int = 100,
     paqueteria: Optional[str] = None,
-    numero_factura: Optional[str] = None,
+    n_facturas: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)  # <-- current_user ya es un objeto
 ):
     return caja_service.get_cajas(
         db, skip=skip, limit=limit, paqueteria=paqueteria,
-        numero_factura=numero_factura, current_user=current_user
+        n_facturas=n_facturas, current_user=current_user
     )
+
 
 # ✅ Obtener caja por ID
 @router.get("/{caja_id}", response_model=CajaRead)
@@ -40,6 +42,7 @@ def get_caja(caja_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Caja no encontrada")
     return db_caja
 
+
 # ✅ Actualizar caja
 @router.put("/{caja_id}", response_model=CajaRead)
 def update_caja(caja_id: int, payload: CajaCreate, db: Session = Depends(get_db)):
@@ -47,6 +50,7 @@ def update_caja(caja_id: int, payload: CajaCreate, db: Session = Depends(get_db)
     if not db_caja:
         raise HTTPException(status_code=404, detail="Caja no encontrada")
     return db_caja
+
 
 # ✅ Eliminar caja
 @router.delete("/{caja_id}")

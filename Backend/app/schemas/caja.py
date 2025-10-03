@@ -3,26 +3,33 @@ from pydantic import BaseModel
 from app.db.models.enums import PaqueteriaEnum, TipoEmbalajeEnum
 from typing import Optional
 
+
 class CajaBase(BaseModel):
+    nombre_user_practicante: Optional[str] = None
+    nombre_user_coordinador: Optional[str] = None
+    n_facturas: str
+    n_cajas: int
     paqueteria: PaqueteriaEnum
-    numero_factura: str
-    numero_cajas: int
-    tipo_embalaje: TipoEmbalajeEnum
+    t_embalaje: TipoEmbalajeEnum
+    clave_producto: str
+    cantidad_piezas: Optional[int] = None
     ancho: float
     largo: float
     alto: float
     peso: float
-    cantidad_piezas: Optional[int] = None
-    clave_producto: str
+    peso_volumetrico: Optional[float] = None
+
 
 class CajaCreate(CajaBase):
-    pass
+    practicante_id: Optional[int] = None
+    coordinador_id: Optional[int] = None
+
 
 class CajaRead(CajaBase):
     id: int
-    fecha_creacion: datetime
-    coordinador_nombre: Optional[str] = None  
-    practicante_nombre: Optional[str] = None  
+    fecha_hora: datetime
+    practicante_id: Optional[int] = None
+    coordinador_id: Optional[int] = None
 
     class Config:
         from_attributes = True

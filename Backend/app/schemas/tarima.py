@@ -1,24 +1,35 @@
-from pydantic import BaseModel  
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from app.db.models.tarima import PaqueteriaEnum, TipoEmbalajeEnum
 
-class TarimaCreate(BaseModel):
+
+class TarimaBase(BaseModel):
+    nombre_user_practicante: Optional[str] = None
+    nombre_user_coordinador: Optional[str] = None
+    n_facturas: str
+    n_tarimas: int
     paqueteria: PaqueteriaEnum
-    numero_factura: str
-    numero_tarimas: int
-    tipo_embalaje: TipoEmbalajeEnum
+    t_embalaje: TipoEmbalajeEnum
+    clave_producto: str
+    cantidad_piezas: Optional[int] = None
     ancho: float
     largo: float
     alto: float
-    cantidad_piezas: Optional[int] = None
-    clave_producto: str
+    peso: float
+    peso_volumetrico: Optional[float] = None
 
-class TarimaRead(TarimaCreate):
-    tarima_id: int
-    fecha_creacion: datetime
-    coordinador_nombre: Optional[str] = None  
-    practicante_nombre: Optional[str] = None  
+
+class TarimaCreate(TarimaBase):
+    practicante_id: Optional[int] = None
+    coordinador_id: Optional[int] = None
+
+
+class TarimaRead(TarimaBase):
+    id: int
+    fecha_hora: datetime
+    practicante_id: Optional[int] = None
+    coordinador_id: Optional[int] = None
 
     class Config:
         from_attributes = True

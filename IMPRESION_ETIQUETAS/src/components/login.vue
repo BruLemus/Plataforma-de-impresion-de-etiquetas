@@ -1,53 +1,65 @@
-
 <template>
   <div class="login-wrapper">
-    <div class="login-background">
-      <div class="login-card">
-        <h1 class="login-title">Bienvenido</h1>
+    <div class="login-card" :class="{ 'enter-card': animateCard }">
+      
+      <!-- Imagen con rebote -->
+      <img src="@/assets/login.svg" alt="Login Imagen" class="login-img"/>
 
-        <div class="login-image">
-          <img src="@/assets/img_login.png" alt="Login Imagen" />
+      <!-- Título -->
+      <h1 class="login-title">
+        <span class="highlight">BIENVENIDO<span class="green-dot">.</span></span>
+      </h1>
+
+      <!-- Formulario con animación secuencial -->
+      <transition-group name="fade-slide" tag="div">
+        
+        <!-- Sede -->
+        <div v-if="animateCard" class="input-group" key="sede">
+          <label>Sede</label>
+          <select v-model="sede" class="login-select">
+            <option disabled value="">Selecciona tu sede</option>
+            <option value="Guadalajara">Guadalajara</option>
+            <option value="Mexico">México</option>
+          </select>
         </div>
 
-        <!-- Selección de Rol -->
-        <select v-model="rol" class="login-select">
-          <option disabled value="">Selecciona tu rol</option>
-          <option value="Practicante">Practicante</option>
-          <option value="Coordinador">Coordinador</option>
-        </select>
+        <!-- Rol -->
+        <div v-if="sede" class="input-group" key="rol">
+          <label>Rol</label>
+          <select v-model="rol" class="login-select">
+            <option disabled value="">Selecciona tu rol</option>
+            <option value="Practicante">Practicante</option>
+            <option value="Coordinador">Coordinador</option>
+          </select>
+        </div>
 
         <!-- Usuario -->
-        <input
-          v-model="username"
-          type="text"
-          placeholder="Ingresa tu nombre"
-          class="login-input"
-        />
+        <div class="input-group" key="usuario">
+          <label>Usuario</label>
+          <input v-model="username" type="text" placeholder="Ingresa tu nombre" class="login-input"/>
+        </div>
 
-        <!-- Solo Practicante ve la mesa -->
-        <select v-if="rol === 'Practicante'" v-model="mesa" class="login-select">
-          <option disabled value="">Selecciona la mesa</option>
-          <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
-        </select>
+        <!-- Mesa solo Practicante -->
+        <div v-if="rol === 'Practicante'" class="input-group" key="mesa">
+          <label>Mesa de trabajo</label>
+          <select v-model="mesa" class="login-select">
+            <option disabled value="">Selecciona la mesa</option>
+            <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
+          </select>
+        </div>
 
-        <!-- Solo Coordinador ve la contraseña -->
-        <input
-          v-if="rol === 'Coordinador'"
-          v-model="password"
-          type="password"
-          placeholder="Ingresa tu contraseña"
-          class="login-input"
-        />
+        <!-- Contraseña solo Coordinador -->
+        <div v-if="rol === 'Coordinador'" class="input-group" key="password">
+          <label>Contraseña</label>
+          <input v-model="password" type="password" placeholder="Ingresa tu contraseña" class="login-input"/>
+        </div>
 
-        <button @click="login" class="login-btn">Ingresar</button>
-        <button
-          v-if="rol === 'Coordinador'"
-          @click="registrarCoordinador"
-          class="registrar-btn"
-        >
-          Registrar
-        </button>
-      </div>
+        <!-- Botones -->
+        <button @click="login" class="login-btn" key="btn">Ingresar</button>
+        <button v-if="rol === 'Coordinador'" @click="registrarCoordinador" class="registrar-btn" key="register">Registrar</button>
+
+      </transition-group>
+
     </div>
   </div>
 </template>
@@ -62,225 +74,211 @@ export default {
       username: "",
       mesa: "",
       rol: "",
-      password: "" // solo coordinador
+      password: "",
+      sede: "",
+      animateCard: false
     };
   },
-  methods: {
-    login() {
-      if (!this.username || !this.rol) {
-        alert("Debes ingresar usuario y seleccionar rol");
+  mounted() {
+    // Animación inicial de la tarjeta
+    setTimeout(() => { this.animateCard = true; }, 100);
+  },
+methods: {
+  async login() {
+    if (!this.username || !this.rol || !this.sede) {
+      alert("Debes ingresar usuario, sede y seleccionar rol");
+      return;
+    }
+
+    // === Practicante ===
+    if (this.rol === "Practicante") {
+      if (!this.mesa) {
+        alert("Debes seleccionar una mesa");
         return;
       }
 
-      // === Practicante ===
-      if (this.rol === "Practicante") {
-        if (!this.mesa) {
-          alert("Debes seleccionar una mesa");
-          return;
-        }
+      try {
+        const payload = {
+          nombre: this.username,
+          mesa_trabajo: parseInt(this.mesa),
+          entrada: Date.now(),
+        };
 
-        localStorage.setItem("username", this.username);
-        localStorage.setItem("mesaSeleccionada", this.mesa);
+        const res = await axios.post(
+          `http://127.0.0.1:8000/user_practicantes/`,
+          payload
+        );
+
+        localStorage.setItem("username", res.data.nombre);
         localStorage.setItem("rol", "Practicante");
+        localStorage.setItem("mesaSeleccionada", this.mesa);
+        localStorage.setItem("sede", this.sede);
         if (!localStorage.getItem("horaEntrada")) {
           localStorage.setItem("horaEntrada", new Date().toLocaleString());
         }
 
-        axios
-          .post("http://127.0.0.1:8000/user_practicantes", {
-            nombre: this.username,
-            mesa_trabajo: this.mesa,
-            entrada: new Date().getTime(),
-            salida: null
-          })
-          .then(res => console.log("Practicante guardado:", res.data))
-          .catch(err => console.error("Error al guardar practicante:", err.response?.data || err));
+        // Redirigir usando la ruta dinámica
+        this.$router.push(`/${this.sede.toLowerCase()}/practicante`);
 
-        this.$router.push("/practicante/");
+      } catch (err) {
+        console.error(err);
+        alert(err.response?.data?.detail || "Error al iniciar sesión como practicante");
+      }
+    }
+
+    // === Coordinador ===
+    if (this.rol === "Coordinador") {
+      if (!this.password) {
+        alert("Debes ingresar la contraseña");
+        return;
       }
 
-      // === Coordinador ===
-     // === Coordinador ===
-if (this.rol === "Coordinador") {
-  if (!this.password) {
-    alert("Debes ingresar la contraseña");
-    return;
+      try {
+        const formData = new FormData();
+        formData.append("nombre", this.username);
+        formData.append("contrasena", this.password);
+
+        const res = await axios.post(
+          `http://127.0.0.1:8000/user_coordinadors/login`,
+          formData
+        );
+
+        localStorage.setItem("username", res.data.nombre);
+        localStorage.setItem("rol", "Coordinador");
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("sede", this.sede);
+
+        // Redirigir usando la ruta dinámica
+        this.$router.push(`/${this.sede.toLowerCase()}/coordinador`);
+
+      } catch (err) {
+        console.error(err);
+        alert(err.response?.data?.detail || "Error al iniciar sesión como coordinador");
+      }
+    }
+  },
+
+  // Redirige al registro
+  registrarCoordinador() {
+    this.$router.push("/registro");
   }
-
-  const formData = new URLSearchParams();
-  formData.append("nombre", this.username);
-  formData.append("contrasena", this.password);
-
-  axios
-    .post("http://127.0.0.1:8000/user_coordinadors/login", formData)
-    .then(res => {
-      localStorage.setItem("username", res.data.nombre);
-      localStorage.setItem("rol", "Coordinador");
-      localStorage.setItem("token", res.data.token);
-
-      this.$router.push("/coordinador/");
-    })
-    .catch(err => alert(err.response?.data?.detail || "Error al ingresar"));
 }
 
-    },
 
-    registrarCoordinador() {
-      this.$router.push("/registro");
-    }
-  }
+
+
 };
 </script>
 
-
 <style scoped>
-/* Fondo y centrado */
+/* Fondo principal */
 .login-wrapper {
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(to right, #bfc4d6, #9cacc4);
-  padding: 20px;
+  background-color: #0F1973;
+  font-family: "Poppins", sans-serif;
 }
 
 /* Tarjeta */
 .login-card {
-  background: white;
-  border-radius: 16px;
-  padding: 60px 40px;
-  max-width: 700px;
-  width: 90%;
+  background: #FFFFFF;
+  border-radius: 25px;
+  padding: 50px 40px;
+  max-width: 500px;
+  width: 100%;
   text-align: center;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
-  position: relative;
-  transition: all 0.3s ease;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  transform: translateY(-40px);
+  opacity: 0;
+  transition: all 0.8s ease;
 }
+.login-card.enter-card {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Imagen con rebote */
+.login-img {
+  width: 330px;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 0px;
+  margin-top: auto;
+  animation: bounce 1.5s infinite alternate;
+}
+@keyframes bounce { 0% { transform: translateY(0);} 100% { transform: translateY(-10px);} }
 
 /* Título */
-.login-title {
+.highlight {
   font-size: 3rem;
-  font-weight: bold;
-  margin-bottom: 25px;
-  color: #1e3a8a;
-  line-height: 1.2;
+  font-weight: 900;
+  color: #F4550F;
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+}
+.green-dot {
+  color: #64C22C;
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
 }
 
-/* Imagen */
-.login-image {
-  height: 250px;
-  margin-bottom: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.login-image img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  border-radius: 12px;
-}
-
-/* Input y select */
-.login-input,
-.login-select {
-  width: 90%;
-  padding: 14px;
-  margin-bottom: 20px;
+/* Inputs */
+.input-group { margin-bottom: 20px; text-align: left; }
+.input-group label { display: block; font-weight: 600; margin-bottom: 5px; color: #0F1973; }
+.login-input, .login-select {
+  width: 100%;
+  padding: 12px 15px;
   border-radius: 10px;
-  border: 1px solid #ccc;
-  font-size: 1.2rem;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+  transition: border 0.3s, box-shadow 0.3s;
 }
-
-.login-select {
-  background: #f9fafb;
-  cursor: pointer;
+.login-input:focus, .login-select:focus {
+  border-color: #F4550F;
+  box-shadow: 0 0 10px rgba(244,85,15,0.5);
+  outline: none;
 }
 
 /* Botones */
-.login-btn {
-  width: 60%;
+.login-btn, .registrar-btn {
+  width: 100%;
   padding: 14px;
-  border-radius: 10px;
-  border: none;
-  background: #0fa8cb;
-  color: white;
-  font-weight: bold;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.registrar-btn {
-  width: 50%;
   margin-top: 10px;
-  padding: 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
-  background: #afb7ac;
-  color: white;
   font-weight: bold;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s ease;
 }
-
+.login-btn {
+  background: linear-gradient(135deg, #F4550F, #F4772E);
+  color: white;
+}
 .login-btn:hover {
-  background: #a9b8e2;
+  background: linear-gradient(135deg, #F4772E, #F4550F);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(244,85,15,0.4);
+}
+.registrar-btn {
+  background: #e5e7eb;
+  color: #111827;
+}
+.registrar-btn:hover {
+  background: #d1d5db;
+  transform: translateY(-2px) scale(1.02);
 }
 
-/* ===== Media Queries ===== */
-@media (max-width: 1024px) {
-  .login-card {
-    padding: 50px 30px;
-  }
-  .login-title {
-    font-size: 2.5rem;
-  }
-  .login-image {
-    height: 200px;
-  }
+/* Animación inputs secuenciales */
+.fade-slide-enter-active {
+  transition: all 0.5s ease;
 }
-
-@media (max-width: 768px) {
-  .login-card {
-    padding: 40px 25px;
-    width: 95%;
-  }
-  .login-title {
-    font-size: 2rem;
-  }
-  .login-image {
-    height: 180px;
-  }
-  .login-input,
-  .login-select {
-    font-size: 1rem;
-  }
-  .login-btn {
-    font-size: 1rem;
-    width: 70%;
-  }
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
 }
-
-@media (max-width: 480px) {
-  .login-card {
-    padding: 30px 20px;
-  }
-  .login-title {
-    font-size: 1.7rem;
-  }
-  .login-image {
-    height: 150px;
-  }
-  .login-input,
-  .login-select {
-    font-size: 0.95rem;
-  }
-  .login-btn {
-    font-size: 0.95rem;
-    width: 80%;
-  }
+.fade-slide-enter-to {
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>

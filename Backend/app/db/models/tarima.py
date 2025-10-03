@@ -4,15 +4,8 @@ from sqlalchemy.sql import func
 from app.db.database import Base  
 from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
+from app.db.models.enums import PaqueteriaEnum
 
-# 🔹 Enums
-class PaqueteriaEnum(str, enum.Enum):
-    PAQUETEXPRESS = "Paquetexpress"
-    ESTAFETA = "Estafeta"
-    DHL = "DHL"
-    FEDEX = "FedEx"
-    UPS = "UPS"
-    MERCADO_LIBRE = "MercadoLibre"
 
 class TipoEmbalajeEnum(int, enum.Enum):
     TIPO1 = 1
@@ -33,8 +26,12 @@ class Tarima(Base):
     alto = Column(Float, nullable=False)
     cantidad_piezas = Column(Integer, nullable=True)
     clave_producto = Column(String(100), nullable=False)
+    peso = Column(Float, nullable=False)
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
-    
+    coordinador_nombre = Column(String(255), nullable=True)
+    practicante_nombre = Column(String(255), nullable=True)
+    coordinador_id = Column(Integer, nullable=True)
+    practicante_id = Column(Integer, nullable=True)
 
     coordinador_id = Column(Integer, ForeignKey("user_coordinadores.id"), nullable=True)
     practicante_id = Column(Integer, ForeignKey("user_practicantes.user_id"), nullable=True)

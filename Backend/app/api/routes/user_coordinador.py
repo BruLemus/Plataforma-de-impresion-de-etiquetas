@@ -18,8 +18,6 @@ from jose import jwt, JWTError
 from app.db.database import get_db
 
 
-
-
 router = APIRouter()
 
 

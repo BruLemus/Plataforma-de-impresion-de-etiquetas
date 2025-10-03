@@ -52,6 +52,12 @@
         <label class="crud-label">Alto (cm)</label>
         <input v-model.number="alto" type="number" min="0" class="crud-input" placeholder="Ej: 150" />
       </div>
+
+      <!-- Peso -->
+      <div class="form-field">
+        <label class="crud-label">Peso (kg)</label>
+        <input v-model.number="peso" type="number" min="0" step="0.01" class="crud-input" placeholder="Ej: 12.5" />
+      </div>
     </div>
 
     <!-- PIEZAS POR TARIMA -->
@@ -86,6 +92,7 @@ export default {
       ancho: 0,
       largo: 0,
       alto: 0,
+      peso: 0,
       piezas: [],
     };
   },
@@ -100,18 +107,17 @@ export default {
     },
   },
   methods: {
-    // --- AJUSTE: Imprimir directamente a la impresora de red ---
     async imprimir() {
       if (!this.numTarimas || this.numTarimas <= 0)
         return alert("No hay etiquetas para imprimir");
 
-      // Construir contenido a imprimir (puedes personalizar formato)
       const contenido = `
 Paquetería: ${this.paqueteriaSeleccionada}
 Factura: ${this.factura}
 Número de Tarimas: ${this.numTarimas}
 Tipo de Embalaje: ${this.tipoEmbalaje}
 Clave Producto: ${this.claveProducto}
+Peso: ${this.peso} kg
 Total piezas: ${this.totalPiezas}
 `;
 
@@ -141,48 +147,54 @@ Total piezas: ${this.totalPiezas}
       this.ancho = 0;
       this.largo = 0;
       this.alto = 0;
+      this.peso = 0;
       this.piezas = [];
     },
 
-    async guardarDatos() {
-      if (!this.factura || !this.paqueteriaSeleccionada || !this.tipoEmbalaje || !this.numTarimas) {
-        return alert("Factura, Paquetería, Tipo de Embalaje y Número de Tarimas son obligatorios");
-      }
+async guardarDatos() {
+  if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada || !this.claveProducto) {
+    return alert("Completa todos los campos obligatorios");
+  }
 
-      try {
-        const payload = {
-          paqueteria: this.paqueteriaSeleccionada,
-          numero_factura: this.factura,
-          numero_tarimas: Number(this.numTarimas),
-          tipo_embalaje: Number(this.tipoEmbalaje),
-          ancho: this.paqueteriaSeleccionada === "Estafeta" ? Number(this.ancho) : 0,
-          largo: this.paqueteriaSeleccionada === "Estafeta" ? Number(this.largo) : 0,
-          alto: this.paqueteriaSeleccionada === "Estafeta" ? Number(this.alto) : 0,
-          cantidad_piezas: Number(this.totalPiezas),
-          clave_producto: this.claveProducto || "N/A"
-        };
+  try {
+    const token = localStorage.getItem("token");
 
-        console.log("Payload a enviar:", payload);
+    const payload = {
+      paqueteria: String(this.paqueteriaSeleccionada),
+      numero_factura: String(this.factura),
+      numero_tarimas: Number(this.numTarimas) || 0,
+      tipo_embalaje: Number(this.tipoEmbalaje),
+      cantidad_piezas: this.totalPiezas,
+      clave_producto: String(this.claveProducto),
+      ancho: Number(this.ancho) || 0,
+      alto: Number(this.alto) || 0,
+      largo: Number(this.largo) || 0,
+      peso: Number(this.peso) || 0
+    };
 
-        const response = await fetch("http://127.0.0.1:8000/tarimas/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+    const response = await fetch('http://127.0.0.1:8000/tarimas/?role=coordinador', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'token': token
+      },
+      body: JSON.stringify(payload)
+    });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Error API:", errorData);
-          throw new Error("Error al guardar en la base de datos");
-        }
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error en API:", errorData);
+      throw new Error("Error al guardar en la base de datos");
+    }
 
-        alert("Datos guardados correctamente");
-        this.reiniciar();
-      } catch (err) {
-        console.error(err);
-        alert("Ocurrió un error al guardar los datos");
-      }
-    },
+    alert("Datos guardados correctamente");
+    this.reiniciar();
+  } catch (err) {
+    console.error(err);
+    alert("Ocurrió un error al guardar los datos");
+  }
+}
+
   },
 };
 </script>
@@ -193,15 +205,11 @@ Total piezas: ${this.totalPiezas}
 .crud-label { font-weight: 600; margin-bottom: 8px; display: block; color: #1e3a8a; }
 .crud-input { border: 1px solid #d1d5db; border-radius: 8px; width: 100%; padding: 10px; font-size: 0.95rem; }
 .crud-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
-.crud-subtitle { font-weight: 600; margin-bottom: 12px; color: #1e40af; font-size: 1.05rem; }
-.pieces-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; }
-.piece-card { background: #e0f2fe; border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; align-items: center; min-width: 90px; transition: all 0.2s; }
-.crud-label-inline { font-weight: 600; margin-bottom: 6px; text-align: center; }
-.crud-input-small { border: 1px solid #9ca3af; border-radius: 6px; width: 60px; padding: 6px; font-size: 0.9rem; text-align: center; }
+.crud-subtitle { font-size: 28px; font-weight: 700; color: #1f618d; margin-bottom: 20px; border-left: 6px solid #2980b9; padding-left: 12px; }
+.crud-total { font-weight: bold; margin-top: 10px; color: #1e40af; }
 .crud-actions { display: flex; gap: 12px; margin-top: 16px; }
 .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 .btn-print { background: #126330; color: white; }
 .btn-reset { background: #cd981c; color: white; }
 .btn-save { background: #2559ac; color: white; }
-.crud-total { font-weight: bold; margin-top: 10px; color: #1e40af; }
 </style>
