@@ -23,10 +23,10 @@ class Caja(Base):
     t_embalaje = Column(Enum(TipoEmbalajeEnum), nullable=False)
     clave_producto = Column(String(50), nullable=False)
     cantidad_piezas = Column(Integer, nullable=True)
-    ancho = Column(Float, nullable=False)
-    largo = Column(Float, nullable=False)
-    alto = Column(Float, nullable=False)
-    peso = Column(Float, nullable=False)
+    ancho = Column(Float, nullable=True)
+    largo = Column(Float, nullable=True)
+    alto = Column(Float, nullable=True)
+    peso = Column(Float, nullable=True)
     peso_volumetrico = Column(Float, nullable=True)
 
     # Fecha y hora de creación/registro

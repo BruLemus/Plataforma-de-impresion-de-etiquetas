@@ -1,43 +1,39 @@
 <template>
-  <div class="register-wrapper">
-    <div class="register-card" :class="{ 'enter-card': animateCard }">
-      
-      <!-- Imagen con rebote -->
-      <img src="@/assets/login.svg" alt="Registro Imagen" class="register-img"/>
-
-      <!-- Título -->
-      <h1 class="register-title">
-        <span class="highlight">Registro de Coordinador</span>
-      </h1>
-
-      <!-- Inputs animados -->
-      <transition-group name="fade-slide" tag="div">
-
-        <!-- Nombre -->
-        <div class="input-group" key="nombre">
-          <label>Nombre</label>
-          <input v-model="nombre" type="text" placeholder="Ingresa tu nombre" class="register-input"/>
-        </div>
-
-        <!-- Contraseña -->
-        <div class="input-group" key="contrasena">
-          <label>Contraseña</label>
-          <input v-model="contrasena" type="password" placeholder="Ingresa tu contraseña" class="register-input"/>
-        </div>
-
-        <!-- Código secreto -->
-        <div class="input-group" key="codigo">
-          <label>Código secreto</label>
-          <input v-model="codigoSecreto" type="password" placeholder="Ingresa el código secreto" class="register-input"/>
-        </div>
-
-        <!-- Botones -->
-        <button @click="registrar" class="register-btn" key="btn">Registrar</button>
-        <button @click="volverLogin" class="volver-btn" key="volver">Volver al login</button>
-
-      </transition-group>
-
-    </div>
+  <div class="historial-wrapper">
+    <h1>Historial de Pedidos</h1>
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Factura</th>
+          <th>Cantidad</th>
+          <th>Tipo Embalaje</th>
+          <th>Paquetería</th>
+          <th>Clave Producto</th>
+          <th>Tipo Pedido</th>
+          <th>Fecha Creación</th>
+          <th>Peso Volumétrico</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="item in historial" :key="item.id">
+          <td>{{ item.usuario }}</td>
+          <td>{{ item.factura }}</td>
+          <td>{{ item.cantidad_piezas }}</td>
+          <td>{{ item.tipo_embalaje }}</td>
+          <td>{{ item.paqueteria }}</td>
+          <td>{{ item.clave_producto }}</td>
+          <td>{{ item.tipo_pedido }}</td>
+          <td>{{ formatFecha(item.fecha_creacion) }}</td>
+          <td>{{ item.peso_volumetrico }}</td>
+          <td>
+            <button @click="editar(item)">Editar</button>
+            <button @click="eliminar(item)">Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
@@ -45,163 +41,86 @@
 import axios from "axios";
 
 export default {
-  name: "UserCoordinadorRegister",
+  name: "CompHistorial",
   data() {
     return {
-      nombre: "",
-      contrasena: "",
-      codigoSecreto: "",
-      animateCard: false
+      historial: []
     };
   },
   mounted() {
-    setTimeout(() => { this.animateCard = true; }, 100);
+    this.fetchHistorial();
   },
   methods: {
-    async registrar() {
-      if (!this.nombre || !this.contrasena || !this.codigoSecreto) {
-        alert("Todos los campos son obligatorios");
-        return;
-      }
+    async fetchHistorial() {
       try {
-        const payload = {
-          nombre: this.nombre,
-          contrasena: this.contrasena,
-          codigo_secreto: this.codigoSecreto
-        };
-        const res = await axios.post("http://127.0.0.1:8000/user_coordinadors/", payload);
-        alert(`Coordinador ${res.data.nombre} registrado correctamente`);
-        this.$router.push("/");
+        const res = await axios.get("http://127.0.0.1:8000/historial/registros/");
+        this.historial = res.data;
       } catch (error) {
-        alert(error.response?.data?.detail || "Error al registrar coordinador");
+        console.error("Error al cargar historial:", error);
+        alert("Error al cargar historial");
       }
     },
-    volverLogin() {
-      this.$router.push("/");
+    formatFecha(fecha) {
+      return new Date(fecha).toLocaleString();
+    },
+    editar(item) {
+      // Aquí podrías redirigir a un formulario de edición
+      alert(`Editar ${item.tipo_pedido} ID: ${item.id}`);
+    },
+    async eliminar(item) {
+      try {
+        const url = item.tipo_pedido === "Caja"
+          ? `http://127.0.0.1:8000/historial/caja/${item.id}`
+          : `http://127.0.0.1:8000/historial/tarima/${item.id}`;
+        await axios.delete(url);
+        alert(`${item.tipo_pedido} eliminada correctamente`);
+        this.fetchHistorial(); // refrescar tabla
+      } catch (error) {
+        console.error("Error al eliminar:", error);
+        alert("Error al eliminar registro");
+      }
     }
   }
 };
 </script>
 
 <style scoped>
-/* Fondo principal */
-.register-wrapper {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #0F1973; /* azul */
+.historial-wrapper {
+  padding: 20px;
   font-family: "Poppins", sans-serif;
 }
 
-
-/* Tarjeta */
-.register-card {
-  background: #FFFFFF;
-  border-radius: 25px;
-  padding: 50px 40px;
-  max-width: 500px;
+.historial-table {
   width: 100%;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  transform: translateY(-40px);
-  opacity: 0;
-  transition: all 0.8s ease;
-}
-.register-card.enter-card {
-  transform: translateY(0);
-  opacity: 1;
+  border-collapse: collapse;
+  margin-top: 20px;
 }
 
-/* Imagen con rebote */
-.register-img {
-  object-fit: contain;
-  animation: bounce 1.5s infinite alternate;
-  width: 330px;
-  height: 100px;
-  object-fit: contain;
-  margin-bottom: 0px;
-  margin-top: auto;
-
-}
-@keyframes bounce { 0% { transform: translateY(0);} 100% { transform: translateY(-10px);} }
-
-/* Título */
-.register-title {
-  font-size: 2.5rem;
-  font-weight: 900;
-  color: #F4550F; /* naranja */
-  text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
-  margin-bottom: 25px;
-}
-.highlight { color: #F4550F; }
-.green-dot { color: #64C22C; }
-
-/* Inputs */
-.input-group { margin-bottom: 20px; text-align: left; }
-.input-group label { display: block; font-weight: 600; margin-bottom: 5px; color: #0F1973; }
-.register-input {
-  width: 100%;
-  padding: 12px 15px;
-  border-radius: 10px;
+.historial-table th,
+.historial-table td {
   border: 1px solid #ddd;
-  font-size: 1rem;
-  transition: border 0.3s, box-shadow 0.3s;
-}
-.register-input:focus {
-  border-color: #F4550F;
-  box-shadow: 0 0 10px rgba(244,85,15,0.5);
-  outline: none;
+  padding: 10px;
+  text-align: center;
 }
 
-/* Botones */
-.register-btn, .volver-btn {
-  width: 100%;
-  padding: 14px;
-  margin-top: 10px;
-  border-radius: 12px;
-  border: none;
-  font-weight: bold;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-.register-btn {
-  background: linear-gradient(135deg, #F4550F, #F4772E);
+.historial-table th {
+  background-color: #0f1973;
   color: white;
 }
-.register-btn:hover {
-  background: linear-gradient(135deg, #F4772E, #F4550F);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 20px rgba(244,85,15,0.4);
-}
-.volver-btn {
-  background: #e5e7eb;
-  color: #111827;
-}
-.volver-btn:hover {
-  background: #d1d5db;
-  transform: translateY(-2px) scale(1.02);
+
+.historial-table tbody tr:nth-child(even) {
+  background-color: #f2f2f2;
 }
 
-/* Animación inputs secuenciales */
-.fade-slide-enter-active {
-  transition: all 0.5s ease;
-}
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateY(-20px);
-}
-.fade-slide-enter-to {
-  opacity: 1;
-  transform: translateY(0);
+.historial-table button {
+  margin: 2px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
 }
 
-/* Responsive */
-@media (max-width: 480px) {
-  .register-card { padding: 40px 20px; }
-  .register-title { font-size: 2rem; }
-  .register-img { width: 150px; height: 150px; }
-  .register-input, .register-btn, .volver-btn { font-size: 0.95rem; }
+.historial-table button:hover {
+  opacity: 0.8;
 }
 </style>

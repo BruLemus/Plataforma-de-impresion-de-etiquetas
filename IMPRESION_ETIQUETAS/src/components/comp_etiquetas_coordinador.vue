@@ -111,24 +111,28 @@
                 <input v-model="claveProducto" type="text" class="crud-input" placeholder="Clave del producto" />
               </div>
 
-              <!-- SOLO PARA ESTAFETA -->
-              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
+              <!-- SOLO PARA ESTAFETA Y PAQUETEXPRESS -->
+              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'" class="form-field">
                 <label class="crud-label">Ancho de la Caja (cm)</label>
                 <input v-model.number="anchoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 40" />
               </div>
-              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
+              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'" class="form-field">
                 <label class="crud-label">Alto de la Caja (cm)</label>
                 <input v-model.number="altoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 60" />
               </div>
-              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
+              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'" class="form-field">
                 <label class="crud-label">Largo de la Caja (cm)</label>
                 <input v-model.number="largoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 50" />
               </div>
 
-              <!-- PESO SOLO PARA PAQUETEXPRESS Y ESTAFETA -->
-              <div v-if="paqueteriaSeleccionada.nombre === 'Paquetexpress' || paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
+              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'" class="form-field">
                 <label class="crud-label">Peso (kg)</label>
                 <input v-model.number="peso" type="number" min="0" step="0.01" class="crud-input" placeholder="Ej: 2.5" />
+              </div>
+
+              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'" class="form-field">
+                <label class="crud-label">Peso Volumétrico (kg)</label>
+                <input :value="pesoVolumetrico.toFixed(2)" type="number" class="crud-input" disabled />
               </div>
             </div>
 
@@ -143,22 +147,14 @@
               </div>
             </div>
 
-            <!-- ESTADO IMPRESORA -->
-            <div class="printer-status no-print">
-              <i class="fas fa-print"></i> Estado de Impresora:
-              <span :class="{ online: impresoraOnline, offline: !impresoraOnline }">
-                {{ impresoraOnline ? "En línea ✅" : "Desconectada ❌" }}
-              </span>
-            </div>
+           
 
             <!-- BOTONES CRUD CENTRADOS -->
             <div class="crud-actions centered no-print">
               <button @click="imprimirZebra" class="btn btn-print">
                 <i class="fas fa-print"></i> Imprimir en Zebra
               </button>
-              <button @click="imprimirRemoto" class="btn btn-print">
-                <i class="fas fa-server"></i> Imprimir en Servidor (ZPL)
-              </button>
+              
               <button @click="reiniciar" class="btn btn-reset">
                 <i class="fas fa-redo-alt"></i> Reiniciar
               </button>
@@ -180,13 +176,12 @@
                     <div class="dato"><strong>Factura:</strong> {{ factura || '—' }}</div>
                     <div class="dato"><strong>Caja:</strong> {{ n }} de {{ numCajas }}</div>
                     <div class="dato"><strong>Piezas:</strong> {{ piezas[n-1] || 0 }}</div>
-                    <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'">
+                    <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'">
                       <div class="dato"><strong>Ancho:</strong> {{ anchoCaja || 0 }} cm</div>
                       <div class="dato"><strong>Alto:</strong> {{ altoCaja || 0 }} cm</div>
                       <div class="dato"><strong>Largo:</strong> {{ largoCaja || 0 }} cm</div>
-                    </div>
-                    <div v-if="paqueteriaSeleccionada.nombre === 'Paquetexpress' || paqueteriaSeleccionada.nombre === 'Estafeta'">
                       <div class="dato"><strong>Peso:</strong> {{ peso || 0 }} kg</div>
+                      <div class="dato"><strong>Peso Volumétrico:</strong> {{ pesoVolumetrico.toFixed(2) }} kg</div>
                     </div>
                   </div>
                   <div class="etiqueta-qr">
@@ -246,7 +241,18 @@ export default {
       peso: "",
       qrSize: 130,
       impresoraOnline: false,
+      nombrePracticante: localStorage.getItem("username") || "",
+      nombreCoordinador: "Coordinador Principal",
     };
+  },
+  computed: {
+    totalPiezas() { return this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0); },
+    pesoVolumetrico() {
+      if (this.anchoCaja && this.altoCaja && this.largoCaja) {
+        return (this.anchoCaja * this.altoCaja * this.largoCaja) / 5000; //PESO VOLUMETRICO ENTRE 5000 -----------------------------------------------
+      }
+      return 0;
+    },
   },
   created() {
     const hora = new Date().toLocaleString();
@@ -255,113 +261,106 @@ export default {
     this.checkPrinterStatus();
     setInterval(this.checkPrinterStatus, 5000);
   },
-  computed: {
-    totalPiezas() {
-      return this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
-    },
-  },
   methods: {
-    logout() { localStorage.clear(); this.$router.push('/'); },
     setView(view) { this.currentView = view; },
-    openEditUserModal() { this.showEditUserModal = true; this.editUser.nombre = this.username; },
+    openEditUserModal() { this.showEditUserModal = true; },
     closeEditUserModal() { this.showEditUserModal = false; },
-    async saveUser() {
-      try {
-        const payload = { nombre: this.editUser.nombre, contrasena: this.editUser.contrasena };
-        const token = localStorage.getItem("token");
-        await axios.put("http://127.0.0.1:8000/user_coordinadors/perfil", payload, { headers: { Authorization: `Bearer ${token}` } });
-        this.username = this.editUser.nombre;
-        localStorage.setItem("username", this.username);
-        alert("Perfil actualizado correctamente");
-        this.closeEditUserModal();
-      } catch (err) {
-        console.error(err);
-        if (err.response && err.response.status === 401) alert("Token inválido o expirado. Por favor, inicia sesión de nuevo.");
-        else alert("Error al actualizar el perfil");
-      }
+    saveUser() { alert("Función de guardar usuario aquí"); },
+    logout() { localStorage.clear();this.$router.push("/") },
+    checkPrinterStatus() { this.impresoraOnline = true; },
+    reiniciar() {
+      this.factura = "";
+      this.numCajas = 0;
+      this.piezas = [];
+      this.tipoEmbalaje = "";
+      this.claveProducto = "";  
+      this.anchoCaja = "";
+      this.altoCaja = "";
+      this.largoCaja = "";
+      this.peso = "";
     },
-    generateQR(index) {
-      let data = [`Factura: ${this.factura || '-'}`, `Caja: ${index + 1} de ${this.numCajas || 0}`, `Piezas: ${this.piezas[index] || 0}`, `Total: ${this.totalPiezas}`, `Paquetería: ${this.paqueteriaSeleccionada.nombre || '-'}`, `Embalaje: ${this.tipoEmbalaje || '-'}`, `Clave: ${this.claveProducto || '-'}`];
-      if (this.paqueteriaSeleccionada.nombre === "Estafeta") {
-        data.push(`Ancho: ${this.anchoCaja || 0} cm`, `Alto: ${this.altoCaja || 0} cm`, `Largo: ${this.largoCaja || 0} cm`);
-      }
-      if (this.paqueteriaSeleccionada.nombre === "Paquetexpress" || this.paqueteriaSeleccionada.nombre === "Estafeta") {
-        data.push(`Peso: ${this.peso || 0} kg`);
-      }
-      return data.join("\n");
-    },
-    imprimirZebra() { this.imprimir(); },
-    imprimir() { if (!this.numCajas || this.numCajas <= 0) return alert("No hay etiquetas para imprimir"); this.$nextTick(() => setTimeout(() => window.print(), 200)); },
-    async imprimirRemoto() {
-      if (!this.numCajas) return alert("No hay etiquetas para imprimir");
-      try { for (let i = 0; i < this.numCajas; i++) { const zpl = this.generateZPL(i); await axios.post("http://127.0.0.1:8000/print_label/", { zpl }); } alert("Todas las etiquetas fueron enviadas al servidor en formato ZPL"); } 
-      catch (error) { console.error(error); alert("Error al enviar etiquetas ZPL al servidor"); }
-    },
-    generateZPL(index) {
-      return `^XA
-^FO50,50^ADN,36,20^FDFactura: ${this.factura || '-'}^FS
-^FO50,100^ADN,36,20^FDCaja: ${index + 1} de ${this.numCajas}^FS
-^FO50,150^ADN,36,20^FDPiezas: ${this.piezas[index] || 0}^FS
-^FO50,200^ADN,36,20^FDTotal: ${this.totalPiezas}^FS
-^FO50,250^ADN,36,20^FDPaquetería: ${this.paqueteriaSeleccionada.nombre || '-'}^FS
-^FO50,300^ADN,36,20^FDEmbalaje: ${this.tipoEmbalaje || '-'}^FS
-^FO50,350^ADN,36,20^FDClave: ${this.claveProducto || '-'}^FS
-^FO50,400^ADN,36,20^FDPeso: ${this.peso || 0} kg^FS
-^FO50,450^BQN,2,5^FDLA,${this.generateQR(index)}^FS
-^XZ`;
-    },
-    reiniciar() { this.factura = ""; this.numCajas = 0; this.piezas = []; this.tipoEmbalaje = ""; this.claveProducto = ""; this.anchoCaja = ""; this.altoCaja = ""; this.largoCaja = ""; this.peso = ""; },
-    
-    async guardarDatos() {
-      if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada.nombre || !this.claveProducto) {
-        return alert("Completa todos los campos obligatorios");
-      }
+    imprimirZebra() { alert("Impresión en Zebra"); },
+    imprimirRemoto() { alert("Impresión Servidor/ZPL"); },
+    generateQR(index) { return `Factura:${this.factura || "—"}|Caja:${index+1}|Practicante:${this.nombrePracticante}`; },
 
-      try {
-        const token = localStorage.getItem("token");
+async guardarDatos() {
+  // Validar campos obligatorios
+  if (!this.paqueteriaSeleccionada.nombre || !this.factura || !this.numCajas || !this.tipoEmbalaje || !this.claveProducto) {
+    alert("Completa los campos obligatorios.");
+    return;
+  }
 
-        const payload = {
-          paqueteria: String(this.paqueteriaSeleccionada.nombre),
-          numero_factura: String(this.factura),
-          numero_cajas: Number(this.numCajas) || 0,
-          tipo_embalaje: String(this.tipoEmbalaje), 
-          cantidad_piezas: this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0),
-          clave_producto: String(this.claveProducto),
-          ancho: Number(this.anchoCaja) || 0,
-          alto: Number(this.altoCaja) || 0,
-          largo: Number(this.largoCaja) || 0,
-          peso: Number(this.peso) || 0
-        };
+  // Total de piezas
+  const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
 
-        const response = await fetch('http://127.0.0.1:8000/cajas/?role=coordinador', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'token': token
-          },
-          body: JSON.stringify(payload)
-        });
+  // IDs desde localStorage
+  const practicante_id = Number(localStorage.getItem("practicante_id")) || 0;
+  const coordinador_id = Number(localStorage.getItem("coordinador_id")) || 5; // por ejemplo
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Error en API:", errorData);
-          throw new Error("Error al guardar en la base de datos");
+  // Nombres desde localStorage
+  const nombrePracticante = localStorage.getItem("nombre_practicante") || this.nombrePracticante || "string";
+  const nombreCoordinador = localStorage.getItem("nombre_coordinador") || this.nombreCoordinador || "Meli";
+
+  // Token JWT
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Token no encontrado, inicia sesión nuevamente.");
+    return;
+  }
+
+  // Estructura del payload
+  const payload = {
+    nombre_user_practicante: nombrePracticante,
+    nombre_user_coordinador: nombreCoordinador,
+    n_facturas: String(this.factura),
+    n_cajas: Number(this.numCajas),
+    paqueteria: this.paqueteriaSeleccionada.nombre,
+    t_embalaje: Number(this.tipoEmbalaje),
+    clave_producto: String(this.claveProducto),
+    cantidad_piezas: totalPiezas,
+    ancho: Number(this.anchoCaja) || 0,
+    largo: Number(this.largoCaja) || 0,
+    alto: Number(this.altoCaja) || 0,
+    peso: Number(this.peso) || 0,
+    peso_volumetrico: Number(this.pesoVolumetrico.toFixed(2)) || 0,
+    practicante_id,
+    coordinador_id
+  };
+
+  try {
+    const response = await axios.post(
+      "http://127.0.0.1:8000/cajas/?role=coordinador",
+      payload,
+      {
+        headers: {
+          "accept": "application/json",
+          "Content-Type": "application/json",
+          "token": token
         }
-
-        alert("Datos guardados correctamente");
-        this.reiniciar();
-      } catch (err) {
-        console.error(err);
-        alert("Ocurrió un error al guardar los datos");
       }
-    },
+    );
 
-    checkPrinterStatus() {
-      this.impresoraOnline = true; 
-    },
+    console.log("✅ Respuesta API:", response.data);
+    alert("✅ Datos guardados correctamente");
+    this.reiniciar();
+
+  } catch (error) {
+    console.error("❌ Error en API:", error.response || error);
+    const msg = error.response?.data?.detail || "Error al guardar. Revisa los datos.";
+    alert(msg);
+  }
+}
+
+
+
+
+
   },
 };
 </script>
+
+
+
 
 
 <style scoped>

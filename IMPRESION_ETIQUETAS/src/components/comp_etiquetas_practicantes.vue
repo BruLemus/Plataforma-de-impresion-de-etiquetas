@@ -11,7 +11,7 @@
           <i class="fas fa-user-graduate"></i> Practicante
         </h2>
         <div class="user-info">
-          <i class="fas fa-clock"></i> Entrada: <strong v-if="horaEntrada">{{ horaEntrada }}</strong> |
+          🕖 Entrada: <strong v-if="horaEntrada">{{ horaEntrada }}</strong> |
           <button class="btn-logout" @click="logout"><i class="fas fa-sign-out-alt"></i> Salir</button>
         </div>
       </div>
@@ -77,66 +77,68 @@
           <div class="crud-card no-print">
             <h2 class="crud-subtitle">Etiquetas por Caja</h2>
 
-            <!-- FORMULARIO -->
-            <div class="form-grid">
-              <!-- Paquetería -->
-              <div class="form-field">
-                <label class="crud-label">Paquetería</label>
-                <select v-model="paqueteriaSeleccionada" class="crud-input">
-                  <option disabled value="">-- Selecciona --</option>
-                  <option v-for="paq in paqueterias" :key="paq.nombre" :value="paq">{{ paq.nombre }}</option>
-                </select>
+            <!-- FORMULARIO REORGANIZADO -->
+            <div class="etiquetas-container">
+              <!-- FILA 1: Datos generales -->
+              <div class="fila-general">
+                <div class="form-field">
+                  <label class="crud-label">Paquetería</label>
+                  <select v-model="paqueteriaSeleccionada" class="crud-input">
+                    <option disabled value="">-- Selecciona --</option>
+                    <option v-for="paq in paqueterias" :key="paq.nombre" :value="paq">{{ paq.nombre }}</option>
+                  </select>
+                </div>
+
+                <div class="form-field">
+                  <label class="crud-label">Número de Factura</label>
+                  <input v-model="factura" type="text" class="crud-input" placeholder="Factura" />
+                </div>
+
+                <div class="form-field">
+                  <label class="crud-label">Número de Cajas</label>
+                  <input v-model.number="numCajas" type="number" min="0" class="crud-input" placeholder="Ej: 3" />
+                </div>
+
+                <div class="form-field">
+                  <label class="crud-label">Tipo de Embalaje</label>
+                  <select v-model="tipoEmbalaje" class="crud-input">
+                    <option disabled value="">-- Selecciona --</option>
+                    <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
+                  </select>
+                </div>
+
+                <div class="form-field">
+                  <label class="crud-label">Clave de Producto</label>
+                  <input v-model="claveProducto" type="text" class="crud-input" placeholder="Clave del producto" />
+                </div>
               </div>
 
-              <!-- Factura -->
-              <div class="form-field">
-                <label class="crud-label">Número de Factura</label>
-                <input v-model="factura" type="text" class="crud-input" placeholder="Factura" />
-              </div>
-
-              <!-- Número de cajas -->
-              <div class="form-field">
-                <label class="crud-label">Número de Cajas</label>
-                <input v-model.number="numCajas" type="number" min="0" class="crud-input" placeholder="Ej: 3" />
-              </div>
-
-              <!-- Tipo de Embalaje -->
-              <div class="form-field">
-                <label class="crud-label">Tipo de Embalaje</label>
-                <select v-model="tipoEmbalaje" class="crud-input">
-                  <option disabled value="">-- Selecciona --</option>
-                  <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
-                </select>
-              </div>
-
-              <!-- Clave de Producto -->
-              <div class="form-field">
-                <label class="crud-label">Clave de Producto</label>
-                <input v-model="claveProducto" type="text" class="crud-input" placeholder="Clave del producto" />
-              </div>
-
-              <!-- Peso -->
-              <div class="form-field">
-                <label class="crud-label">Peso de la Caja (kg)</label>
-                <input v-model.number="peso" type="number" min="0" class="crud-input" placeholder="Ej: 15" />
-              </div>
-
-              <!-- SOLO SI ES ESTAFETA -->
-              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
-                <label class="crud-label">Ancho de la Caja (cm)</label>
-                <input v-model.number="anchoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 40" />
-              </div>
-              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
-                <label class="crud-label">Alto de la Caja (cm)</label>
-                <input v-model.number="altoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 60" />
-              </div>
-              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'" class="form-field">
-                <label class="crud-label">Largo de la Caja (cm)</label>
-                <input v-model.number="largoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 50" />
+              <!-- FILA 2: Dimensiones y peso -->
+              <div class="fila-dimensiones" v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'">
+                <div class="form-field">
+                  <label class="crud-label">Ancho de la Caja (cm)</label>
+                  <input v-model.number="anchoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 40" />
+                </div>
+                <div class="form-field">
+                  <label class="crud-label">Alto de la Caja (cm)</label>
+                  <input v-model.number="altoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 60" />
+                </div>
+                <div class="form-field">
+                  <label class="crud-label">Largo de la Caja (cm)</label>
+                  <input v-model.number="largoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 50" />
+                </div>
+                <div class="form-field">
+                  <label class="crud-label">Peso (kg)</label>
+                  <input v-model.number="peso" type="number" min="0" step="0.01" class="crud-input" placeholder="Ej: 2.5" />
+                </div>
+                <div class="form-field">
+                  <label class="crud-label">Peso Volumétrico (kg)</label>
+                  <input :value="pesoVolumetrico.toFixed(2)" type="number" class="crud-input" disabled />
+                </div>
               </div>
             </div>
 
-            <!-- Piezas -->
+            <!-- PIEZAS Y BOTONES (sin cambios) -->
             <div v-if="numCajas > 0" class="mb-4">
               <h3 class="crud-subtitle">Piezas por Caja</h3>
               <div class="pieces-grid">
@@ -147,15 +149,6 @@
               </div>
             </div>
 
-            <!-- ESTATUS DE IMPRESORA -->
-            <div class="printer-status no-print">
-              <i class="fas fa-print"></i> Estado de Impresora:
-              <span :class="{ online: impresoraOnline, offline: !impresoraOnline }">
-                {{ impresoraOnline ? "En línea ✅" : "Desconectada ❌" }}
-              </span>
-            </div>
-
-            <!-- BOTONES -->
             <div class="crud-actions centered no-print">
               <button @click="imprimirZebra" class="btn btn-print">
                 <i class="fas fa-print"></i> Imprimir en Zebra
@@ -172,7 +165,7 @@
             </div>
           </div>
 
-          <!-- ETIQUETAS DE CAJA -->
+          <!-- ETIQUETAS DE CAJA (sin cambios) -->
           <div class="labels-container print-only" v-if="numCajas > 0">
             <div v-for="n in numCajas" :key="'etiqueta-' + n" class="etiqueta">
               <div class="contenido">
@@ -185,10 +178,11 @@
                     <div class="dato"><strong>Caja:</strong> {{ n }} de {{ numCajas }}</div>
                     <div class="dato"><strong>Piezas:</strong> {{ piezas[n-1] || 0 }}</div>
                     <div class="dato"><strong>Peso:</strong> {{ peso || 0 }} kg</div>
-                    <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta'">
+                    <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'">
                       <div class="dato"><strong>Ancho:</strong> {{ anchoCaja || 0 }} cm</div>
                       <div class="dato"><strong>Alto:</strong> {{ altoCaja || 0 }} cm</div>
                       <div class="dato"><strong>Largo:</strong> {{ largoCaja || 0 }} cm</div>
+                      <div class="dato"><strong>Peso Volumétrico:</strong> {{ pesoVolumetrico.toFixed(2) }} kg</div>
                     </div>
                   </div>
                   <div class="etiqueta-qr">
@@ -222,12 +216,11 @@ import comp_otras_etiquetas from "./comp_otras_etiquetas.vue";
 
 export default {
   name: "CompEtiquetasPracticantes",
-  components: { QrcodeVue, comp_tarima, comp_inf, comp_otras_etiquetas,  },
+  components: { QrcodeVue, comp_tarima, comp_inf, comp_otras_etiquetas },
   data() {
     return {
       username: localStorage.getItem("username") || "",
-      mesaSeleccionada: localStorage.getItem("mesaSeleccionada") || "",
-      horaEntrada: "",
+      horaEntrada: localStorage.getItem("horaEntrada") || "",
       currentView: "caja",
       showEditUserModal: false,
       editUser: { nombre: "", contrasena: "" },
@@ -248,21 +241,23 @@ export default {
       anchoCaja: "",
       altoCaja: "",
       largoCaja: "",
-      peso: "",
+      peso: 0,
       qrSize: 130,
-      impresoraOnline: false
     };
   },
   created() {
-    const hora = new Date().toLocaleString();
-    localStorage.setItem("horaEntrada", hora);
-    this.horaEntrada = hora;
-    this.checkPrinterStatus();
-    setInterval(this.checkPrinterStatus, 5000);
+    if (!this.horaEntrada) {
+      const hora = new Date().toLocaleString();
+      localStorage.setItem("horaEntrada", hora);
+      this.horaEntrada = hora;
+    }
   },
   computed: {
     totalPiezas() {
       return this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
+    },
+    pesoVolumetrico() {
+      return ((this.anchoCaja * this.altoCaja * this.largoCaja) / 5000) || 0;
     }
   },
   methods: {
@@ -285,141 +280,115 @@ export default {
         const payload = { nombre: this.editUser.nombre, contrasena: this.editUser.contrasena };
         const token = localStorage.getItem("token");
         await axios.put("http://127.0.0.1:8000/user_practicantes/perfil", payload, {
-          headers: { Authorization: token ? `Bearer ${token}` : "" }
+          headers: token ? { token } : {}
         });
+        alert("Perfil actualizado");
         this.username = this.editUser.nombre;
         localStorage.setItem("username", this.username);
-        alert("Perfil actualizado correctamente");
         this.closeEditUserModal();
       } catch (err) {
         console.error(err);
-        if (err.response && err.response.status === 401) alert("Token inválido o expirado. Por favor, inicia sesión de nuevo.");
-        else alert("Error al actualizar el perfil");
+        alert("Error al actualizar perfil");
       }
-    },
-    generateQR(index) {
-      let data = [
-        `Factura: ${this.factura || '-'}`,
-        `Caja: ${index + 1} de ${this.numCajas || 0}`,
-        `Piezas: ${this.piezas[index] || 0}`,
-        `Peso: ${this.peso || 0} kg`,
-        `Total: ${this.totalPiezas}`,
-        `Paquetería: ${this.paqueteriaSeleccionada.nombre || '-'}`,
-        `Embalaje: ${this.tipoEmbalaje || '-'}`,
-        `Clave: ${this.claveProducto || '-'}`,
-      ];
-      if (this.paqueteriaSeleccionada.nombre === "Estafeta") {
-        data.push(`Ancho: ${this.anchoCaja || 0} cm`);
-        data.push(`Alto: ${this.altoCaja || 0} cm`);
-        data.push(`Largo: ${this.largoCaja || 0} cm`);
-        this.piezas.forEach((p, i) => data.push(`Caja ${i+1} Piezas: ${p}`));
-      }
-      return data.join("\n");
-    },
-    imprimirZebra() {
-      this.imprimir();
-    },
-    imprimir() {
-      if (!this.numCajas || this.numCajas <= 0) return alert("No hay etiquetas para imprimir");
-      this.$nextTick(() => setTimeout(() => window.print(), 200));
-    },
-    async imprimirRemoto() {
-      if (!this.numCajas) return alert("No hay etiquetas para imprimir");
-      try {
-        for (let i = 0; i < this.numCajas; i++) {
-          const zpl = this.generateZPL(i);
-          await axios.post("http://127.0.0.1:8000/print_label/", { zpl });
-        }
-        alert("Todas las etiquetas fueron enviadas al servidor en formato ZPL");
-      } catch (error) {
-        console.error(error);
-        alert("Error al enviar etiquetas ZPL al servidor");
-      }
-    },
-    generateZPL(index) {
-      return `^XA
-^FO50,50^ADN,36,20^FDFactura: ${this.factura || '-'}^FS
-^FO50,100^ADN,36,20^FDCaja: ${index + 1} de ${this.numCajas}^FS
-^FO50,150^ADN,36,20^FDPiezas: ${this.piezas[index] || 0}^FS
-^FO50,200^ADN,36,20^FDPeso: ${this.peso || 0} kg^FS
-^FO50,250^ADN,36,20^FDTotal: ${this.totalPiezas}^FS
-^FO50,300^ADN,36,20^FDPaquetería: ${this.paqueteriaSeleccionada.nombre || '-'}^FS
-^FO50,350^ADN,36,20^FDEmbalaje: ${this.tipoEmbalaje || '-'}^FS
-^FO50,400^ADN,36,20^FDClave: ${this.claveProducto || '-'}^FS
-^FO50,450^BQN,2,5^FDLA,${this.generateQR(index)}^FS
-^XZ`;
     },
     reiniciar() {
       this.factura = "";
       this.numCajas = 0;
       this.piezas = [];
       this.paqueteriaSeleccionada = { nombre: "", logo: "" };
-      this.tipoEmbalaje = 1;
+      this.tipoEmbalaje = "";
       this.claveProducto = "";
       this.anchoCaja = "";
       this.altoCaja = "";
       this.largoCaja = "";
-      this.peso = "";
+      this.peso = 0;
     },
-    async guardarDatosPracticante() {
-      if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada.nombre || !this.claveProducto) {
-        return alert("Completa todos los campos obligatorios");
-      }
-
-      try {
-        const payload = {
-          paqueteria: String(this.paqueteriaSeleccionada.nombre),
-          numero_factura: String(this.factura),
-          numero_cajas: Number(this.numCajas) || 0,
-          tipo_embalaje: String(this.tipoEmbalaje),
-          cantidad_piezas: this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0),
-          clave_producto: String(this.claveProducto),
-          ancho: Number(this.anchoCaja) || 0,
-          alto: Number(this.altoCaja) || 0,
-          largo: Number(this.largoCaja) || 0,
-          peso: Number(this.peso) || 0
-        };
-
-        console.log("Payload enviado:", JSON.stringify(payload, null, 2));
-
-        const token = localStorage.getItem("token");
-        const response = await fetch("http://127.0.0.1:8000/cajas/?role=practicante", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { token } : {})
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Error en API:", errorData);
-          alert("Error en API: " + JSON.stringify(errorData, null, 2));
-          throw new Error("Error al guardar en la base de datos");
-        }
-
-        alert("✅ Datos guardados correctamente");
-        this.reiniciar();
-      } catch (err) {
-        console.error(err);
-        alert("Ocurrió un error al guardar los datos");
-      }
+    generateQR(index) {
+      return JSON.stringify({
+        factura: this.factura,
+        caja: index + 1,
+        piezas: this.piezas[index] || 0,
+        peso: this.peso,
+      });
     },
-    async checkPrinterStatus() {
-      try {
-        const res = await axios.get("http://127.0.0.1:8000/print_label/status");
-        this.impresoraOnline = res.data.online;
-      } catch {
-        this.impresoraOnline = false;
-      }
+    async imprimirZebra() {
+      alert("Función de impresión en Zebra");
+    },
+    async imprimirRemoto() {
+      alert("Función de impresión en servidor (ZPL)");
+    },
+async guardarDatosPracticante() {
+  if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada.nombre || !this.claveProducto) {
+    return alert("Completa todos los campos obligatorios");
+  }
+
+  try {
+    const payload = {
+      nombre_user_practicante: this.username, // tu usuario actual
+      nombre_user_coordinador: "", // si no hay coordinador asignado, deja vacío o asigna dinámicamente
+      n_facturas: String(this.factura),
+      n_cajas: Number(this.numCajas) || 0,
+      paqueteria: String(this.paqueteriaSeleccionada.nombre),
+      t_embalaje: Number(this.tipoEmbalaje),
+      clave_producto: String(this.claveProducto),
+      cantidad_piezas: this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0),
+      ancho: Number(this.anchoCaja) || 0,
+      alto: Number(this.altoCaja) || 0,
+      largo: Number(this.largoCaja) || 0,
+      peso: Number(this.peso) || 0,
+      peso_volumetrico: this.pesoVolumetrico,
+      practicante_id: Number(localStorage.getItem("practicante_id")) || 0, // asigna según tu sesión
+      coordinador_id: 0 // si no hay coordinador asignado
+    };
+
+    console.log("Payload enviado:", JSON.stringify(payload, null, 2));
+
+    const token = localStorage.getItem("token");
+    const response = await fetch("http://127.0.0.1:8000/cajas/?role=practicante", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { token } : {})
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error en API:", errorData);
+      alert("Error en API: " + JSON.stringify(errorData, null, 2));
+      throw new Error("Error al guardar en la base de datos");
     }
+
+    alert("✅ Datos guardados correctamente");
+    this.reiniciar();
+  } catch (err) {
+    console.error(err);
+    alert("Ocurrió un error al guardar los datos");
+  }
+}
+
   }
 };
 </script>
 
+
+
+
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+
+/* ==== AGREGADO: ESTILOS PARA NUEVAS FILAS ==== */
+.fila-general, .fila-dimensiones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.fila-general .form-field, .fila-dimensiones .form-field {
+  flex: 1 1 180px; /* tamaño mínimo respetado, se adapta */
+}
 
 /* ==== VARIABLES ==== */
 :root {

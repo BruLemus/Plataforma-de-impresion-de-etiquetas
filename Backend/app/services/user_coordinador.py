@@ -16,6 +16,7 @@ def create_user_coordinador(db: Session, payload: UserCoordinadorCreate) -> User
     
     hashed_password = pwd_context.hash(payload.contraseña)
     db_user = UserCoordinador(
+        
         nombre=payload.nombre,
         contraseña=hashed_password,
         codigo_secreto=payload.codigo_secreto

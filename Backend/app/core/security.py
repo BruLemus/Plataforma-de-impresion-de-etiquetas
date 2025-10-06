@@ -12,7 +12,7 @@ from app.db.models.user_practicante import UserPracticante
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = "SUPER_SECRET_KEY"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+ACCESS_TOKEN_EXPIRE_MINUTES = 7200 #DURACION DEL TOKEN DE 12 HORAS
 
 security = HTTPBearer()
 

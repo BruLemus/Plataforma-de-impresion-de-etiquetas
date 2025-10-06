@@ -1,25 +1,72 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
+from typing import Optional, List
 from app.db.database import get_db
 from app.db.models.caja import Caja
+from app.db.models.tarima import Tarima
 from app.db.models.enums import PaqueteriaEnum, TipoEmbalajeEnum
-from app.db.models.tarima import Tarima, PaqueteriaEnum as TarimaPaqueteriaEnum, TipoEmbalajeEnum as TarimaTipoEmbalajeEnum
 from app.db.models.user_coordinador import UserCoordinador
 from app.db.models.user_practicante import UserPracticante
 from pydantic import BaseModel
-from typing import Optional
 
-router = APIRouter()
+router = APIRouter(prefix="/registros", tags=["Registros"])
 
-# ----------------------
-# GET: Listar historial
-# ----------------------
+# ------------------------------------------------------------------
+# ✅ GET: Obtener todos los registros (Cajas y Tarimas)
+# ------------------------------------------------------------------
+
 @router.get("/")
-def get_historial(db: Session = Depends(get_db)):
+def obtener_registros(db: Session = Depends(get_db)):
     result = []
 
-    # Traer todas las cajas con sus usuarios
+    # ----------------------
+    # Cajas
+    # ----------------------
+    cajas = db.query(Caja).all()
+    for c in cajas:
+        usuario = c.nombre_user_coordinador or c.nombre_user_practicante or "Desconocido"
+
+        result.append({
+            "id": c.id,
+            "nombre_usuario": usuario,
+            "factura": c.n_facturas,
+            "cantidad": c.cantidad_piezas,
+            "tipo_embalaje": c.t_embalaje.value if c.t_embalaje else None,
+            "paqueteria": c.paqueteria.value if c.paqueteria else None,
+            "clave_producto": c.clave_producto,
+            "tipo_pedido": "Caja",
+            "fecha_creacion": c.fecha_hora,
+            "acciones": {"editar": f"/caja/{c.id}", "eliminar": f"/caja/{c.id}"}
+        })
+
+    # ----------------------
+    # Tarimas
+    # ----------------------
+    tarimas = db.query(Tarima).all()
+    for t in tarimas:
+        usuario = t.coordinador_nombre or t.practicante_nombre or "Desconocido"
+
+        result.append({
+            "id": t.tarima_id,
+            "nombre_usuario": usuario,
+            "factura": t.numero_factura,
+            "cantidad": t.cantidad_piezas,
+            "tipo_embalaje": t.tipo_embalaje.value if t.tipo_embalaje else None,
+            "paqueteria": t.paqueteria.value if t.paqueteria else None,
+            "clave_producto": t.clave_producto,
+            "tipo_pedido": "Tarima",
+            "fecha_creacion": t.fecha_creacion,
+            "acciones": {"editar": f"/tarima/{t.tarima_id}", "eliminar": f"/tarima/{t.tarima_id}"}
+        })
+
+    # Ordenar por fecha
+    result.sort(key=lambda x: x["fecha_creacion"])
+    return result
+
+    registros = []
+
+    # 🔹 Obtener cajas
     cajas = db.query(Caja).all()
     for c in cajas:
         usuario = "Desconocido"
@@ -28,19 +75,19 @@ def get_historial(db: Session = Depends(get_db)):
         elif c.practicante:
             usuario = c.practicante.nombre
 
-        result.append({
+        registros.append({
             "id": c.id,
-            "numero_factura": c.numero_factura,
-            "paqueteria": c.paqueteria.value if c.paqueteria else None,
-            "cantidad_piezas": c.cantidad_piezas,
-            "clave_producto": c.clave_producto,
+            "nombre_usuario": usuario,
+            "factura": c.numero_factura,
+            "cantidad": c.cantidad_piezas,
             "tipo_embalaje": c.tipo_embalaje.value if c.tipo_embalaje else None,
-            "fecha_creacion": c.fecha_creacion,
+            "paqueteria": c.paqueteria.value if c.paqueteria else None,
+            "clave_producto": c.clave_producto,
             "tipo_pedido": "Caja",
-            "usuario": usuario
+            "fecha_creacion": c.fecha_creacion,
         })
 
-    # Traer todas las tarimas con sus usuarios
+    # 🔹 Obtener tarimas
     tarimas = db.query(Tarima).all()
     for t in tarimas:
         usuario = "Desconocido"
@@ -49,25 +96,25 @@ def get_historial(db: Session = Depends(get_db)):
         elif t.practicante:
             usuario = t.practicante.nombre
 
-        result.append({
+        registros.append({
             "id": t.tarima_id,
-            "numero_factura": t.numero_factura,
-            "paqueteria": t.paqueteria.value if t.paqueteria else None,
-            "cantidad_piezas": t.cantidad_piezas,
-            "clave_producto": t.clave_producto,
+            "nombre_usuario": usuario,
+            "factura": t.numero_factura,
+            "cantidad": t.cantidad_piezas,
             "tipo_embalaje": t.tipo_embalaje.value if t.tipo_embalaje else None,
-            "fecha_creacion": t.fecha_creacion,
+            "paqueteria": t.paqueteria.value if t.paqueteria else None,
+            "clave_producto": t.clave_producto,
             "tipo_pedido": "Tarima",
-            "usuario": usuario
+            "fecha_creacion": t.fecha_creacion,
         })
 
-    # Ordenar por fecha
-    result.sort(key=lambda x: x["fecha_creacion"])
-    return result
+    # 🔹 Ordenar por fecha más reciente
+    registros.sort(key=lambda x: x["fecha_creacion"], reverse=True)
+    return registros
 
-# ----------------------
-# DELETE: Eliminar registros
-# ----------------------
+# ------------------------------------------------------------------
+# 🗑️ DELETE: Eliminar Caja o Tarima
+# ------------------------------------------------------------------
 @router.delete("/caja/{caja_id}")
 def eliminar_caja(caja_id: int, db: Session = Depends(get_db)):
     caja = db.query(Caja).filter(Caja.id == caja_id).first()
@@ -86,15 +133,15 @@ def eliminar_tarima(tarima_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"mensaje": "Tarima eliminada correctamente"}
 
-# ----------------------
-# PUT: Editar registros con validación ENUM
-# ----------------------
+# ------------------------------------------------------------------
+# ✏️ PUT: Editar Caja
+# ------------------------------------------------------------------
 class CajaUpdate(BaseModel):
     numero_factura: Optional[str]
     paqueteria: Optional[str]
     cantidad_piezas: Optional[int]
     clave_producto: Optional[str]
-    tipo_embalaje: Optional[int]
+    tipo_embalaje: Optional[str]
 
 @router.put("/caja/{caja_id}")
 def editar_caja(caja_id: int, data: CajaUpdate, db: Session = Depends(get_db)):
@@ -102,26 +149,13 @@ def editar_caja(caja_id: int, data: CajaUpdate, db: Session = Depends(get_db)):
     if not caja:
         raise HTTPException(status_code=404, detail="Caja no encontrada")
 
-    # Validar ENUMs
+    # Validar enums
     if data.paqueteria:
-        try:
-            caja.paqueteria = PaqueteriaEnum(data.paqueteria)
-        except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Paqueteria inválida. Valores permitidos: {[e.value for e in PaqueteriaEnum]}"
-            )
-
+        caja.paqueteria = PaqueteriaEnum(data.paqueteria)
     if data.tipo_embalaje:
-        try:
-            caja.tipo_embalaje = TipoEmbalajeEnum(data.tipo_embalaje)
-        except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Tipo de embalaje inválido. Valores permitidos: {[e.value for e in TipoEmbalajeEnum]}"
-            )
+        caja.tipo_embalaje = TipoEmbalajeEnum(data.tipo_embalaje)
 
-    # Asignar el resto de campos
+    # Actualizar otros campos
     for field, value in data.dict(exclude_unset=True).items():
         if field not in ["paqueteria", "tipo_embalaje"]:
             setattr(caja, field, value)
@@ -129,14 +163,17 @@ def editar_caja(caja_id: int, data: CajaUpdate, db: Session = Depends(get_db)):
     caja.fecha_actualizacion = datetime.now()
     db.commit()
     db.refresh(caja)
-    return {"mensaje": "Caja actualizada", "caja": caja}
+    return {"mensaje": "Caja actualizada correctamente"}
 
+# ------------------------------------------------------------------
+# ✏️ PUT: Editar Tarima
+# ------------------------------------------------------------------
 class TarimaUpdate(BaseModel):
     numero_factura: Optional[str]
     paqueteria: Optional[str]
     cantidad_piezas: Optional[int]
     clave_producto: Optional[str]
-    tipo_embalaje: Optional[int]
+    tipo_embalaje: Optional[str]
 
 @router.put("/tarima/{tarima_id}")
 def editar_tarima(tarima_id: int, data: TarimaUpdate, db: Session = Depends(get_db)):
@@ -144,26 +181,11 @@ def editar_tarima(tarima_id: int, data: TarimaUpdate, db: Session = Depends(get_
     if not tarima:
         raise HTTPException(status_code=404, detail="Tarima no encontrada")
 
-    # Validar ENUMs
     if data.paqueteria:
-        try:
-            tarima.paqueteria = TarimaPaqueteriaEnum(data.paqueteria)
-        except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Paqueteria inválida. Valores permitidos: {[e.value for e in TarimaPaqueteriaEnum]}"
-            )
-
+        tarima.paqueteria = PaqueteriaEnum(data.paqueteria)
     if data.tipo_embalaje:
-        try:
-            tarima.tipo_embalaje = TarimaTipoEmbalajeEnum(data.tipo_embalaje)
-        except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Tipo de embalaje inválido. Valores permitidos: {[e.value for e in TarimaTipoEmbalajeEnum]}"
-            )
+        tarima.tipo_embalaje = TipoEmbalajeEnum(data.tipo_embalaje)
 
-    # Asignar el resto de campos
     for field, value in data.dict(exclude_unset=True).items():
         if field not in ["paqueteria", "tipo_embalaje"]:
             setattr(tarima, field, value)
@@ -171,4 +193,4 @@ def editar_tarima(tarima_id: int, data: TarimaUpdate, db: Session = Depends(get_
     tarima.fecha_actualizacion = datetime.now()
     db.commit()
     db.refresh(tarima)
-    return {"mensaje": "Tarima actualizada", "tarima": tarima}
+    return {"mensaje": "Tarima actualizada correctamente"}

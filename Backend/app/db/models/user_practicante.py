@@ -12,6 +12,7 @@ class UserPracticante(Base):
 
     user_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nombre = Column(String(100), nullable=False)
+    contrasena = Column(String(100), nullable=False)
     mesa_trabajo = Column(String(100), nullable=True)
     entrada = Column(BIGINT, nullable=True)
 
