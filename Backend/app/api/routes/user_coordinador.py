@@ -68,6 +68,7 @@ def create_coordinador(payload: UserCoordinadorCreate, db: Session = Depends(get
     db.refresh(user)
     return user
 
+# Login coordinador
 @router.post("/login")
 def login_coordinador(
     nombre: str = Form(...),
@@ -77,17 +78,18 @@ def login_coordinador(
     user = db.query(UserCoordinador).filter(UserCoordinador.nombre == nombre).first()
     if not user:
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
-
+    
     if not verify_password(contrasena, user.contrasena):
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
-
-    # 🔹 Incluir datos completos dentro del token
-    token = create_access_token({
-        "sub": user.nombre,
+    
+    # 🔹 Agregamos el ID y tipo al token
+    token_data = {
         "user_id": user.id,
+        "sub": user.nombre,
         "tipo": "coordinador"
-    })
-
+    }
+    token = create_access_token(token_data)
+    
     return {
         "nombre": user.nombre,
         "id": user.id,
@@ -95,6 +97,47 @@ def login_coordinador(
         "token": token
     }
 
+# Ver perfil (protegido)
+@router.get("/me", response_model=UserCoordinadorResponse)
+def get_me(current_user: UserCoordinador = Depends(get_current_coordinator)):
+    return current_user
+
+# Actualizar perfil (protegido)
+@router.put("/perfil", response_model=UserCoordinadorResponse)
+def update_perfil_coordinador(
+    payload: UserCoordinadorUpdate,
+    token: str = Header(...),  # Se espera que Vue envíe token en header
+    db: Session = Depends(get_db)
+):
+    # 🔹 Validar token
+    try:
+        data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = data.get("user_id")
+        tipo = data.get("tipo", "").lower()
+        if tipo != "coordinador":
+            raise HTTPException(status_code=403, detail="No autorizado")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+
+    # 🔹 Buscar usuario en DB
+    user = db.query(UserCoordinador).filter(UserCoordinador.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # 🔹 Verificar código secreto
+    if payload.codigo_secreto != user.codigo_secreto:
+        raise HTTPException(status_code=403, detail="Código secreto inválido")
+
+    # 🔹 Actualizar campos
+    if payload.nombre:
+        user.nombre = payload.nombre
+    if payload.contrasena:
+        user.contrasena = pwd_context.hash(payload.contrasena)
+
+    db.commit()
+    db.refresh(user)
+
+    return user
 
 
 # Listar todos los coordinadores (opcional)

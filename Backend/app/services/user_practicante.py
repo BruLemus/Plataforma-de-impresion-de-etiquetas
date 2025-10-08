@@ -18,8 +18,9 @@ def create_user_practicante(db: Session, payload: UserPracticanteCreate) -> User
 def get_user_practicantes(db: Session, skip: int = 0, limit: int = 100) -> List[UserPracticante]:
     return db.query(UserPracticante).offset(skip).limit(limit).all()
 
-def get_user_practicante_by_id(db: Session, user_id: int) -> Optional[UserPracticante]:
+def get_user_practicante_by_id(db: Session, user_id: int):
     return db.query(UserPracticante).filter(UserPracticante.user_id == user_id).first()
+
 
 # 🔹 Actualizar usuario con contraseña opcional
 def update_user_practicante(db: Session, user_id: int, payload: UserPracticanteUpdate) -> Optional[UserPracticante]:

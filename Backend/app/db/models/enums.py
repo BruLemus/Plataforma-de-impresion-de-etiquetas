@@ -7,7 +7,7 @@ class PaqueteriaEnum(str, Enum):
     DHL = "DHL"
     FEDEX = "FedEx"
     UPS = "UPS"
-    MERCADO_LIBRE = "MercadoLibre"
+    MERCADO_LIBRE = "Mercado Libre"
 
 class TipoEmbalajeEnum(int, Enum):
     TIPO1 = 1

@@ -12,7 +12,7 @@
 
       <!-- Formulario con animación secuencial -->
       <transition-group name="fade-slide" tag="div">
-        
+
         <!-- Sede -->
         <div v-if="animateCard" class="input-group" key="sede">
           <label>Sede</label>
@@ -38,17 +38,9 @@
           <label>Usuario</label>
           <input v-model="username" type="text" placeholder="Ingresa tu nombre" class="login-input"/>
         </div>
-        <!-- Contraseña solo Practicante -->
-        <div v-if="rol === 'Practicante'" class="input-group" key="password-practicante">
-          <label>Contraseña</label>
-          <input v-model="password" type="password" placeholder="Ingresa tu contraseña" class="login-input"/>
-        </div>
 
-
-      
-
-        <!-- Contraseña solo Coordinador -->
-        <div v-if="rol === 'Coordinador'" class="input-group" key="password">
+        <!-- Contraseña -->
+        <div v-if="rol" class="input-group" key="password">
           <label>Contraseña</label>
           <input v-model="password" type="password" placeholder="Ingresa tu contraseña" class="login-input"/>
         </div>
@@ -58,7 +50,6 @@
         <button v-if="rol === 'Coordinador'" @click="registrarCoordinador" class="registrar-btn" key="register">Registrar</button>
 
       </transition-group>
-
     </div>
   </div>
 </template>
@@ -71,28 +62,22 @@ export default {
   data() {
     return {
       username: "",
-      mesa: "",
-      rol: "",
       password: "",
       sede: "",
+      rol: "",
       animateCard: false
     };
   },
   mounted() {
-    // Animación inicial de la tarjeta
-    setTimeout(() => { this.animateCard = true; }, 100);
+    // Animación inicial
+    setTimeout(() => {
+      this.animateCard = true;
+    }, 100);
   },
-methods: {
-  async login() {
-    if (!this.username || !this.rol || !this.sede) {
-      alert("Debes ingresar usuario, sede y seleccionar rol");
-      return;
-    }
-
-    // === PRACTICANTE ===
-    if (this.rol === "Practicante") {
-      if (!this.password) {
-        alert("Debes ingresar la contraseña");
+  methods: {
+    async login() {
+      if (!this.username || !this.password || !this.rol || !this.sede) {
+        alert("Debes ingresar usuario, contraseña, sede y rol");
         return;
       }
 
@@ -101,69 +86,44 @@ methods: {
         formData.append("nombre", this.username);
         formData.append("contrasena", this.password);
 
-        const res = await axios.post(
-          `http://127.0.0.1:8000/user_practicantes/login`,
-          formData
-        );
+        let url = "";
 
-        // Guardar datos del usuario en localStorage
+        // Login para cada tipo de usuario
+        if (this.rol === "Practicante") {
+          url = "http://127.0.0.1:8000/user_practicantes/login";
+        } else if (this.rol === "Coordinador") {
+          url = "http://127.0.0.1:8000/user_coordinadors/login";
+        }
+
+        const res = await axios.post(url, formData);
+
+        // Guardar datos en localStorage
         localStorage.setItem("username", res.data.nombre);
-        localStorage.setItem("rol", "Practicante");
+        localStorage.setItem("rol", this.rol);
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("sede", this.sede);
         localStorage.setItem("user_id", res.data.user_id);
 
-        // Redirigir
-        this.$router.push(`/${this.sede.toLowerCase()}/practicante`);
+        // Redirigir según rol y sede
+        const destino =
+          this.rol === "Practicante"
+            ? `/${this.sede.toLowerCase()}/practicante`
+            : `/${this.sede.toLowerCase()}/coordinador`;
+
+        this.$router.push(destino);
 
       } catch (err) {
-        console.error("Error en login:", err);
-        alert(err.response?.data?.detail || "Error al iniciar sesión como practicante");
+        console.error("❌ Error en login:", err);
+        alert(err.response?.data?.detail || "Error al iniciar sesión");
       }
+    },
+
+    registrarCoordinador() {
+      this.$router.push("/registro");
     }
-
-    // === COORDINADOR ===
-    if (this.rol === "Coordinador") {
-      if (!this.password) {
-        alert("Debes ingresar la contraseña");
-        return;
-      }
-
-      try {
-        const formData = new FormData();
-        formData.append("nombre", this.username);
-        formData.append("contrasena", this.password);
-
-        const res = await axios.post(
-          `http://127.0.0.1:8000/user_coordinadors/login`,
-          formData
-        );
-
-        localStorage.setItem("username", res.data.nombre);
-        localStorage.setItem("rol", "Coordinador");
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("sede", this.sede);
-
-        this.$router.push(`/${this.sede.toLowerCase()}/coordinador`);
-
-      } catch (err) {
-        console.error(err);
-        alert(err.response?.data?.detail || "Error al iniciar sesión como coordinador");
-      }
-    }
-  },
-
-  registrarCoordinador() {
-    this.$router.push("/registro");
   }
-}
 };
 </script>
-
-
-
-
-
 
 <style scoped>
 /* Fondo principal */
