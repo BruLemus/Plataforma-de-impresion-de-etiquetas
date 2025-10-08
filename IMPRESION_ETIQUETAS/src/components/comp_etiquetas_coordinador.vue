@@ -22,10 +22,10 @@
       <aside class="sidebar no-print">
         <nav class="menu">
           <ul>
-            <div class="sidebar-user" @click="openEditUserModal">
-             <i class="fas fa-user-circle"></i>
-             <span>{{ username }}</span>
-            </div>
+            <div class="sidebar-user" @click="setView('crear_practicante')" style="cursor:pointer;">
+            <i class="fas fa-user-circle"></i>
+            <span>{{ username }}</span>
+          </div>
 
             <li :class="{active: currentView === 'caja'}" @click="setView('caja')">
               <i class="fas fa-box-open"></i> Etiquetas por Caja
@@ -45,31 +45,6 @@
           </ul>
         </nav>
       </aside>
-
-      <!-- MODAL EDITAR PERFIL -->
-      <div v-if="showEditUserModal" class="modal-overlay" @click.self="closeEditUserModal">
-        <div class="modal-card">
-          <h3>Editar Perfil</h3>
-
-          <div class="form-field">
-            <label>Nombre</label>
-            <input v-model="editUser.nombre" placeholder="Nombre completo" />
-          </div>
-          <div class="form-field">
-            <label>Contraseña</label>
-            <input v-model="editUser.contrasena" type="password" placeholder="Nueva contraseña" />
-          </div>
-         
-          <div class="crud-actions">
-            <button @click="saveUser" class="btn btn-save">
-              <i class="fas fa-save"></i> Guardar
-            </button>
-            <button @click="closeEditUserModal" class="btn btn-reset">
-              Cancelar
-            </button>
-          </div>
-        </div>
-      </div>
 
       <!-- CONTENIDO PRINCIPAL -->
       <main class="content">
@@ -147,8 +122,6 @@
               </div>
             </div>
 
-           
-
             <!-- BOTONES CRUD CENTRADOS -->
             <div class="crud-actions centered no-print">
               <button @click="imprimirZebra" class="btn btn-print">
@@ -198,6 +171,7 @@
         <section v-if="currentView === 'otras_etiquetas'"><comp_otras_etiquetas /></section>
         <section v-if="currentView === 'historial'"><comp_historial /></section>
         <section v-if="currentView === 'info'"><comp_inf /></section>
+        <section v-if="currentView === 'crear_practicante'"><comp_crear_practicante /></section>
       </main>
     </div>
   </div>
@@ -210,10 +184,11 @@ import comp_tarima from "@/components/comp_tarima.vue";
 import comp_inf from "@/components/comp_inf.vue";
 import comp_otras_etiquetas from "./comp_otras_etiquetas.vue";
 import comp_historial from "./comp_historial.vue";
+import comp_crear_practicante from "./comp_crear_practicante.vue";
 
 export default {
   name: "CompEtiquetas",
-  components: { QrcodeVue, comp_tarima, comp_inf, comp_otras_etiquetas, comp_historial },
+  components: { QrcodeVue, comp_tarima, comp_inf, comp_otras_etiquetas, comp_historial, comp_crear_practicante },
   data() {
     return {
       username: localStorage.getItem("username") || "",
@@ -267,6 +242,9 @@ export default {
     closeEditUserModal() { this.showEditUserModal = false; },
     saveUser() { alert("Función de guardar usuario aquí"); },
     logout() { localStorage.clear();this.$router.push("/") },
+    goToCrearPracticante() {
+      this.$router.push('/crearpracticante');
+    },
     checkPrinterStatus() { this.impresoraOnline = true; },
     reiniciar() {
       this.factura = "";
