@@ -4,62 +4,22 @@
     <!-- PERFIL COORDINADOR -->
     <section class="perfil-coordinador card">
       <h2>Mi Perfil</h2>
-      <form @submit.prevent="actualizarPerfil" class="form-grid">
-        <div class="form-field">
-          <label>Nombre:</label>
-          <input v-model="coordinador.nombre" type="text" required autocomplete="name" />
+      <div class="perfil-info">
+        <div class="sidebar-user" style="cursor:pointer;">
+            <i class="fas fa-user-circle"></i>
+            <span>{{ username }}</span>
         </div>
-
-        <div class="form-field password-field">
-          <label>Contraseña:</label>
-          <div class="password-wrapper">
-            <input
-              v-model="coordinador.contrasena"
-              :type="mostrarContrasenaCoord ? 'text' : 'password'"
-              autocomplete="new-password"
-            />
-            <button
-              type="button"
-              class="toggle-btn"
-              @click="mostrarContrasenaCoord = !mostrarContrasenaCoord"
-            >
-              {{ mostrarContrasenaCoord ? '🙈' : '👁️' }}
-            </button>
-          </div>
-        </div>
-
-        <div class="form-field">
-          <label>Código Secreto:</label>
-          <input
-            v-model="coordinador.codigo_secreto"
-            type="text"
-            autocomplete="off"
-            required
-          />
-        </div>
-
-        <button type="submit" class="btn btn-save">Actualizar Perfil</button>
-      </form>
-
-      <!-- ELIMINAR PERFIL DEL COORDINADOR -->
-      <button
-        @click="eliminarPerfil"
-        class="btn btn-delete"
-        style="margin-top: 15px;"
-      >
-        Eliminar mi cuenta
-      </button>
+        <p><strong>Puesto:</strong> Coordinador</p>
+      </div>
     </section>
-
-    <hr />
 
     <!-- GESTIÓN DE PRACTICANTES -->
     <section class="practicantes card">
-      <h2>Gestión de Practicantes</h2>
+      <h2>Crear Usuarios</h2>
+      <h1>-Practicantes-</h1>
 
-      <!-- Crear Practicante -->
+      <!-- FORMULARIO CREAR PRACTICANTE -->
       <form @submit.prevent="crearPracticante" class="form-grid">
-        <h3>Crear Practicante</h3>
         <div class="form-field">
           <label>Nombre:</label>
           <input
@@ -78,12 +38,9 @@
               :type="mostrarContrasenaNuevo ? 'text' : 'password'"
               required
               autocomplete="new-password"
+              placeholder="••••••"
             />
-            <button
-              type="button"
-              class="toggle-btn"
-              @click="mostrarContrasenaNuevo = !mostrarContrasenaNuevo"
-            >
+            <button type="button" class="toggle-btn" @click="mostrarContrasenaNuevo = !mostrarContrasenaNuevo">
               {{ mostrarContrasenaNuevo ? '🙈' : '👁️' }}
             </button>
           </div>
@@ -100,13 +57,13 @@
         <button type="submit" class="btn btn-save">Crear</button>
       </form>
 
-      <!-- Lista de Practicantes -->
+      <!-- LISTA DE PRACTICANTES -->
       <h3>Practicantes Existentes</h3>
       <div class="table-wrapper">
         <table>
           <thead>
             <tr>
-              <th>ID</th>
+              <th>#</th>
               <th>Nombre</th>
               <th>Mesa Trabajo</th>
               <th>Contraseña</th>
@@ -114,8 +71,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in practicantes" :key="p.user_id">
-              <td>{{ p.user_id }}</td>
+            <tr v-for="(p, index) in practicantes" :key="p.user_id">
+              <td>{{ index + 1 }}</td>
               <td><input v-model="p.nombre" autocomplete="name" /></td>
               <td>
                 <select v-model="p.mesa_trabajo" class="login-select">
@@ -129,12 +86,9 @@
                     :type="p.mostrarContrasena ? 'text' : 'password'"
                     v-model="p.contrasena"
                     autocomplete="current-password"
+                    placeholder="••••••"
                   />
-                  <button
-                    type="button"
-                    class="toggle-btn"
-                    @click="p.mostrarContrasena = !p.mostrarContrasena"
-                  >
+                  <button type="button" class="toggle-btn" @click="p.mostrarContrasena = !p.mostrarContrasena">
                     {{ p.mostrarContrasena ? '🙈' : '👁️' }}
                   </button>
                 </div>
@@ -147,8 +101,8 @@
           </tbody>
         </table>
       </div>
-    </section>
 
+    </section>
   </div>
 </template>
 
@@ -159,93 +113,41 @@ import { ref, onMounted } from "vue";
 export default {
   name: "DashboardCoordinador",
   setup() {
-    // Obtener token del localStorage
     const token = localStorage.getItem("token");
     if (!token) {
       alert("Debes iniciar sesión");
       window.location.href = "/login";
     }
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = { Authorization: `Bearer ${token}` }; 
 
-    // ---------------------------
-    // PERFIL COORDINADOR
-    // ---------------------------
-    const coordinador = ref({ nombre: "", contrasena: "", codigo_secreto: "", user_id: "" });
-    const mostrarContrasenaCoord = ref(false);
+    const coordinador = ref({ nombre: "", user_id: "" });
+    const username = localStorage.getItem("username") || "";
 
     const cargarPerfil = async () => {
       try {
         const res = await axios.get("http://127.0.0.1:8000/user_coordinadors/perfil", { headers });
-        coordinador.value = res.data;
+        coordinador.value.nombre = res.data?.nombre || "Nombre no disponible";
+        coordinador.value.user_id = res.data?.user_id || "";
       } catch (error) {
         console.error("Error al cargar perfil:", error);
-        if (error.response && error.response.status === 401) {
+        coordinador.value.nombre = "Error al cargar";
+        if (error.response?.status === 401) {
           alert("Token inválido o expirado");
           localStorage.removeItem("token");
           window.location.href = "/login";
+          
         }
       }
     };
 
-    const actualizarPerfil = async () => {
-      if (!coordinador.value.codigo_secreto) {
-        alert("Debes ingresar tu código secreto para actualizar el perfil");
-        return;
-      }
-
-      try {
-        const payload = {
-          nombre: coordinador.value.nombre,
-          contrasena: coordinador.value.contrasena,
-          codigo_secreto: coordinador.value.codigo_secreto
-        };
-
-        await axios.put(
-          "http://127.0.0.1:8000/user_coordinadors/perfil",
-          payload,
-          { headers }
-        );
-
-        alert("Perfil actualizado correctamente");
-        coordinador.value.contrasena = "";
-      } catch (error) {
-        if (error.response && error.response.status === 403) {
-          alert("Código secreto incorrecto");
-        } else if (error.response && error.response.status === 401) {
-          alert("Token inválido o expirado");
-          localStorage.removeItem("token");
-          window.location.href = "/login";
-        } else {
-          console.error("Error al actualizar perfil:", error);
-          alert("Error al actualizar perfil");
-        }
-      }
-    };
-
-    const eliminarPerfil = async () => {
-      if (!confirm("¿Deseas eliminar tu cuenta?")) return;
-      try {
-        await axios.delete(`http://127.0.0.1:8000/user_coordinadors/${coordinador.value.user_id}`, { headers });
-        alert("Cuenta eliminada correctamente");
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-      } catch (error) {
-        console.error("Error al eliminar cuenta:", error);
-        alert("No se pudo eliminar la cuenta");
-      }
-    };
-
-    // ---------------------------
-    // GESTIÓN DE PRACTICANTES
-    // ---------------------------
     const practicantes = ref([]);
     const nuevoPracticante = ref({ nombre: "", contrasena: "", mesa_trabajo: "" });
     const mostrarContrasenaNuevo = ref(false);
 
     const cargarPracticantes = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:8000/user_practicantes/", { headers });
-        practicantes.value = res.data.map((p) => ({ ...p, contrasena: "", mostrarContrasena: false }));
+        const res = await axios.get("http://127.0.0.1:8000/user_practicantes/");
+        practicantes.value = res.data.map(p => ({ ...p, contrasena: "", mostrarContrasena: false }));
       } catch (error) {
         console.error("Error al cargar practicantes:", error);
       }
@@ -253,7 +155,7 @@ export default {
 
     const crearPracticante = async () => {
       try {
-        await axios.post("http://127.0.0.1:8000/user_practicantes/", nuevoPracticante.value, { headers });
+        await axios.post("http://127.0.0.1:8000/user_practicantes/", nuevoPracticante.value);
         alert("Practicante creado correctamente");
         nuevoPracticante.value = { nombre: "", contrasena: "", mesa_trabajo: "" };
         await cargarPracticantes();
@@ -264,7 +166,7 @@ export default {
 
     const editarPracticante = async (p) => {
       try {
-        await axios.put(`http://127.0.0.1:8000/user_practicantes/${p.user_id}`, p, { headers });
+        await axios.put(`http://127.0.0.1:8000/user_practicantes/${p.user_id}`, p);
         alert("Practicante actualizado correctamente");
         await cargarPracticantes();
       } catch (error) {
@@ -274,44 +176,39 @@ export default {
 
     const eliminarPracticante = async (id) => {
       if (!confirm("¿Deseas eliminar este practicante?")) return;
+
       try {
-        await axios.delete(`http://127.0.0.1:8000/user_practicantes/${id}`, { headers });
+        await axios.delete(`http://127.0.0.1:8000/user_practicantes/${id}`);
+        // Eliminamos localmente para que la tabla quede compacta
+        practicantes.value = practicantes.value.filter(p => p.user_id !== id);
         alert("Practicante eliminado correctamente");
-        await cargarPracticantes();
       } catch (error) {
         console.error("Error al eliminar practicante:", error);
       }
     };
 
-    // ---------------------------
-    // ON MOUNT
-    // ---------------------------
     onMounted(() => {
       cargarPerfil();
       cargarPracticantes();
     });
 
     return {
+      username,
       coordinador,
-      mostrarContrasenaCoord,
-      actualizarPerfil,
-      eliminarPerfil,
       practicantes,
       nuevoPracticante,
       mostrarContrasenaNuevo,
       crearPracticante,
       editarPracticante,
-      eliminarPracticante,
+      eliminarPracticante
     };
-  },
+  }
 };
 </script>
 
-
 <style scoped>
-/* Mantengo tus estilos existentes */
 .coordinador-dashboard {
-  max-width: 950px;
+  max-width: 1000px;
   margin: 20px auto;
   padding: 20px;
   font-family: 'Poppins', sans-serif;
@@ -319,6 +216,7 @@ export default {
 }
 
 .card {
+  text-align: center;
   background: #fff;
   padding: 25px;
   border-radius: 12px;
@@ -326,72 +224,14 @@ export default {
   margin-bottom: 30px;
 }
 
-.password-wrapper {
-  display: flex;
-  align-items: center;
-  position: relative;
-}
-
-.password-wrapper input {
-  flex: 1;
-}
-
-.toggle-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.2rem;
-  margin-left: 8px;
-}
-
-h2 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #2563eb;
-  margin-bottom: 20px;
-}
-
-h3 {
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin: 15px 0;
-  color: #1e40af;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 15px;
-  align-items: end;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-field label {
-  font-weight: 600;
-  margin-bottom: 6px;
+.perfil-info p {
+  font-size: 1rem;
+  margin-bottom: 10px;
   color: #1e3a8a;
 }
 
-input, select {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 0.95rem;
-  transition: all 0.2s;
-}
-
-input:focus, select:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 5px rgba(37, 99, 235, 0.3);
-}
-
 .btn {
-  padding: 10px 18px;
+  padding: 12px 20px;
   font-weight: 600;
   border-radius: 8px;
   cursor: pointer;
@@ -407,28 +247,81 @@ input:focus, select:focus {
 .btn-delete { background: #ef4444; }
 .btn-delete:hover { background: #dc2626; }
 
-.table-wrapper { overflow-x: auto; }
+.table-wrapper { overflow-x: auto; margin-top: 15px; }
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
 }
-
 th, td {
   padding: 10px 12px;
   border: 1px solid #e5e7eb;
   text-align: left;
   font-size: 0.95rem;
 }
-
 th {
   background: #f3f4f6;
   font-weight: 600;
   color: #111827;
 }
-
 tr:nth-child(even) { background: #f9fafb; }
+tr:hover { background: #e0f2fe; transition: background 0.2s; }
 .actions button { margin-right: 5px; }
+
+h2 { font-size: 1.8rem; font-weight: 700; color: #2563eb; margin-bottom: 15px; }
+h3 { font-size: 1.3rem; font-weight: 600; margin: 15px 0; color: #1e40af; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+  align-items: end;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+.form-field label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #1e3a8a;
+}
+input, select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  background: #f9fafb;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 40px; /* espacio para el botón dentro del input */
+  box-sizing: border-box;
+}
+
+.toggle-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #6b7280;
+}
+
 
 @media (max-width: 600px) {
   .form-grid { grid-template-columns: 1fr; }

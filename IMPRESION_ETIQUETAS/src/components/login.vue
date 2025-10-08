@@ -38,15 +38,14 @@
           <label>Usuario</label>
           <input v-model="username" type="text" placeholder="Ingresa tu nombre" class="login-input"/>
         </div>
-
-        <!-- Mesa solo Practicante -->
-        <div v-if="rol === 'Practicante'" class="input-group" key="mesa">
-          <label>Mesa de trabajo</label>
-          <select v-model="mesa" class="login-select">
-            <option disabled value="">Selecciona la mesa</option>
-            <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
-          </select>
+        <!-- Contraseña solo Practicante -->
+        <div v-if="rol === 'Practicante'" class="input-group" key="password-practicante">
+          <label>Contraseña</label>
+          <input v-model="password" type="password" placeholder="Ingresa tu contraseña" class="login-input"/>
         </div>
+
+
+      
 
         <!-- Contraseña solo Coordinador -->
         <div v-if="rol === 'Coordinador'" class="input-group" key="password">
@@ -90,43 +89,40 @@ methods: {
       return;
     }
 
-    // === Practicante ===
+    // === PRACTICANTE ===
     if (this.rol === "Practicante") {
-      if (!this.mesa) {
-        alert("Debes seleccionar una mesa");
+      if (!this.password) {
+        alert("Debes ingresar la contraseña");
         return;
       }
 
       try {
-        const payload = {
-          nombre: this.username,
-          mesa_trabajo: parseInt(this.mesa),
-          entrada: Date.now(),
-        };
+        const formData = new FormData();
+        formData.append("nombre", this.username);
+        formData.append("contrasena", this.password);
 
         const res = await axios.post(
-          `http://127.0.0.1:8000/user_practicantes/`,
-          payload
+          `http://127.0.0.1:8000/user_practicantes/login`,
+          formData
         );
 
+        // Guardar datos del usuario en localStorage
         localStorage.setItem("username", res.data.nombre);
         localStorage.setItem("rol", "Practicante");
-        localStorage.setItem("mesaSeleccionada", this.mesa);
+        localStorage.setItem("token", res.data.token);
         localStorage.setItem("sede", this.sede);
-        if (!localStorage.getItem("horaEntrada")) {
-          localStorage.setItem("horaEntrada", new Date().toLocaleString());
-        }
+        localStorage.setItem("user_id", res.data.user_id);
 
-        // Redirigir usando la ruta dinámica
+        // Redirigir
         this.$router.push(`/${this.sede.toLowerCase()}/practicante`);
 
       } catch (err) {
-        console.error(err);
+        console.error("Error en login:", err);
         alert(err.response?.data?.detail || "Error al iniciar sesión como practicante");
       }
     }
 
-    // === Coordinador ===
+    // === COORDINADOR ===
     if (this.rol === "Coordinador") {
       if (!this.password) {
         alert("Debes ingresar la contraseña");
@@ -148,7 +144,6 @@ methods: {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("sede", this.sede);
 
-        // Redirigir usando la ruta dinámica
         this.$router.push(`/${this.sede.toLowerCase()}/coordinador`);
 
       } catch (err) {
@@ -158,17 +153,17 @@ methods: {
     }
   },
 
-  // Redirige al registro
   registrarCoordinador() {
     this.$router.push("/registro");
   }
 }
-
-
-
-
 };
 </script>
+
+
+
+
+
 
 <style scoped>
 /* Fondo principal */

@@ -6,6 +6,11 @@ from app.schemas.user_practicante import UserPracticanteCreate, UserPracticanteU
 from app.services import user_practicante
 from app.core.security import create_access_token
 from datetime import timedelta
+from fastapi import APIRouter, HTTPException, Depends, Form
+from sqlalchemy.orm import Session
+from app.db.database import get_db
+from app.db.models.user_practicante import UserPracticante
+from app.core.security import pwd_context, create_access_token
 
 router = APIRouter()
 
@@ -44,19 +49,19 @@ def delete_user_practicante_endpoint(user_id: int, db: Session = Depends(get_db)
     return {"detail": "Usuario practicante eliminado correctamente"}
 
 # 🔹 LOGIN practicante
+
 @router.post("/login")
-def login_user_practicante(nombre: str, contrasena: str, db: Session = Depends(get_db)):
-    db_user = db.query(user_practicante.UserPracticante).filter(user_practicante.UserPracticante.nombre == nombre).first()
-    if not db_user:
-        raise HTTPException(status_code=400, detail="Usuario no encontrado")
+def login_practicante(
+    nombre: str = Form(...),
+    contrasena: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    user = db.query(UserPracticante).filter(UserPracticante.nombre == nombre).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    if not db_user.verify_password(contrasena):
-        raise HTTPException(status_code=400, detail="Contraseña incorrecta")
+    if not pwd_context.verify(contrasena, user.contrasena):
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
 
-    access_token_expires = timedelta(minutes=60)
-    access_token = create_access_token(
-        data={"sub": db_user.nombre, "user_id": db_user.user_id},
-        expires_delta=access_token_expires
-    )
-
-    return {"access_token": access_token, "token_type": "bearer", "user_id": db_user.user_id, "nombre": db_user.nombre}
+    token = create_access_token({"sub": user.nombre})
+    return {"token": token, "nombre": user.nombre, "user_id": user.user_id}
