@@ -18,10 +18,7 @@ def create_tarima_endpoint(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    """
-    Crea una tarima asignando automáticamente coordinador o practicante
-    según el usuario logueado.
-    """
+  
     return tarima_services.create_tarima(db, payload, current_user)
 
 

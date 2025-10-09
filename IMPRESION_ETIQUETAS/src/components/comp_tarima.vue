@@ -39,25 +39,29 @@
         <input v-model="claveProducto" type="text" class="crud-input" placeholder="Clave del producto" />
       </div>
 
-      <!-- Dimensiones solo si es Estafeta -->
-      <div v-if="paqueteriaSeleccionada === 'Estafeta'" class="form-field">
-        <label class="crud-label">Ancho (cm)</label>
-        <input v-model.number="ancho" type="number" min="0" class="crud-input" placeholder="Ej: 120" />
-      </div>
-      <div v-if="paqueteriaSeleccionada === 'Estafeta'" class="form-field">
-        <label class="crud-label">Largo (cm)</label>
-        <input v-model.number="largo" type="number" min="0" class="crud-input" placeholder="Ej: 80" />
-      </div>
-      <div v-if="paqueteriaSeleccionada === 'Estafeta'" class="form-field">
-        <label class="crud-label">Alto (cm)</label>
-        <input v-model.number="alto" type="number" min="0" class="crud-input" placeholder="Ej: 150" />
-      </div>
-
-      <!-- Peso -->
-      <div class="form-field">
-        <label class="crud-label">Peso (kg)</label>
-        <input v-model.number="peso" type="number" min="0" step="0.01" class="crud-input" placeholder="Ej: 12.5" />
-      </div>
+      <!-- Campos solo para Estafeta y Paquetexpress -->
+      <template v-if="requiereDimensiones">
+        <div class="form-field">
+          <label class="crud-label">Ancho (cm)</label>
+          <input v-model.number="ancho" type="number" min="0" class="crud-input" placeholder="Ej: 120" />
+        </div>
+        <div class="form-field">
+          <label class="crud-label">Largo (cm)</label>
+          <input v-model.number="largo" type="number" min="0" class="crud-input" placeholder="Ej: 80" />
+        </div>
+        <div class="form-field">
+          <label class="crud-label">Alto (cm)</label>
+          <input v-model.number="alto" type="number" min="0" class="crud-input" placeholder="Ej: 150" />
+        </div>
+        <div class="form-field">
+          <label class="crud-label">Peso (kg)</label>
+          <input v-model.number="peso" type="number" min="0" step="0.01" class="crud-input" placeholder="Ej: 12.5" />
+        </div>
+        <div class="form-field">
+          <label class="crud-label">Peso Volumétrico (kg)</label>
+          <input :value="pesoVolumetrico.toFixed(2)" type="number" disabled class="crud-input bg-gray-100" />
+        </div>
+      </template>
     </div>
 
     <!-- PIEZAS POR TARIMA -->
@@ -105,6 +109,17 @@ export default {
     totalPiezas() {
       return this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
     },
+    requiereDimensiones() {
+      return (
+        this.paqueteriaSeleccionada === "Estafeta" ||
+        this.paqueteriaSeleccionada === "Paquetexpress"
+      );
+    },
+    pesoVolumetrico() {
+      if (!this.requiereDimensiones) return 0;
+      const pv = (this.ancho * this.largo * this.alto) / 5000;
+      return isNaN(pv) ? 0 : pv;
+    },
   },
   methods: {
     async imprimir() {
@@ -117,7 +132,13 @@ Factura: ${this.factura}
 Número de Tarimas: ${this.numTarimas}
 Tipo de Embalaje: ${this.tipoEmbalaje}
 Clave Producto: ${this.claveProducto}
+${this.requiereDimensiones ? `
+Ancho: ${this.ancho} cm
+Largo: ${this.largo} cm
+Alto: ${this.alto} cm
 Peso: ${this.peso} kg
+Peso Volumétrico: ${this.pesoVolumetrico.toFixed(2)} kg
+` : ""}
 Total piezas: ${this.totalPiezas}
 `;
 
@@ -125,13 +146,12 @@ Total piezas: ${this.totalPiezas}
         const res = await fetch("http://127.0.0.1:8000/imprimir/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contenido })
+          body: JSON.stringify({ contenido }),
         });
 
         const data = await res.json();
         if (data.status === "ok") alert("Se envió a imprimir correctamente");
         else alert("Error al imprimir: " + data.message);
-
       } catch (err) {
         console.error(err);
         alert("Ocurrió un error al enviar la impresión");
@@ -151,50 +171,54 @@ Total piezas: ${this.totalPiezas}
       this.piezas = [];
     },
 
-async guardarDatos() {
-  if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada || !this.claveProducto) {
-    return alert("Completa todos los campos obligatorios");
-  }
+    async guardarDatos() {
+      if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada || !this.claveProducto) {
+        return alert("Completa todos los campos obligatorios");
+      }
 
-  try {
-    const token = localStorage.getItem("token");
+      try {
+        const token = localStorage.getItem("token");
 
-    const payload = {
-      paqueteria: String(this.paqueteriaSeleccionada),
-      numero_factura: String(this.factura),
-      numero_tarimas: Number(this.numTarimas) || 0,
-      tipo_embalaje: Number(this.tipoEmbalaje),
-      cantidad_piezas: this.totalPiezas,
-      clave_producto: String(this.claveProducto),
-      ancho: Number(this.ancho) || 0,
-      alto: Number(this.alto) || 0,
-      largo: Number(this.largo) || 0,
-      peso: Number(this.peso) || 0
-    };
+        const payload = {
+          nombre_user_practicante: "string",
+          nombre_user_coordinador: "string",
+          n_facturas: this.factura,
+          n_tarimas: Number(this.numTarimas) || 0,
+          paqueteria: this.paqueteriaSeleccionada,
+          t_embalaje: Number(this.tipoEmbalaje),
+          clave_producto: this.claveProducto,
+          cantidad_piezas: this.totalPiezas,
+          ancho: this.requiereDimensiones ? Number(this.ancho) : 0,
+          largo: this.requiereDimensiones ? Number(this.largo) : 0,
+          alto: this.requiereDimensiones ? Number(this.alto) : 0,
+          peso: this.requiereDimensiones ? Number(this.peso) : 0,
+          peso_volumetrico: this.requiereDimensiones ? Number(this.pesoVolumetrico.toFixed(2)) : 0,
+          practicante_id: 0,
+          coordinador_id: 0,
+        };
 
-    const response = await fetch('http://127.0.0.1:8000/tarimas/?role=coordinador', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'token': token
-      },
-      body: JSON.stringify(payload)
-    });
+        const response = await fetch("http://127.0.0.1:8000/tarimas/tarimas/?role=coordinador", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            token: token,
+          },
+          body: JSON.stringify(payload),
+        });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Error en API:", errorData);
-      throw new Error("Error al guardar en la base de datos");
-    }
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Error en API:", errorData);
+          throw new Error("Error al guardar en la base de datos");
+        }
 
-    alert("Datos guardados correctamente");
-    this.reiniciar();
-  } catch (err) {
-    console.error(err);
-    alert("Ocurrió un error al guardar los datos");
-  }
-}
-
+        alert("Datos guardados correctamente");
+        this.reiniciar();
+      } catch (err) {
+        console.error(err);
+        alert("Ocurrió un error al guardar los datos");
+      }
+    },
   },
 };
 </script>
@@ -212,4 +236,5 @@ async guardarDatos() {
 .btn-print { background: #126330; color: white; }
 .btn-reset { background: #cd981c; color: white; }
 .btn-save { background: #2559ac; color: white; }
+.bg-gray-100 { background: #f3f4f6; }
 </style>

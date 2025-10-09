@@ -1,13 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException 
 from sqlalchemy.orm import Session
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 from app.db.database import get_db
 from app.db.models.caja import Caja
 from app.db.models.tarima import Tarima
 from app.db.models.enums import PaqueteriaEnum, TipoEmbalajeEnum
-from app.db.models.user_coordinador import UserCoordinador
-from app.db.models.user_practicante import UserPracticante
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/registros", tags=["Registros"])
@@ -15,19 +13,15 @@ router = APIRouter(prefix="/registros", tags=["Registros"])
 # ------------------------------------------------------------------
 # ✅ GET: Obtener todos los registros (Cajas y Tarimas)
 # ------------------------------------------------------------------
-
 @router.get("/")
 def obtener_registros(db: Session = Depends(get_db)):
-    result = []
+    registros = []
 
-    # ----------------------
-    # Cajas
-    # ----------------------
+    # 🔹 Obtener cajas
     cajas = db.query(Caja).all()
     for c in cajas:
         usuario = c.nombre_user_coordinador or c.nombre_user_practicante or "Desconocido"
-
-        result.append({
+        registros.append({
             "id": c.id,
             "nombre_usuario": usuario,
             "factura": c.n_facturas,
@@ -37,65 +31,17 @@ def obtener_registros(db: Session = Depends(get_db)):
             "clave_producto": c.clave_producto,
             "tipo_pedido": "Caja",
             "fecha_creacion": c.fecha_hora,
-            "acciones": {"editar": f"/caja/{c.id}", "eliminar": f"/caja/{c.id}"}
-        })
-
-    # ----------------------
-    # Tarimas
-    # ----------------------
-    tarimas = db.query(Tarima).all()
-    for t in tarimas:
-        usuario = t.coordinador_nombre or t.practicante_nombre or "Desconocido"
-
-        result.append({
-            "id": t.tarima_id,
-            "nombre_usuario": usuario,
-            "factura": t.numero_factura,
-            "cantidad": t.cantidad_piezas,
-            "tipo_embalaje": t.tipo_embalaje.value if t.tipo_embalaje else None,
-            "paqueteria": t.paqueteria.value if t.paqueteria else None,
-            "clave_producto": t.clave_producto,
-            "tipo_pedido": "Tarima",
-            "fecha_creacion": t.fecha_creacion,
-            "acciones": {"editar": f"/tarima/{t.tarima_id}", "eliminar": f"/tarima/{t.tarima_id}"}
-        })
-
-    # Ordenar por fecha
-    result.sort(key=lambda x: x["fecha_creacion"])
-    return result
-
-    registros = []
-
-    # 🔹 Obtener cajas
-    cajas = db.query(Caja).all()
-    for c in cajas:
-        usuario = "Desconocido"
-        if c.coordinador:
-            usuario = c.coordinador.nombre
-        elif c.practicante:
-            usuario = c.practicante.nombre
-
-        registros.append({
-            "id": c.id,
-            "nombre_usuario": usuario,
-            "factura": c.numero_factura,
-            "cantidad": c.cantidad_piezas,
-            "tipo_embalaje": c.tipo_embalaje.value if c.tipo_embalaje else None,
-            "paqueteria": c.paqueteria.value if c.paqueteria else None,
-            "clave_producto": c.clave_producto,
-            "tipo_pedido": "Caja",
-            "fecha_creacion": c.fecha_creacion,
+            "largo": c.largo,
+            "ancho": c.ancho,
+            "alto": c.alto,
+            "peso": c.peso,
+            "peso_volumetrico": c.peso_volumetrico
         })
 
     # 🔹 Obtener tarimas
     tarimas = db.query(Tarima).all()
     for t in tarimas:
-        usuario = "Desconocido"
-        if t.coordinador:
-            usuario = t.coordinador.nombre
-        elif t.practicante:
-            usuario = t.practicante.nombre
-
+        usuario = t.coordinador_nombre or t.practicante_nombre or "Desconocido"
         registros.append({
             "id": t.tarima_id,
             "nombre_usuario": usuario,
@@ -106,9 +52,14 @@ def obtener_registros(db: Session = Depends(get_db)):
             "clave_producto": t.clave_producto,
             "tipo_pedido": "Tarima",
             "fecha_creacion": t.fecha_creacion,
+            "largo": t.largo,
+            "ancho": t.ancho,
+            "alto": t.alto,
+            "peso": t.peso,
+            "peso_volumetrico": t.peso_volumetrico
         })
 
-    # 🔹 Ordenar por fecha más reciente
+    # Ordenar por fecha más reciente
     registros.sort(key=lambda x: x["fecha_creacion"], reverse=True)
     return registros
 
@@ -142,6 +93,11 @@ class CajaUpdate(BaseModel):
     cantidad_piezas: Optional[int]
     clave_producto: Optional[str]
     tipo_embalaje: Optional[str]
+    largo: Optional[float]
+    ancho: Optional[float]
+    alto: Optional[float]
+    peso: Optional[float]
+    peso_volumetrico: Optional[float]
 
 @router.put("/caja/{caja_id}")
 def editar_caja(caja_id: int, data: CajaUpdate, db: Session = Depends(get_db)):
@@ -149,13 +105,11 @@ def editar_caja(caja_id: int, data: CajaUpdate, db: Session = Depends(get_db)):
     if not caja:
         raise HTTPException(status_code=404, detail="Caja no encontrada")
 
-    # Validar enums
     if data.paqueteria:
         caja.paqueteria = PaqueteriaEnum(data.paqueteria)
     if data.tipo_embalaje:
         caja.tipo_embalaje = TipoEmbalajeEnum(data.tipo_embalaje)
 
-    # Actualizar otros campos
     for field, value in data.dict(exclude_unset=True).items():
         if field not in ["paqueteria", "tipo_embalaje"]:
             setattr(caja, field, value)
@@ -174,6 +128,11 @@ class TarimaUpdate(BaseModel):
     cantidad_piezas: Optional[int]
     clave_producto: Optional[str]
     tipo_embalaje: Optional[str]
+    largo: Optional[float]
+    ancho: Optional[float]
+    alto: Optional[float]
+    peso: Optional[float]
+    peso_volumetrico: Optional[float]
 
 @router.put("/tarima/{tarima_id}")
 def editar_tarima(tarima_id: int, data: TarimaUpdate, db: Session = Depends(get_db)):

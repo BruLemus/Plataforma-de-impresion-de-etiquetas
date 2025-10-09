@@ -37,6 +37,11 @@
           <th>Tipo Embalaje</th>
           <th>Paquetería</th>
           <th>Clave Producto</th>
+          <th>Largo</th>
+          <th>Ancho</th>
+          <th>Alto</th>
+          <th>Peso</th>
+          <th>Peso Volumétrico</th>
           <th>Tipo Pedido</th>
           <th>Fecha Creación</th>
           <th>Acciones</th>
@@ -44,12 +49,17 @@
       </thead>
       <tbody>
         <tr v-for="registro in historialFiltrado" :key="registro.tipo_pedido + registro.id">
-          <td>{{ registro.usuario }}</td>
-          <td>{{ registro.numero_factura }}</td>
-          <td>{{ registro.cantidad_piezas }}</td>
+          <td>{{ registro.nombre_usuario }}</td>
+          <td>{{ registro.factura }}</td>
+          <td>{{ registro.cantidad }}</td>
           <td>{{ registro.tipo_embalaje }}</td>
           <td>{{ registro.paqueteria }}</td>
           <td>{{ registro.clave_producto }}</td>
+          <td>{{ registro.largo }}</td>
+          <td>{{ registro.ancho }}</td>
+          <td>{{ registro.alto }}</td>
+          <td>{{ registro.peso }}</td>
+          <td>{{ registro.peso_volumetrico }}</td>
           <td>
             <span :class="registro.tipo_pedido === 'Caja' ? 'badge-caja' : 'badge-tarima'">
               {{ registro.tipo_pedido }}
@@ -74,17 +84,16 @@ import autoTable from "jspdf-autotable";
 
 export default {
   name: "CompHistorial",
- data() {
-  return {
-    historial: [],
-    busqueda: "",
-    filtroTipo: "Todos",
-    fechaInicio: "",
-    fechaFin: "",
-    opcionesPaqueteria: ["Paquetexpress","Estafeta","DHL","FedEx","UPS","MercadoLibre"], 
-    opcionesTipoEmbalaje: ["1","2","3","4","5"], 
-  };
-
+  data() {
+    return {
+      historial: [],
+      busqueda: "",
+      filtroTipo: "Todos",
+      fechaInicio: "",
+      fechaFin: "",
+      opcionesPaqueteria: ["Paquetexpress","Estafeta","DHL","FedEx","UPS","MercadoLibre"], 
+      opcionesTipoEmbalaje: ["1","2","3","4","5"], 
+    };
   },
   created() {
     this.fetchHistorial();
@@ -94,8 +103,8 @@ export default {
       return this.historial.filter((r) => {
         const texto = this.busqueda.toLowerCase();
         const coincideBusqueda =
-          r.usuario?.toLowerCase().includes(texto) ||
-          r.numero_factura?.toLowerCase().includes(texto) ||
+          r.nombre_usuario?.toLowerCase().includes(texto) ||
+          r.factura?.toLowerCase().includes(texto) ||
           r.clave_producto?.toLowerCase().includes(texto) ||
           new Date(r.fecha_creacion).toLocaleString().toLowerCase().includes(texto);
 
@@ -117,7 +126,7 @@ export default {
     async fetchHistorial() {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://127.0.0.1:8000/historial/", {
+        const response = await axios.get("http://127.0.0.1:8000/historial/registros/", {
           headers: { Authorization: `Bearer ${token}` },
         });
         this.historial = response.data;
@@ -130,12 +139,17 @@ export default {
     exportarExcel() {
       const ws = XLSX.utils.json_to_sheet(
         this.historialFiltrado.map(r => ({
-          Usuario: r.usuario,
-          Factura: r.numero_factura,
-          Cantidad: r.cantidad_piezas,
+          Usuario: r.nombre_usuario,
+          Factura: r.factura,
+          Cantidad: r.cantidad,
           "Tipo Embalaje": r.tipo_embalaje,
           Paquetería: r.paqueteria,
           "Clave Producto": r.clave_producto,
+          Largo: r.largo,
+          Ancho: r.ancho,
+          Alto: r.alto,
+          Peso: r.peso,
+          "Peso Volumétrico": r.peso_volumetrico,
           "Tipo Pedido": r.tipo_pedido,
           "Fecha Creación": new Date(r.fecha_creacion).toLocaleString(),
         }))
@@ -150,15 +164,21 @@ export default {
       doc.text("Historial de Registros", 14, 10);
       autoTable(doc, {
         head: [[
-          "Usuario","Factura","Cantidad","Tipo Embalaje","Paquetería","Clave Producto","Tipo Pedido","Fecha Creación"
+          "Usuario","Factura","Cantidad","Tipo Embalaje","Paquetería","Clave Producto",
+          "Largo","Ancho","Alto","Peso","Peso Volumétrico","Tipo Pedido","Fecha Creación"
         ]],
         body: this.historialFiltrado.map(r => [
-          r.usuario,
-          r.numero_factura,
-          r.cantidad_piezas,
+          r.nombre_usuario,
+          r.factura,
+          r.cantidad,
           r.tipo_embalaje,
           r.paqueteria,
           r.clave_producto,
+          r.largo,
+          r.ancho,
+          r.alto,
+          r.peso,
+          r.peso_volumetrico,
           r.tipo_pedido,
           new Date(r.fecha_creacion).toLocaleString(),
         ]),
@@ -167,14 +187,14 @@ export default {
     },
 
     async eliminarRegistro(registro) {
-      if (!confirm(`¿Eliminar ${registro.tipo_pedido} ${registro.numero_factura}?`)) return;
+      if (!confirm(`¿Eliminar ${registro.tipo_pedido} ${registro.factura}?`)) return;
 
       try {
         const token = localStorage.getItem("token");
         const url =
           registro.tipo_pedido === "Caja"
-            ? `http://127.0.0.1:8000/historial/caja/${registro.id}`
-            : `http://127.0.0.1:8000/historial/tarima/${registro.id}`;
+            ? `http://127.0.0.1:8000/historial/registros/caja/${registro.id}`
+            : `http://127.0.0.1:8000/historial/registros/tarima/${registro.id}`;
 
         await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
         this.fetchHistorial();
@@ -184,75 +204,74 @@ export default {
       }
     },
 
-async editarRegistro(registro) {
-  const body = {};
+    async editarRegistro(registro) {
+      const body = {};
 
-  // Paquetería
-  const opcionesPaqueteria = [
-    "Paquetexpress", "Estafeta", "DHL", "FedEx", "UPS", "MercadoLibre"
-  ];
-  let nuevoPaquete = prompt(
-    `Seleccione Paquetería: ${opcionesPaqueteria.join(", ")}`,
-    registro.paqueteria || ""
-  );
-  if (nuevoPaquete && opcionesPaqueteria.includes(nuevoPaquete)) {
-    body.paqueteria = nuevoPaquete;
-  }
-
-  // Tipo de embalaje
-  const opcionesEmbalaje = [1,2,3,4,5];
-  let nuevoEmbalaje = prompt(
-    `Seleccione Tipo de Embalaje: ${opcionesEmbalaje.join(", ")}`,
-    registro.tipo_embalaje || ""
-  );
-  const numEmbalaje = Number(nuevoEmbalaje);
-  if (!isNaN(numEmbalaje) && opcionesEmbalaje.includes(numEmbalaje)) {
-    body.tipo_embalaje = numEmbalaje;
-  }
-
-  // Otros campos
-  const campos = [
-    { key: "numero_factura", label: "Número de factura" },
-    { key: "cantidad_piezas", label: "Cantidad de piezas" },
-    { key: "clave_producto", label: "Clave de producto" }
-  ];
-  for (const campo of campos) {
-    const valorActual = registro[campo.key] ?? "";
-    let nuevoValor = prompt(`Ingrese nuevo valor para ${campo.label}:`, valorActual);
-    if (nuevoValor !== null && nuevoValor !== valorActual) {
-      if (campo.key === "cantidad_piezas") {
-        const num = Number(nuevoValor);
-        if (!isNaN(num)) body[campo.key] = num;
-        else { alert("Cantidad de piezas debe ser un número válido"); return; }
-      } else if (nuevoValor.trim() !== "") {
-        body[campo.key] = nuevoValor;
+      // Paquetería
+      let nuevoPaquete = prompt(
+        `Seleccione Paquetería: ${this.opcionesPaqueteria.join(", ")}`,
+        registro.paqueteria || ""
+      );
+      if (nuevoPaquete && this.opcionesPaqueteria.includes(nuevoPaquete)) {
+        body.paqueteria = nuevoPaquete;
       }
-    }
-  }
 
-  if (Object.keys(body).length === 0) return; // nada que actualizar
+      // Tipo de embalaje
+      let nuevoEmbalaje = prompt(
+        `Seleccione Tipo de Embalaje: ${this.opcionesTipoEmbalaje.join(", ")}`,
+        registro.tipo_embalaje || ""
+      );
+      const numEmbalaje = Number(nuevoEmbalaje);
+      if (!isNaN(numEmbalaje) && this.opcionesTipoEmbalaje.includes(nuevoEmbalaje)) {
+        body.tipo_embalaje = nuevoEmbalaje;
+      }
 
-  try {
-    const token = localStorage.getItem("token");
-    const url = registro.tipo_pedido === "Caja"
-      ? `http://127.0.0.1:8000/historial/caja/${registro.id}`
-      : `http://127.0.0.1:8000/historial/tarima/${registro.id}`;
-    await axios.put(url, body, { headers: { Authorization: `Bearer ${token}` } });
-    this.fetchHistorial(); // recarga la tabla
-  } catch (err) {
-    console.error("Error al editar:", err);
-    alert("No se pudo editar el registro");
-  }
-},
+      // Otros campos
+      const campos = [
+        { key: "factura", label: "Número de factura" },
+        { key: "cantidad", label: "Cantidad de piezas" },
+        { key: "clave_producto", label: "Clave de producto" },
+        { key: "largo", label: "Largo" },
+        { key: "ancho", label: "Ancho" },
+        { key: "alto", label: "Alto" },
+        { key: "peso", label: "Peso" },
+        { key: "peso_volumetrico", label: "Peso Volumétrico" }
+      ];
 
+      for (const campo of campos) {
+        const valorActual = registro[campo.key] ?? "";
+        let nuevoValor = prompt(`Ingrese nuevo valor para ${campo.label}:`, valorActual);
+        if (nuevoValor !== null && nuevoValor !== valorActual) {
+          if (["cantidad","largo","ancho","alto","peso","peso_volumetrico"].includes(campo.key)) {
+            const num = Number(nuevoValor);
+            if (!isNaN(num)) body[campo.key] = num;
+            else { alert(`${campo.label} debe ser un número válido`); return; }
+          } else if (nuevoValor.trim() !== "") {
+            body[campo.key] = nuevoValor;
+          }
+        }
+      }
 
+      if (Object.keys(body).length === 0) return;
 
+      try {
+        const token = localStorage.getItem("token");
+        const url =
+          registro.tipo_pedido === "Caja"
+            ? `http://127.0.0.1:8000/historial/registros/caja/${registro.id}`
+            : `http://127.0.0.1:8000/historial/registros/tarima/${registro.id}`;
+        await axios.put(url, body, { headers: { Authorization: `Bearer ${token}` } });
+        this.fetchHistorial();
+      } catch (err) {
+        console.error("Error al editar:", err);
+        alert("No se pudo editar el registro");
+      }
+    },
   },
 };
 </script>
 
 <style scoped>
-/* Mantengo tus estilos originales, puedes personalizar colores y tamaños */
 .crud-card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
 .crud-subtitle { font-size: 28px; font-weight: 700; color: #1f618d; margin-bottom: 20px; border-left: 6px solid #2980b9; padding-left: 12px; }
 .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
@@ -267,4 +286,6 @@ async editarRegistro(registro) {
 .btn { padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; border: none; }
 .btn-excel { background: #27ae60; color: white; }
 .btn-pdf { background: #c0392b; color: white; }
+.btn-edit { background: #2980b9; color: white; margin-right: 4px; }
+.btn-delete { background: #c0392b; color: white; }
 </style>

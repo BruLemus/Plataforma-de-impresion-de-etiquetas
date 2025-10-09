@@ -72,12 +72,18 @@ def update_caja(db: Session, caja_id: int, update_data: dict) -> Optional[Caja]:
     db_caja = db.query(Caja).filter(Caja.id == caja_id).first()
     if not db_caja:
         return None
+
+    # Solo permitir actualizar estos campos
+    campos_permitidos = ["numero_factura", "paqueteria", "cantidad_piezas", "clave_producto", "tipo_embalaje"]
+
     for key, value in update_data.items():
-        if hasattr(db_caja, key):
+        if key in campos_permitidos and hasattr(db_caja, key):
             setattr(db_caja, key, value)
+
     db.commit()
     db.refresh(db_caja)
     return db_caja
+
 
 
 def delete_caja(db: Session, caja_id: int) -> bool:

@@ -52,7 +52,7 @@ def get_current_coordinator(
 # 🔹 Obtener usuario coordinador o practicante logueado
 def get_current_user(
     role: str,
-    token: str = Header(None),  # Practicante no necesita token
+    token: str = Header,  
     db: Session = Depends(get_db)
 ):
     """
