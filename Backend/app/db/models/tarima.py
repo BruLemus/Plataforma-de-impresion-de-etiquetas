@@ -13,8 +13,16 @@ class TipoEmbalajeEnum(int, enum.Enum):
 
 class Tarima(Base):
     __tablename__ = "tarimas"
-
+    #relaciones con usuarios
+    
     id = Column(Integer, primary_key=True, index=True)
+     
+    coordinador_id = Column(Integer, ForeignKey("user_coordinadores.id"), nullable=True)
+    practicante_id = Column(Integer, ForeignKey("user_practicantes.user_id"), nullable=True)
+
+    # Campos solicitados
+    nombre_user_practicante = Column(String(255), nullable=True)
+    nombre_user_coordinador = Column(String(255), nullable=True)
     numero_facturas = Column(String(50), nullable=False)
     numero_tarimas = Column(Integer, nullable=False)
     tipo_embalaje = Column(Enum(TipoEmbalajeEnum), nullable=False)
@@ -26,14 +34,11 @@ class Tarima(Base):
     alto = Column(Float, default=0)
     peso = Column(Float, default=0)
     peso_volumetrico = Column(Float, default=0)
-    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
-    fecha_actualizacion = Column(DateTime(timezone=True), onupdate=func.now())
-
+    
+    # Fecha y hora de creación/registro
+    fecha_hora = Column(DateTime(timezone=True), server_default=func.now())
     # Relaciones con usuarios
-    coordinador_id = Column(Integer, ForeignKey("user_coordinadores.id"), nullable=True)
-    practicante_id = Column(Integer, ForeignKey("user_practicantes.user_id"), nullable=True)
-    coordinador_nombre = Column(String(255), nullable=True)
-    practicante_nombre = Column(String(255), nullable=True)
+   
 
     # Relaciones ORM
     coordinador = relationship("UserCoordinador", back_populates="tarimas")

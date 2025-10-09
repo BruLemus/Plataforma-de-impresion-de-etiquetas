@@ -5,7 +5,9 @@ from app.db.models.tarima import TipoEmbalajeEnum
 from app.db.models.enums import PaqueteriaEnum
 from datetime import datetime
 
-class TarimaCreate(BaseModel):
+class TarimaBase(BaseModel):
+    nombre_user_practicante: Optional[str] = None
+    nombre_user_coordinador: Optional[str] = None
     numero_facturas: str
     numero_tarimas: int
     tipo_embalaje: TipoEmbalajeEnum
@@ -18,38 +20,15 @@ class TarimaCreate(BaseModel):
     peso: Optional[float] = 0
     peso_volumetrico: Optional[float] = 0
 
-class TarimaUpdate(BaseModel):
-    numero_facturas: Optional[str]
-    numero_tarimas: Optional[int]
-    tipo_embalaje: Optional[TipoEmbalajeEnum]
-    paqueteria: Optional[PaqueteriaEnum]
-    clave_producto: Optional[str]
-    cantidad_piezas: Optional[int]
-    ancho: Optional[float]
-    largo: Optional[float]
-    alto: Optional[float]
-    peso: Optional[float]
-    peso_volumetrico: Optional[float]
-
-class TarimaResponse(BaseModel):
+class TarimaCreate(TarimaBase):
+    practicante_id: Optional[int] = None
+    coordinador_id: Optional[int] = None
+    
+class TarimaRead(TarimaBase):
     id: int
-    numero_facturas: str
-    numero_tarimas: int
-    tipo_embalaje: TipoEmbalajeEnum
-    paqueteria: PaqueteriaEnum
-    clave_producto: str
-    cantidad_piezas: Optional[int]
-    ancho: Optional[float]
-    largo: Optional[float]
-    alto: Optional[float]
-    peso: Optional[float]
-    peso_volumetrico: Optional[float]
-    coordinador_nombre: Optional[str]
-    practicante_nombre: Optional[str]
-    coordinador_id: Optional[int]
-    practicante_id: Optional[int]
-    fecha_creacion: datetime
-    fecha_actualizacion: Optional[datetime]
+    fecha_hora: datetime
+    practicante_id: Optional[int] = None
+    coordinador_id: Optional[int] = None
 
     class Config:
-        from_orm = True
+        from_attributes = True

@@ -147,14 +147,16 @@ async guardarDatos() {
 
   try {
     const token = localStorage.getItem("token");
-    const user = JSON.parse(localStorage.getItem("user")) || {}; 
-    // Debes guardar en localStorage el objeto user con {id, nombre, role}
+    const user_id = localStorage.getItem("user_id");
+    const username = localStorage.getItem("username");
+    const role = localStorage.getItem("rol"); // "coordinador" o "practicante"
 
+    // 🔹 Construcción del payload
     const payload = {
       numero_facturas: this.factura,
       numero_tarimas: Number(this.numTarimas) || 0,
-      paqueteria: this.paqueteriaSeleccionada, // Debe coincidir con el Enum
       tipo_embalaje: Number(this.tipoEmbalaje),
+      paqueteria: this.paqueteriaSeleccionada,
       clave_producto: this.claveProducto,
       cantidad_piezas: this.totalPiezas,
       ancho: this.requiereDimensiones ? Number(this.ancho) : 0,
@@ -164,13 +166,21 @@ async guardarDatos() {
       peso_volumetrico: this.requiereDimensiones
         ? Number(this.pesoVolumetrico.toFixed(2))
         : 0,
-      practicante_id: user.role === "practicante" ? user.id : null,
-      coordinador_id: user.role === "coordinador" ? user.id : null,
-      nombre_creador: user.nombre || "",
+
+      // 🔹 Estos dos se asignan dinámicamente según el rol
+      practicante_id: role === "Practicante" ? Number(user_id) : null,
+      coordinador_id: role === "Coordinador" ? Number(user_id) : null,
+
+      nombre_user_practicante:
+        role === "Practicante" ? username || "" : "string",
+      nombre_user_coordinador:
+        role === "Coordinador" ? username || "" : "C Bruno",
     };
 
+    console.log("📦 Enviando payload:", payload);
+
     const response = await fetch(
-      `http://127.0.0.1:8000/tarimas/?role=${user.role || "practicante"}`,
+      `http://127.0.0.1:8000/tarimas/?role=${role?.toLowerCase() || "practicante"}`,
       {
         method: "POST",
         headers: {
@@ -191,13 +201,14 @@ async guardarDatos() {
       );
     }
 
-    alert("Datos guardados correctamente");
+    alert("✅ Datos guardados correctamente");
     this.reiniciar();
   } catch (err) {
     console.error(err);
-    alert("Ocurrió un error al guardar los datos");
+    alert("❌ Ocurrió un error al guardar los datos");
   }
 },
+
 
 
     async imprimir() {

@@ -40,7 +40,7 @@ def obtener_registros(db: Session = Depends(get_db)):
     # 🔹 Tarimas
     tarimas = db.query(Tarima).all()
     for t in tarimas:
-        usuario = t.coordinador_nombre or t.practicante_nombre or "Desconocido"
+        usuario = t.nombre_user_coordinador or t.nombre_user_practicante or "Desconocido"
         registros.append({
             "id": t.id,
             "nombre_usuario": usuario,
