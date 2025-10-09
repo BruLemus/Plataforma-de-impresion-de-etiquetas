@@ -1,13 +1,15 @@
+# app/schemas/tarima_schemas.py
 from pydantic import BaseModel
 from typing import Optional
+from app.db.models.tarima import TipoEmbalajeEnum
+from app.db.models.enums import PaqueteriaEnum
 from datetime import datetime
-from app.db.models.tarima import PaqueteriaEnum, TipoEmbalajeEnum
 
-class TarimaBase(BaseModel):
+class TarimaCreate(BaseModel):
     numero_facturas: str
     numero_tarimas: int
-    paqueteria: PaqueteriaEnum
     tipo_embalaje: TipoEmbalajeEnum
+    paqueteria: PaqueteriaEnum
     clave_producto: str
     cantidad_piezas: Optional[int] = 0
     ancho: Optional[float] = 0
@@ -15,16 +17,39 @@ class TarimaBase(BaseModel):
     alto: Optional[float] = 0
     peso: Optional[float] = 0
     peso_volumetrico: Optional[float] = 0
-    practicante_id: Optional[int] = None
-    coordinador_id: Optional[int] = None
 
-class TarimaCreate(TarimaBase):
-    pass
+class TarimaUpdate(BaseModel):
+    numero_facturas: Optional[str]
+    numero_tarimas: Optional[int]
+    tipo_embalaje: Optional[TipoEmbalajeEnum]
+    paqueteria: Optional[PaqueteriaEnum]
+    clave_producto: Optional[str]
+    cantidad_piezas: Optional[int]
+    ancho: Optional[float]
+    largo: Optional[float]
+    alto: Optional[float]
+    peso: Optional[float]
+    peso_volumetrico: Optional[float]
 
-class TarimaRead(TarimaBase):
+class TarimaResponse(BaseModel):
     id: int
-    fecha_hora: datetime
-    nombre_creador: Optional[str] = None
+    numero_facturas: str
+    numero_tarimas: int
+    tipo_embalaje: TipoEmbalajeEnum
+    paqueteria: PaqueteriaEnum
+    clave_producto: str
+    cantidad_piezas: Optional[int]
+    ancho: Optional[float]
+    largo: Optional[float]
+    alto: Optional[float]
+    peso: Optional[float]
+    peso_volumetrico: Optional[float]
+    coordinador_nombre: Optional[str]
+    practicante_nombre: Optional[str]
+    coordinador_id: Optional[int]
+    practicante_id: Optional[int]
+    fecha_creacion: datetime
+    fecha_actualizacion: Optional[datetime]
 
     class Config:
-        fromm_orm = True
+        from_orm = True
