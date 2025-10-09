@@ -17,11 +17,14 @@
         <option value="Tarima">Tarimas</option>
       </select>
 
+      <!-- Filtro solo por semana -->
       <div class="date-range">
-        <label>De:</label>
-        <input type="date" v-model="fechaInicio" class="date-input" />
-        <label>A:</label>
-        <input type="date" v-model="fechaFin" class="date-input" />
+        <label>Semana:</label>
+        <select v-model="semanaSeleccionada" class="filter-select">
+          <option v-for="w in semanasDisponibles" :key="w" :value="w">
+            Semana {{ w }}
+          </option>
+        </select>
       </div>
 
       <button @click="exportarExcel" class="btn btn-excel">⬇️ Excel</button>
@@ -89,40 +92,52 @@ export default {
       historial: [],
       busqueda: "",
       filtroTipo: "Todos",
-      fechaInicio: "",
-      fechaFin: "",
+      semanaSeleccionada: null,
+      semanasDisponibles: [],
       opcionesPaqueteria: ["Paquetexpress","Estafeta","DHL","FedEx","UPS","MercadoLibre"], 
       opcionesTipoEmbalaje: ["1","2","3","4","5"], 
     };
   },
   created() {
     this.fetchHistorial();
+    this.generarSemanas();
+    this.semanaSeleccionada = this.getWeekNumber(new Date()).week; // selecciona semana actual
   },
   computed: {
     historialFiltrado() {
-      return this.historial.filter((r) => {
+      return this.historial.filter(r => {
         const texto = this.busqueda.toLowerCase();
         const coincideBusqueda =
           r.nombre_usuario?.toLowerCase().includes(texto) ||
           r.factura?.toLowerCase().includes(texto) ||
-          r.clave_producto?.toLowerCase().includes(texto) ||
-          new Date(r.fecha_creacion).toLocaleString().toLowerCase().includes(texto);
+          r.clave_producto?.toLowerCase().includes(texto);
 
-        const coincideTipo =
-          this.filtroTipo === "Todos" || r.tipo_pedido === this.filtroTipo;
+        const coincideTipo = this.filtroTipo === "Todos" || r.tipo_pedido === this.filtroTipo;
 
-        const fechaRegistro = new Date(r.fecha_creacion);
-        const desde = this.fechaInicio ? new Date(this.fechaInicio) : null;
-        const hasta = this.fechaFin ? new Date(this.fechaFin) : null;
-        const coincideFecha =
-          (!desde || fechaRegistro >= desde) &&
-          (!hasta || fechaRegistro <= hasta);
+        let coincideSemana = true;
+        if (this.semanaSeleccionada) {
+          const { week } = this.getWeekNumber(new Date(r.fecha_creacion));
+          coincideSemana = week === this.semanaSeleccionada;
+        }
 
-        return coincideBusqueda && coincideTipo && coincideFecha;
+        return coincideBusqueda && coincideTipo && coincideSemana;
       });
     },
   },
   methods: {
+    getWeekNumber(date) {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+      return { year: d.getUTCFullYear(), week: weekNo };
+    },
+
+    generarSemanas() {
+      this.semanasDisponibles = Array.from({length: 52}, (_, i) => i + 1);
+    },
+
     async fetchHistorial() {
       try {
         const token = localStorage.getItem("token");
@@ -188,14 +203,12 @@ export default {
 
     async eliminarRegistro(registro) {
       if (!confirm(`¿Eliminar ${registro.tipo_pedido} ${registro.factura}?`)) return;
-
       try {
         const token = localStorage.getItem("token");
         const url =
           registro.tipo_pedido === "Caja"
             ? `http://127.0.0.1:8000/historial/registros/caja/${registro.id}`
             : `http://127.0.0.1:8000/historial/registros/tarima/${registro.id}`;
-
         await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
         this.fetchHistorial();
       } catch (err) {
@@ -207,26 +220,19 @@ export default {
     async editarRegistro(registro) {
       const body = {};
 
-      // Paquetería
       let nuevoPaquete = prompt(
         `Seleccione Paquetería: ${this.opcionesPaqueteria.join(", ")}`,
         registro.paqueteria || ""
       );
-      if (nuevoPaquete && this.opcionesPaqueteria.includes(nuevoPaquete)) {
-        body.paqueteria = nuevoPaquete;
-      }
+      if (nuevoPaquete && this.opcionesPaqueteria.includes(nuevoPaquete)) body.paqueteria = nuevoPaquete;
 
-      // Tipo de embalaje
       let nuevoEmbalaje = prompt(
         `Seleccione Tipo de Embalaje: ${this.opcionesTipoEmbalaje.join(", ")}`,
         registro.tipo_embalaje || ""
       );
       const numEmbalaje = Number(nuevoEmbalaje);
-      if (!isNaN(numEmbalaje) && this.opcionesTipoEmbalaje.includes(nuevoEmbalaje)) {
-        body.tipo_embalaje = nuevoEmbalaje;
-      }
+      if (!isNaN(numEmbalaje) && this.opcionesTipoEmbalaje.includes(nuevoEmbalaje)) body.tipo_embalaje = nuevoEmbalaje;
 
-      // Otros campos
       const campos = [
         { key: "factura", label: "Número de factura" },
         { key: "cantidad", label: "Cantidad de piezas" },

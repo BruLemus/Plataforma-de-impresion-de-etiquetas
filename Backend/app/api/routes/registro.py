@@ -10,7 +10,7 @@ from pydantic import BaseModel
 router = APIRouter(prefix="/registros", tags=["Registros"])
 
 # -------------------------
-# ✅ GET: Obtener todos los registros
+# ✅ GET: Obtener todos los registros (Cajas + Tarimas)
 # -------------------------
 @router.get("/")
 def obtener_registros(db: Session = Depends(get_db)):
@@ -23,9 +23,9 @@ def obtener_registros(db: Session = Depends(get_db)):
         registros.append({
             "id": c.id,
             "nombre_usuario": usuario,
-            "factura": c.numero_factura,
-            "cantidad": c.cantidad_piezas,
-            "tipo_embalaje": c.tipo_embalaje.value if c.tipo_embalaje else None,
+            "factura": c.n_facturas,
+            "cantidad": c.n_cajas,
+            "tipo_embalaje": c.t_embalaje.value if c.t_embalaje else None,
             "paqueteria": c.paqueteria.value if c.paqueteria else None,
             "clave_producto": c.clave_producto,
             "tipo_pedido": "Caja",
@@ -40,12 +40,12 @@ def obtener_registros(db: Session = Depends(get_db)):
     # 🔹 Tarimas
     tarimas = db.query(Tarima).all()
     for t in tarimas:
-        usuario = t.nombre_creador or "Desconocido"
+        usuario = t.coordinador_nombre or t.practicante_nombre or "Desconocido"
         registros.append({
-            "id": t.tarima_id,
+            "id": t.id,
             "nombre_usuario": usuario,
-            "factura": t.numero_factura,
-            "cantidad": t.cantidad_piezas,
+            "factura": t.numero_facturas,
+            "cantidad": t.numero_tarimas,
             "tipo_embalaje": t.tipo_embalaje.value if t.tipo_embalaje else None,
             "paqueteria": t.paqueteria.value if t.paqueteria else None,
             "clave_producto": t.clave_producto,
@@ -62,6 +62,7 @@ def obtener_registros(db: Session = Depends(get_db)):
     registros.sort(key=lambda x: x["fecha_creacion"], reverse=True)
     return registros
 
+
 # -------------------------
 # 🗑️ DELETE: Eliminar Caja o Tarima
 # -------------------------
@@ -76,21 +77,22 @@ def eliminar_caja(caja_id: int, db: Session = Depends(get_db)):
 
 @router.delete("/tarima/{tarima_id}")
 def eliminar_tarima(tarima_id: int, db: Session = Depends(get_db)):
-    tarima = db.query(Tarima).filter(Tarima.tarima_id == tarima_id).first()
+    tarima = db.query(Tarima).filter(Tarima.id == tarima_id).first()
     if not tarima:
         raise HTTPException(status_code=404, detail="Tarima no encontrada")
     db.delete(tarima)
     db.commit()
     return {"mensaje": "Tarima eliminada correctamente"}
 
+
 # -------------------------
 # ✏️ PUT: Editar Tarima
 # -------------------------
 class TarimaUpdate(BaseModel):
-    numero_factura: Optional[str]
+    numero_facturas: Optional[str]
     paqueteria: Optional[str]
     tipo_embalaje: Optional[int]
-    cantidad_piezas: Optional[int]
+    numero_tarimas: Optional[int]
     clave_producto: Optional[str]
     largo: Optional[float]
     ancho: Optional[float]
@@ -100,7 +102,7 @@ class TarimaUpdate(BaseModel):
 
 @router.put("/tarima/{tarima_id}")
 def editar_tarima(tarima_id: int, data: TarimaUpdate, db: Session = Depends(get_db)):
-    tarima = db.query(Tarima).filter(Tarima.tarima_id == tarima_id).first()
+    tarima = db.query(Tarima).filter(Tarima.id == tarima_id).first()
     if not tarima:
         raise HTTPException(status_code=404, detail="Tarima no encontrada")
 
@@ -118,16 +120,17 @@ def editar_tarima(tarima_id: int, data: TarimaUpdate, db: Session = Depends(get_
     db.refresh(tarima)
     return {"mensaje": "Tarima actualizada correctamente"}
 
+
 # -------------------------
 # ✏️ POST: Crear Tarima
 # -------------------------
 class TarimaCreate(BaseModel):
-    numero_factura: str
+    numero_facturas: str
     numero_tarimas: int
     paqueteria: str
     tipo_embalaje: int
     clave_producto: str
-    cantidad_piezas: int
+    numero_piezas: int
     largo: float = 0
     ancho: float = 0
     alto: float = 0
@@ -137,15 +140,15 @@ class TarimaCreate(BaseModel):
     coordinador_id: Optional[int] = None
     nombre_creador: str
 
-@router.post("/tarimas/")
+@router.post("/tarima/")
 def crear_tarima(payload: TarimaCreate, db: Session = Depends(get_db)):
     tarima = Tarima(
-        numero_factura=payload.numero_factura,
+        numero_facturas=payload.numero_facturas,
         numero_tarimas=payload.numero_tarimas,
         paqueteria=PaqueteriaEnum(payload.paqueteria),
         tipo_embalaje=TipoEmbalajeEnum(payload.tipo_embalaje),
         clave_producto=payload.clave_producto,
-        cantidad_piezas=payload.cantidad_piezas,
+        cantidad_piezas=payload.numero_piezas,
         largo=payload.largo,
         ancho=payload.ancho,
         alto=payload.alto,
@@ -153,7 +156,8 @@ def crear_tarima(payload: TarimaCreate, db: Session = Depends(get_db)):
         peso_volumetrico=payload.peso_volumetrico,
         practicante_id=payload.practicante_id,
         coordinador_id=payload.coordinador_id,
-        nombre_creador=payload.nombre_creador,
+        practicante_nombre=payload.nombre_creador if payload.practicante_id else None,
+        coordinador_nombre=payload.nombre_creador if payload.coordinador_id else None,
         fecha_creacion=datetime.now(),
     )
     db.add(tarima)
