@@ -122,6 +122,84 @@ export default {
     },
   },
   methods: {
+    reiniciar() {
+      this.factura = "";
+      this.numTarimas = 0;
+      this.paqueteriaSeleccionada = "";
+      this.tipoEmbalaje = null;
+      this.claveProducto = "";
+      this.ancho = 0;
+      this.largo = 0;
+      this.alto = 0;
+      this.peso = 0;
+      this.piezas = [];
+    },
+
+async guardarDatos() {
+  if (
+    !this.factura ||
+    !this.tipoEmbalaje ||
+    !this.paqueteriaSeleccionada ||
+    !this.claveProducto
+  ) {
+    return alert("Completa todos los campos obligatorios");
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user")) || {}; 
+    // Debes guardar en localStorage el objeto user con {id, nombre, role}
+
+    const payload = {
+      numero_facturas: this.factura,
+      numero_tarimas: Number(this.numTarimas) || 0,
+      paqueteria: this.paqueteriaSeleccionada, // Debe coincidir con el Enum
+      tipo_embalaje: Number(this.tipoEmbalaje),
+      clave_producto: this.claveProducto,
+      cantidad_piezas: this.totalPiezas,
+      ancho: this.requiereDimensiones ? Number(this.ancho) : 0,
+      largo: this.requiereDimensiones ? Number(this.largo) : 0,
+      alto: this.requiereDimensiones ? Number(this.alto) : 0,
+      peso: this.requiereDimensiones ? Number(this.peso) : 0,
+      peso_volumetrico: this.requiereDimensiones
+        ? Number(this.pesoVolumetrico.toFixed(2))
+        : 0,
+      practicante_id: user.role === "practicante" ? user.id : null,
+      coordinador_id: user.role === "coordinador" ? user.id : null,
+      nombre_creador: user.nombre || "",
+    };
+
+    const response = await fetch(
+      `http://127.0.0.1:8000/tarimas/?role=${user.role || "practicante"}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          token: token,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Error en API:", data);
+      return alert(
+        "Error al guardar en la base de datos: " +
+          (data.detail ? JSON.stringify(data.detail) : data)
+      );
+    }
+
+    alert("Datos guardados correctamente");
+    this.reiniciar();
+  } catch (err) {
+    console.error(err);
+    alert("Ocurrió un error al guardar los datos");
+  }
+},
+
+
     async imprimir() {
       if (!this.numTarimas || this.numTarimas <= 0)
         return alert("No hay etiquetas para imprimir");
@@ -132,13 +210,7 @@ Factura: ${this.factura}
 Número de Tarimas: ${this.numTarimas}
 Tipo de Embalaje: ${this.tipoEmbalaje}
 Clave Producto: ${this.claveProducto}
-${this.requiereDimensiones ? `
-Ancho: ${this.ancho} cm
-Largo: ${this.largo} cm
-Alto: ${this.alto} cm
-Peso: ${this.peso} kg
-Peso Volumétrico: ${this.pesoVolumetrico.toFixed(2)} kg
-` : ""}
+${this.requiereDimensiones ? `Ancho: ${this.ancho} cm\nLargo: ${this.largo} cm\nAlto: ${this.alto} cm\nPeso: ${this.peso} kg\nPeso Volumétrico: ${this.pesoVolumetrico.toFixed(2)} kg\n` : ""}
 Total piezas: ${this.totalPiezas}
 `;
 
@@ -155,68 +227,6 @@ Total piezas: ${this.totalPiezas}
       } catch (err) {
         console.error(err);
         alert("Ocurrió un error al enviar la impresión");
-      }
-    },
-
-    reiniciar() {
-      this.factura = "";
-      this.numTarimas = 0;
-      this.paqueteriaSeleccionada = "";
-      this.tipoEmbalaje = null;
-      this.claveProducto = "";
-      this.ancho = 0;
-      this.largo = 0;
-      this.alto = 0;
-      this.peso = 0;
-      this.piezas = [];
-    },
-
-    async guardarDatos() {
-      if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada || !this.claveProducto) {
-        return alert("Completa todos los campos obligatorios");
-      }
-
-      try {
-        const token = localStorage.getItem("token");
-
-        const payload = {
-          nombre_user_practicante: "string",
-          nombre_user_coordinador: "string",
-          n_facturas: this.factura,
-          n_tarimas: Number(this.numTarimas) || 0,
-          paqueteria: this.paqueteriaSeleccionada,
-          t_embalaje: Number(this.tipoEmbalaje),
-          clave_producto: this.claveProducto,
-          cantidad_piezas: this.totalPiezas,
-          ancho: this.requiereDimensiones ? Number(this.ancho) : 0,
-          largo: this.requiereDimensiones ? Number(this.largo) : 0,
-          alto: this.requiereDimensiones ? Number(this.alto) : 0,
-          peso: this.requiereDimensiones ? Number(this.peso) : 0,
-          peso_volumetrico: this.requiereDimensiones ? Number(this.pesoVolumetrico.toFixed(2)) : 0,
-          practicante_id: 0,
-          coordinador_id: 0,
-        };
-
-        const response = await fetch("http://127.0.0.1:8000/tarimas/tarimas/?role=coordinador", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            token: token,
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Error en API:", errorData);
-          throw new Error("Error al guardar en la base de datos");
-        }
-
-        alert("Datos guardados correctamente");
-        this.reiniciar();
-      } catch (err) {
-        console.error(err);
-        alert("Ocurrió un error al guardar los datos");
       }
     },
   },

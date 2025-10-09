@@ -3,33 +3,28 @@ from typing import Optional
 from datetime import datetime
 from app.db.models.tarima import PaqueteriaEnum, TipoEmbalajeEnum
 
-
 class TarimaBase(BaseModel):
-    nombre_user_practicante: Optional[str] = None
-    nombre_user_coordinador: Optional[str] = None
-    n_facturas: str
-    n_tarimas: int
+    numero_facturas: str
+    numero_tarimas: int
     paqueteria: PaqueteriaEnum
-    t_embalaje: TipoEmbalajeEnum
+    tipo_embalaje: TipoEmbalajeEnum
     clave_producto: str
-    cantidad_piezas: Optional[int] = None
-    ancho: float
-    largo: float
-    alto: float
-    peso: float
-    peso_volumetrico: Optional[float] = None
-
-
-class TarimaCreate(TarimaBase):
+    cantidad_piezas: Optional[int] = 0
+    ancho: Optional[float] = 0
+    largo: Optional[float] = 0
+    alto: Optional[float] = 0
+    peso: Optional[float] = 0
+    peso_volumetrico: Optional[float] = 0
     practicante_id: Optional[int] = None
     coordinador_id: Optional[int] = None
 
+class TarimaCreate(TarimaBase):
+    pass
 
 class TarimaRead(TarimaBase):
     id: int
     fecha_hora: datetime
-    practicante_id: Optional[int] = None
-    coordinador_id: Optional[int] = None
+    nombre_creador: Optional[str] = None
 
     class Config:
-        from_attributes = True
+        fromm_orm = True

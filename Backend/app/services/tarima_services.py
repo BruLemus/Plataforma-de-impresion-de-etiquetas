@@ -4,31 +4,43 @@ from app.db.models.tarima import Tarima
 from app.schemas.tarima import TarimaCreate
 from app.db.models.user_coordinador import UserCoordinador
 from app.db.models.user_practicante import UserPracticante
+from app.db.models.enums import PaqueteriaEnum
 
 
 # -----------------------------
 # CREAR TARIMA CON USUARIO LOGUEADO
 # -----------------------------
 def create_tarima(db: Session, payload: TarimaCreate, current_user) -> Tarima:
+    # Calcular peso volumétrico solo para Estafeta y Paquetexpress
+    peso_vol = 0
+    if payload.paqueteria in [PaqueteriaEnum.ESTAFETA, PaqueteriaEnum.PAQUETEXPRESS, PaqueteriaEnum.FEDEX, PaqueteriaEnum.DHL,  PaqueteriaEnum.UPS, PaqueteriaEnum.MERCADO_LIBRE]:
+        peso_vol = (payload.largo * payload.ancho * payload.alto) / 5000
+
+    coordinador_id = current_user.id if hasattr(current_user, "id") and current_user.__class__.__name__ == "UserCoordinador" else None
+    practicante_id = current_user.user_id if hasattr(current_user, "user_id") and current_user.__class__.__name__ == "UserPracticante" else None
+    nombre_creador = current_user.nombre if hasattr(current_user, "nombre") else "Desconocido"
+
     db_tarima = Tarima(
-        paqueteria=payload.paqueteria,
-        numero_factura=payload.numero_factura,
-        tipo_embalaje=payload.tipo_embalaje,
+        numero_facturas=payload.numero_facturas,
         numero_tarimas=payload.numero_tarimas,
-        cantidad_piezas=payload.cantidad_piezas,
+        tipo_embalaje=payload.tipo_embalaje,
+        paqueteria=payload.paqueteria,
         clave_producto=payload.clave_producto,
-        ancho=payload.ancho or 0,
-        alto=payload.alto or 0,
-        largo=payload.largo or 0,
-        peso=payload.peso or 0,
-        coordinador_nombre=current_user.nombre if isinstance(current_user, UserCoordinador) else None,
-        practicante_nombre=current_user.nombre if isinstance(current_user, UserPracticante) else None,
+        cantidad_piezas=payload.cantidad_piezas or 0,
+        ancho=payload.ancho,
+        largo=payload.largo,
+        alto=payload.alto,
+        peso=payload.peso,
+        peso_volumetrico=peso_vol,
+        coordinador_id=coordinador_id,
+        practicante_id=practicante_id,
+        nombre_creador=nombre_creador
     )
+
     db.add(db_tarima)
     db.commit()
     db.refresh(db_tarima)
     return db_tarima
-
 
 # -----------------------------
 # OBTENER LISTA DE TARIMAS

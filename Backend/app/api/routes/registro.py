@@ -1,32 +1,31 @@
-from fastapi import APIRouter, Depends, HTTPException 
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import Optional
 from app.db.database import get_db
 from app.db.models.caja import Caja
-from app.db.models.tarima import Tarima
-from app.db.models.enums import PaqueteriaEnum, TipoEmbalajeEnum
+from app.db.models.tarima import Tarima, PaqueteriaEnum, TipoEmbalajeEnum
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/registros", tags=["Registros"])
 
-# ------------------------------------------------------------------
-# ✅ GET: Obtener todos los registros (Cajas y Tarimas)
-# ------------------------------------------------------------------
+# -------------------------
+# ✅ GET: Obtener todos los registros
+# -------------------------
 @router.get("/")
 def obtener_registros(db: Session = Depends(get_db)):
     registros = []
 
-    # 🔹 Obtener cajas
+    # 🔹 Cajas
     cajas = db.query(Caja).all()
     for c in cajas:
         usuario = c.nombre_user_coordinador or c.nombre_user_practicante or "Desconocido"
         registros.append({
             "id": c.id,
             "nombre_usuario": usuario,
-            "factura": c.n_facturas,
+            "factura": c.numero_factura,
             "cantidad": c.cantidad_piezas,
-            "tipo_embalaje": c.t_embalaje.value if c.t_embalaje else None,
+            "tipo_embalaje": c.tipo_embalaje.value if c.tipo_embalaje else None,
             "paqueteria": c.paqueteria.value if c.paqueteria else None,
             "clave_producto": c.clave_producto,
             "tipo_pedido": "Caja",
@@ -38,10 +37,10 @@ def obtener_registros(db: Session = Depends(get_db)):
             "peso_volumetrico": c.peso_volumetrico
         })
 
-    # 🔹 Obtener tarimas
+    # 🔹 Tarimas
     tarimas = db.query(Tarima).all()
     for t in tarimas:
-        usuario = t.coordinador_nombre or t.practicante_nombre or "Desconocido"
+        usuario = t.nombre_creador or "Desconocido"
         registros.append({
             "id": t.tarima_id,
             "nombre_usuario": usuario,
@@ -63,9 +62,9 @@ def obtener_registros(db: Session = Depends(get_db)):
     registros.sort(key=lambda x: x["fecha_creacion"], reverse=True)
     return registros
 
-# ------------------------------------------------------------------
+# -------------------------
 # 🗑️ DELETE: Eliminar Caja o Tarima
-# ------------------------------------------------------------------
+# -------------------------
 @router.delete("/caja/{caja_id}")
 def eliminar_caja(caja_id: int, db: Session = Depends(get_db)):
     caja = db.query(Caja).filter(Caja.id == caja_id).first()
@@ -84,50 +83,15 @@ def eliminar_tarima(tarima_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"mensaje": "Tarima eliminada correctamente"}
 
-# ------------------------------------------------------------------
-# ✏️ PUT: Editar Caja
-# ------------------------------------------------------------------
-class CajaUpdate(BaseModel):
-    numero_factura: Optional[str]
-    paqueteria: Optional[str]
-    cantidad_piezas: Optional[int]
-    clave_producto: Optional[str]
-    tipo_embalaje: Optional[str]
-    largo: Optional[float]
-    ancho: Optional[float]
-    alto: Optional[float]
-    peso: Optional[float]
-    peso_volumetrico: Optional[float]
-
-@router.put("/caja/{caja_id}")
-def editar_caja(caja_id: int, data: CajaUpdate, db: Session = Depends(get_db)):
-    caja = db.query(Caja).filter(Caja.id == caja_id).first()
-    if not caja:
-        raise HTTPException(status_code=404, detail="Caja no encontrada")
-
-    if data.paqueteria:
-        caja.paqueteria = PaqueteriaEnum(data.paqueteria)
-    if data.tipo_embalaje:
-        caja.tipo_embalaje = TipoEmbalajeEnum(data.tipo_embalaje)
-
-    for field, value in data.dict(exclude_unset=True).items():
-        if field not in ["paqueteria", "tipo_embalaje"]:
-            setattr(caja, field, value)
-
-    caja.fecha_actualizacion = datetime.now()
-    db.commit()
-    db.refresh(caja)
-    return {"mensaje": "Caja actualizada correctamente"}
-
-# ------------------------------------------------------------------
+# -------------------------
 # ✏️ PUT: Editar Tarima
-# ------------------------------------------------------------------
+# -------------------------
 class TarimaUpdate(BaseModel):
     numero_factura: Optional[str]
     paqueteria: Optional[str]
+    tipo_embalaje: Optional[int]
     cantidad_piezas: Optional[int]
     clave_producto: Optional[str]
-    tipo_embalaje: Optional[str]
     largo: Optional[float]
     ancho: Optional[float]
     alto: Optional[float]
@@ -142,7 +106,7 @@ def editar_tarima(tarima_id: int, data: TarimaUpdate, db: Session = Depends(get_
 
     if data.paqueteria:
         tarima.paqueteria = PaqueteriaEnum(data.paqueteria)
-    if data.tipo_embalaje:
+    if data.tipo_embalaje is not None:
         tarima.tipo_embalaje = TipoEmbalajeEnum(data.tipo_embalaje)
 
     for field, value in data.dict(exclude_unset=True).items():
@@ -153,3 +117,46 @@ def editar_tarima(tarima_id: int, data: TarimaUpdate, db: Session = Depends(get_
     db.commit()
     db.refresh(tarima)
     return {"mensaje": "Tarima actualizada correctamente"}
+
+# -------------------------
+# ✏️ POST: Crear Tarima
+# -------------------------
+class TarimaCreate(BaseModel):
+    numero_factura: str
+    numero_tarimas: int
+    paqueteria: str
+    tipo_embalaje: int
+    clave_producto: str
+    cantidad_piezas: int
+    largo: float = 0
+    ancho: float = 0
+    alto: float = 0
+    peso: float = 0
+    peso_volumetrico: float = 0
+    practicante_id: Optional[int] = None
+    coordinador_id: Optional[int] = None
+    nombre_creador: str
+
+@router.post("/tarimas/")
+def crear_tarima(payload: TarimaCreate, db: Session = Depends(get_db)):
+    tarima = Tarima(
+        numero_factura=payload.numero_factura,
+        numero_tarimas=payload.numero_tarimas,
+        paqueteria=PaqueteriaEnum(payload.paqueteria),
+        tipo_embalaje=TipoEmbalajeEnum(payload.tipo_embalaje),
+        clave_producto=payload.clave_producto,
+        cantidad_piezas=payload.cantidad_piezas,
+        largo=payload.largo,
+        ancho=payload.ancho,
+        alto=payload.alto,
+        peso=payload.peso,
+        peso_volumetrico=payload.peso_volumetrico,
+        practicante_id=payload.practicante_id,
+        coordinador_id=payload.coordinador_id,
+        nombre_creador=payload.nombre_creador,
+        fecha_creacion=datetime.now(),
+    )
+    db.add(tarima)
+    db.commit()
+    db.refresh(tarima)
+    return tarima

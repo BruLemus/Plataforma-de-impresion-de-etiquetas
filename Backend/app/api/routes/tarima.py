@@ -5,23 +5,25 @@ from app.schemas.tarima import TarimaCreate, TarimaRead
 from app.services import tarima_services
 from app.db.database import get_db
 from app.core.security import get_current_user  # Devuelve UserCoordinador o UserPracticante
+from app.schemas.tarima import TarimaCreate, TarimaRead
 
-router = APIRouter(prefix="/tarimas", tags=["Tarimas"])
+router = APIRouter()
 
 
 # -----------------------------
 # CREAR TARIMA
 # -----------------------------
 @router.post("/", response_model=TarimaRead)
-def create_tarima_endpoint(
+def crear_tarima(
     payload: TarimaCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user = Depends(get_current_user)
 ):
-  
-    return tarima_services.create_tarima(db, payload, current_user)
-
-
+    try:
+        tarima = tarima_services.create_tarima(db, payload, current_user)
+        return tarima
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 # -----------------------------
 # LISTAR TARIMAS CON FILTROS OPCIONALES
 # -----------------------------
