@@ -12,6 +12,7 @@
         </h2>
         <div class="user-info">
           🕖 Entrada: <strong v-if="horaEntrada">{{ horaEntrada }}</strong> |
+             <strong v-if="numMesa">{{ numMesa }}</strong> |
           <button class="btn-logout" @click="logout"><i class="fas fa-sign-out-alt"></i> Salir</button>
         </div>
       </div>
@@ -55,6 +56,7 @@
             <label>Contraseña</label>
             <input v-model="editUser.contrasena" type="password" placeholder="Nueva contraseña" />
           </div>
+          
           <div class="crud-actions">
             <button @click="saveUser" class="btn btn-save">
               <i class="fas fa-save"></i> Guardar
@@ -70,7 +72,6 @@
         <section v-if="currentView === 'caja'">
           <div class="crud-card no-print">
             <h2 class="crud-subtitle">Etiquetas por Caja</h2>
-
             <!-- FORMULARIO REORGANIZADO -->
             <div class="etiquetas-container">
               <!-- FILA 1: Datos generales -->
@@ -128,7 +129,7 @@
               </div>
             </div>
 
-            <!-- PIEZAS Y BOTONES (sin cambios) -->
+            <!-- PIEZAS Y BOTONES -->
             <div v-if="numCajas > 0" class="mb-4">
               <h3 class="crud-subtitle">Piezas por Caja</h3>
               <div class="pieces-grid">
@@ -155,7 +156,7 @@
             </div>
           </div>
 
-          <!-- ETIQUETAS DE CAJA (sin cambios) -->
+          <!-- ETIQUETAS DE CAJA -->
           <div class="labels-container print-only" v-if="numCajas > 0">
             <div v-for="n in numCajas" :key="'etiqueta-' + n" class="etiqueta">
               <div class="contenido">
@@ -165,6 +166,7 @@
                 <div class="etiqueta-content">
                   <div class="etiqueta-datos">
                     <div class="dato"><strong>Factura:</strong> {{ factura || '—' }}</div>
+                    <div class="dato"><strong>Mesa:</strong> {{ numMesa || '—' }}</div>
                     <div class="dato"><strong>Caja:</strong> {{ n }} de {{ numCajas }}</div>
                     <div class="dato"><strong>Piezas:</strong> {{ piezas[n-1] || 0 }}</div>
                     <div class="dato"><strong>Peso:</strong> {{ peso || 0 }} kg</div>
@@ -211,9 +213,10 @@ export default {
     return {
       username: localStorage.getItem("username") || "",
       horaEntrada: localStorage.getItem("horaEntrada") || "",
+      numMesa: localStorage.getItem("numMesa") || "",
       currentView: "caja",
       showEditUserModal: false,
-      editUser: { nombre: "", contrasena: "" },
+      editUser: { nombre: "", contrasena: "", numMesa: "" },
       paqueterias: [
         { nombre: "Paquetexpress", logo: new URL("@/assets/pExp.png", import.meta.url).href },
         { nombre: "FedEx", logo: new URL("@/assets/fedex.png", import.meta.url).href },
@@ -236,6 +239,7 @@ export default {
     };
   },
   created() {
+    this.getUserInfo();
     if (!this.horaEntrada) {
       const hora = new Date().toLocaleString();
       localStorage.setItem("horaEntrada", hora);
@@ -243,26 +247,28 @@ export default {
     }
   },
   computed: {
-    totalPiezas() {
-      return this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
-    },
-    pesoVolumetrico() {
-      return ((this.anchoCaja * this.altoCaja * this.largoCaja) / 5000) || 0;
-    }
+    totalPiezas() { return this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0); },
+    pesoVolumetrico() { return ((this.anchoCaja * this.altoCaja * this.largoCaja) / 5000) || 0; }
   },
   methods: {
     logout() { localStorage.clear(); this.$router.push("/"); },
     setView(view) { this.currentView = view; },
-    openEditUserModal() { this.showEditUserModal = true; this.editUser.nombre = this.username; },
+    openEditUserModal() {
+      this.showEditUserModal = true;
+      this.editUser.nombre = this.username;
+      this.editUser.numMesa = this.numMesa;
+    },
     closeEditUserModal() { this.showEditUserModal = false; },
     async saveUser() {
       try {
-        const payload = { nombre: this.editUser.nombre, contrasena: this.editUser.contrasena };
+        const payload = { nombre: this.editUser.nombre, contrasena: this.editUser.contrasena, numMesa: this.editUser.numMesa };
         const token = localStorage.getItem("token");
         await axios.put("http://127.0.0.1:8000/user_practicantes/perfil", payload, { headers: token ? { token } : {} });
         alert("Perfil actualizado");
         this.username = this.editUser.nombre;
+        this.numMesa = this.editUser.numMesa;
         localStorage.setItem("username", this.username);
+        localStorage.setItem("numMesa", this.numMesa);
         this.closeEditUserModal();
       } catch (err) {
         console.error(err);
@@ -282,7 +288,7 @@ export default {
       this.peso = 0;
     },
     generateQR(index) {
-      return JSON.stringify({ factura: this.factura, caja: index + 1, piezas: this.piezas[index] || 0, peso: this.peso });
+      return JSON.stringify({ factura: this.factura, caja: index + 1, piezas: this.piezas[index] || 0, peso: this.peso, mesa: this.numMesa });
     },
     async imprimirZebra() { alert("Función de impresión en Zebra"); },
     async imprimirRemoto() { alert("Función de impresión en servidor (ZPL)"); },
@@ -293,6 +299,7 @@ export default {
       try {
         const payload = {
           nombre_user_practicante: this.username,
+          numero_mesa: this.numMesa,
           nombre_user_coordinador: "",
           n_facturas: String(this.factura),
           n_cajas: Number(this.numCajas) || 0,
@@ -327,10 +334,27 @@ export default {
         console.error(err);
         alert("Ocurrió un error al guardar los datos");
       }
+    },
+    async getUserInfo() {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get("http://127.0.0.1:8000/user_practicantes/me", {  headers: { Authorization: `Bearer ${token}` } });
+        if (response.data) {
+          this.username = response.data.username || this.username;
+          this.numMesa = response.data.mesa_trabajo || this.numMesa;
+          localStorage.setItem("username", this.username);
+          localStorage.setItem("numMesa", this.numMesa);
+        }
+        console.log(response.data);
+      } catch (err) {
+        console.error("Error al obtener info del usuario:", err);
+      }
     }
   }
 };
 </script>
+
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');

@@ -102,7 +102,7 @@ export default {
         localStorage.setItem("rol", this.rol);
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("sede", this.sede);
-        localStorage.setItem("user_id", res.data.user_id);
+        localStorage.setItem("user_id", res.data.id);
 
         // Redirigir según rol y sede
         const destino =
