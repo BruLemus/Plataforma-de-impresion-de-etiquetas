@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException 
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import Optional
@@ -59,9 +59,9 @@ def obtener_registros(db: Session = Depends(get_db)):
             "peso_volumetrico": t.peso_volumetrico
         })
 
-    # Ordenar por fecha más reciente
     registros.sort(key=lambda x: x["fecha_creacion"], reverse=True)
     return registros
+
 
 # ------------------------------------------------------------------
 # 🗑️ DELETE: Eliminar Caja o Tarima
@@ -75,6 +75,7 @@ def eliminar_caja(caja_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"mensaje": "Caja eliminada correctamente"}
 
+
 @router.delete("/tarima/{tarima_id}")
 def eliminar_tarima(tarima_id: int, db: Session = Depends(get_db)):
     tarima = db.query(Tarima).filter(Tarima.id == tarima_id).first()
@@ -84,23 +85,29 @@ def eliminar_tarima(tarima_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"mensaje": "Tarima eliminada correctamente"}
 
+
+# ------------------------------------------------------------------
+# ✏️ PUT: Modelos de actualización
+# ------------------------------------------------------------------
+class RegistroUpdate(BaseModel):
+    numero_factura: Optional[str] = None
+    paqueteria: Optional[str] = None
+    cantidad_piezas: Optional[int] = None
+    clave_producto: Optional[str] = None
+    tipo_embalaje: Optional[int] = None
+    largo: Optional[float] = None
+    ancho: Optional[float] = None
+    alto: Optional[float] = None
+    peso: Optional[float] = None
+    peso_volumetrico: Optional[float] = None
+    numero_tarimas: Optional[int] = None  # Solo para Tarimas
+
+
 # ------------------------------------------------------------------
 # ✏️ PUT: Editar Caja
 # ------------------------------------------------------------------
-class CajaUpdate(BaseModel):
-    numero_factura: Optional[str]
-    paqueteria: Optional[str]
-    cantidad_piezas: Optional[int]
-    clave_producto: Optional[str]
-    tipo_embalaje: Optional[str]
-    largo: Optional[float]
-    ancho: Optional[float]
-    alto: Optional[float]
-    peso: Optional[float]
-    peso_volumetrico: Optional[float]
-
 @router.put("/caja/{caja_id}")
-def editar_caja(caja_id: int, data: CajaUpdate, db: Session = Depends(get_db)):
+def editar_caja(caja_id: int, data: RegistroUpdate, db: Session = Depends(get_db)):
     caja = db.query(Caja).filter(Caja.id == caja_id).first()
     if not caja:
         raise HTTPException(status_code=404, detail="Caja no encontrada")
@@ -108,34 +115,24 @@ def editar_caja(caja_id: int, data: CajaUpdate, db: Session = Depends(get_db)):
     if data.paqueteria:
         caja.paqueteria = PaqueteriaEnum(data.paqueteria)
     if data.tipo_embalaje:
-        caja.tipo_embalaje = TipoEmbalajeEnum(data.tipo_embalaje)
+        caja.t_embalaje = TipoEmbalajeEnum(data.tipo_embalaje)
 
     for field, value in data.dict(exclude_unset=True).items():
         if field not in ["paqueteria", "tipo_embalaje"]:
-            setattr(caja, field, value)
+            if hasattr(caja, field):
+                setattr(caja, field, value)
 
     caja.fecha_hora = datetime.now()
     db.commit()
     db.refresh(caja)
     return {"mensaje": "Caja actualizada correctamente"}
 
+
 # ------------------------------------------------------------------
 # ✏️ PUT: Editar Tarima
 # ------------------------------------------------------------------
-class TarimaUpdate(BaseModel):
-    numero_factura: Optional[str]
-    paqueteria: Optional[str]
-    cantidad_piezas: Optional[int]
-    clave_producto: Optional[str]
-    tipo_embalaje: Optional[str]
-    largo: Optional[float]
-    ancho: Optional[float]
-    alto: Optional[float]
-    peso: Optional[float]
-    peso_volumetrico: Optional[float]
-
 @router.put("/tarima/{tarima_id}")
-def editar_tarima(tarima_id: int, data: TarimaUpdate, db: Session = Depends(get_db)):
+def editar_tarima(tarima_id: int, data: RegistroUpdate, db: Session = Depends(get_db)):
     tarima = db.query(Tarima).filter(Tarima.id == tarima_id).first()
     if not tarima:
         raise HTTPException(status_code=404, detail="Tarima no encontrada")
@@ -147,9 +144,45 @@ def editar_tarima(tarima_id: int, data: TarimaUpdate, db: Session = Depends(get_
 
     for field, value in data.dict(exclude_unset=True).items():
         if field not in ["paqueteria", "tipo_embalaje"]:
-            setattr(tarima, field, value)
+            if hasattr(tarima, field):
+                setattr(tarima, field, value)
 
     tarima.fecha_hora = datetime.now()
     db.commit()
     db.refresh(tarima)
     return {"mensaje": "Tarima actualizada correctamente"}
+
+
+# ------------------------------------------------------------------
+# ✏️ PUT: Unificado - Editar Caja o Tarima según tipo
+# ------------------------------------------------------------------
+@router.put("/{tipo}/{registro_id}")
+def editar_registro(tipo: str, registro_id: int, data: RegistroUpdate, db: Session = Depends(get_db)):
+    tipo = tipo.lower()
+    if tipo not in ["caja", "tarima"]:
+        raise HTTPException(status_code=400, detail="Tipo inválido, debe ser 'caja' o 'tarima'")
+
+    modelo = Caja if tipo == "caja" else Tarima
+    registro = db.query(modelo).filter(modelo.id == registro_id).first()
+
+    if not registro:
+        raise HTTPException(status_code=404, detail=f"{tipo.capitalize()} no encontrada")
+
+    # Enums
+    if data.paqueteria:
+        registro.paqueteria = PaqueteriaEnum(data.paqueteria)
+    if data.tipo_embalaje:
+        campo_enum = "t_embalaje" if tipo == "caja" else "tipo_embalaje"
+        setattr(registro, campo_enum, TipoEmbalajeEnum(data.tipo_embalaje))
+
+    # Campos comunes
+    for field, value in data.dict(exclude_unset=True).items():
+        if field not in ["paqueteria", "tipo_embalaje"]:
+            if hasattr(registro, field):
+                setattr(registro, field, value)
+
+    registro.fecha_hora = datetime.now()
+    db.commit()
+    db.refresh(registro)
+
+    return {"mensaje": f"{tipo.capitalize()} actualizada correctamente"}
