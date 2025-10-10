@@ -50,7 +50,7 @@
           <label>Mesa de trabajo:</label>
           <select v-model="nuevoPracticante.mesa_trabajo" class="login-select" required>
             <option disabled value="">Selecciona la mesa</option>
-            <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
+            <option v-for="n in 10" :key="n" :value="`MESA${n}`">MESA{{ n }}</option>
           </select>
         </div>
 
@@ -77,7 +77,7 @@
               <td>
                 <select v-model="p.mesa_trabajo" class="login-select">
                   <option disabled value="">Selecciona la mesa</option>
-                  <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
+                  <option v-for="n in 10" :key="n" :value="`MESA${n}`">MESA{{ n }}</option>
                 </select>
               </td>
               <td class="password-field">
@@ -135,7 +135,6 @@ export default {
           alert("Token inválido o expirado");
           localStorage.removeItem("token");
           window.location.href = "/login";
-          
         }
       }
     };
@@ -146,8 +145,14 @@ export default {
 
     const cargarPracticantes = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:8000/user_practicantes/");
-        practicantes.value = res.data.map(p => ({ ...p, contrasena: "", mostrarContrasena: false }));
+        const res = await axios.get("http://127.0.0.1:8000/user_practicantes/", { headers });
+        // 🔹 Ajuste: normalizamos mesa_trabajo para que siempre coincida con el Enum
+        practicantes.value = res.data.map(p => ({
+          ...p,
+          contrasena: "",
+          mostrarContrasena: false,
+          mesa_trabajo: p.mesa_trabajo?.toUpperCase() || "" 
+        }));
       } catch (error) {
         console.error("Error al cargar practicantes:", error);
       }
@@ -155,22 +160,36 @@ export default {
 
     const crearPracticante = async () => {
       try {
-        await axios.post("http://127.0.0.1:8000/user_practicantes/", nuevoPracticante.value);
+        const payload = {
+          ...nuevoPracticante.value,
+          mesa_trabajo: nuevoPracticante.value.mesa_trabajo.toUpperCase() // 🔹 Ajuste
+        };
+
+        await axios.post("http://127.0.0.1:8000/user_practicantes/", payload, { headers });
         alert("Practicante creado correctamente");
+
+        // Limpiar formulario
         nuevoPracticante.value = { nombre: "", contrasena: "", mesa_trabajo: "" };
         await cargarPracticantes();
       } catch (error) {
         console.error("Error al crear practicante:", error);
+        alert("Ocurrió un error al crear el practicante");
       }
     };
 
     const editarPracticante = async (p) => {
       try {
-        await axios.put(`http://127.0.0.1:8000/user_practicantes/${p.user_id}`, p);
-        alert("Practicante actualizado correctamente");
+        const cambios = {
+          nombre: p.nombre,
+          contrasena: p.contrasena || undefined,
+          mesa_trabajo: p.mesa_trabajo.toUpperCase() // 🔹 Ajuste
+        };
+        await axios.put(`http://127.0.0.1:8000/user_practicantes/${p.user_id}`, cambios, { headers });
+        alert(`Practicante "${p.nombre}" actualizado correctamente`);
         await cargarPracticantes();
       } catch (error) {
         console.error("Error al editar practicante:", error);
+        alert("Ocurrió un error al editar el practicante");
       }
     };
 
@@ -178,12 +197,12 @@ export default {
       if (!confirm("¿Deseas eliminar este practicante?")) return;
 
       try {
-        await axios.delete(`http://127.0.0.1:8000/user_practicantes/${id}`);
-        // Eliminamos localmente para que la tabla quede compacta
+        await axios.delete(`http://127.0.0.1:8000/user_practicantes/${id}`, { headers });
         practicantes.value = practicantes.value.filter(p => p.user_id !== id);
         alert("Practicante eliminado correctamente");
       } catch (error) {
         console.error("Error al eliminar practicante:", error);
+        alert("Ocurrió un error al eliminar el practicante");
       }
     };
 
@@ -205,6 +224,10 @@ export default {
   }
 };
 </script>
+
+
+
+
 
 <style scoped>
 .coordinador-dashboard {
