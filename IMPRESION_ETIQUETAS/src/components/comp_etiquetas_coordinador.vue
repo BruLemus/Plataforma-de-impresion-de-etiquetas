@@ -282,7 +282,7 @@ async guardarDatos() {
   // Token JWT
   const token = localStorage.getItem("token");
   if (!token) {
-    alert("Token no encontrado, inicia sesión nuevamente.");
+    alert("Inicia sesión nuevamente.");
     return;
   }
 

@@ -104,7 +104,7 @@ def update_perfil_practicante(
         if tipo != "practicante":
             raise HTTPException(status_code=403, detail="No autorizado")
     except JWTError:
-        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+        raise HTTPException(status_code=401, detail="Inicia Sesión nuevamente")
     user = update_user_practicante(db, user_id, payload)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")

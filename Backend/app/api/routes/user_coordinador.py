@@ -117,7 +117,7 @@ def update_perfil_coordinador(
         if tipo != "coordinador":
             raise HTTPException(status_code=403, detail="No autorizado")
     except JWTError:
-        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+        raise HTTPException(status_code=401, detail="Inicia Sesión nuevamente")
 
     # 🔹 Buscar usuario en DB
     user = db.query(UserCoordinador).filter(UserCoordinador.id == user_id).first()
