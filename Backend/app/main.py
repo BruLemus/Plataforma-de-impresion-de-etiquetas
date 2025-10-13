@@ -10,6 +10,13 @@ from pydantic import BaseModel
 from app.api.routes import caja
 from app.api.routes import registro
 
+#RUTAS DE LOS ENDPOINTS DE MEXICO
+from app.api.routes import registro_mx
+from app.api.routes import tarima_mx
+from app.api.routes import user_practicante_mx
+from app.api.routes import user_coordinador_mx
+from app.api.routes import caja_mx
+
 import win32print
 import win32ui
 
@@ -38,6 +45,12 @@ app.include_router(tarima.router, prefix="/tarimas", tags=["Tarimas"])
 app.include_router(user_practicante.router, prefix="/user_practicantes", tags=["Usuarios Practicantes"])
 app.include_router(user_coordinador.router, prefix="/user_coordinadors", tags=["Usuarios Coordinadores"])
 app.include_router(registro.router, prefix="/historial", tags=["Registros"])
+
+app.include_router(registro_mx.router, prefix="/registros_mx", tags=["Registros Mexico"])
+app.include_router(tarima_mx.router, prefix="/tarimas_mx", tags=["Tarimas Mexico"])
+app.include_router(user_practicante_mx.router, prefix="/user_practicantes_mx", tags=["Usuarios Practicantes Mexico"])
+app.include_router(user_coordinador_mx.router, prefix="/user_coordinadors_mx", tags=["Usuarios Coordinadores Mexico"])
+app.include_router(caja_mx.router, prefix="/cajas_mx", tags=["Cajas Mexico"])
 
 # ========= Servidor de impresión integrado =========
 class PrintPayload(BaseModel):
