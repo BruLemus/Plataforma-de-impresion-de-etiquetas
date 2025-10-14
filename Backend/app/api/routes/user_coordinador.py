@@ -84,7 +84,7 @@ def login_coordinador(
     
     # 🔹 Agregamos el ID y tipo al token
     token_data = {
-        "user_id": user.id,
+        "id": user.id,
         "sub": user.nombre,
         "tipo": "coordinador"
     }
@@ -112,7 +112,7 @@ def update_perfil_coordinador(
     # 🔹 Validar token
     try:
         data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = data.get("user_id")
+        id = data.get("id")
         tipo = data.get("tipo", "").lower()
         if tipo != "coordinador":
             raise HTTPException(status_code=403, detail="No autorizado")
@@ -120,7 +120,7 @@ def update_perfil_coordinador(
         raise HTTPException(status_code=401, detail="Inicia Sesión nuevamente")
 
     # 🔹 Buscar usuario en DB
-    user = db.query(UserCoordinador).filter(UserCoordinador.id == user_id).first()
+    user = db.query(UserCoordinador).filter(UserCoordinador.id == id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 

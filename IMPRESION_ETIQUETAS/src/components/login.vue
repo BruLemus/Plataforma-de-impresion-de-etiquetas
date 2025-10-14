@@ -108,7 +108,7 @@ async login() {
     localStorage.setItem("rol", this.rol);
     localStorage.setItem("token", res.data.token);
     localStorage.setItem("sede", this.sede);
-    localStorage.setItem("user_id", res.data.id || res.data.user_id);
+    localStorage.setItem("id", res.data.id || res.data.id);
     if (res.data.codigo_secreto) {
       localStorage.setItem("codigo_secreto", res.data.codigo_secreto);
     }

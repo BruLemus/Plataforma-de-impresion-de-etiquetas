@@ -26,7 +26,7 @@ def create_caja_mx(db: Session, payload: CajaMXCreate, current_user) -> CajaMX:
         nombre_user_coordinador=current_user.nombre if isinstance(current_user, UserCoordinadorMX) else None,
         nombre_user_practicante=current_user.nombre if isinstance(current_user, UserPracticanteMX) else None,
         coordinador_id=current_user.id if isinstance(current_user, UserCoordinadorMX) else None,
-        practicante_id=current_user.user_id if isinstance(current_user, UserPracticanteMX) else None,
+        practicante_id=current_user.id if isinstance(current_user, UserPracticanteMX) else None,
     )
     db.add(db_caja)
     db.commit()
@@ -58,7 +58,7 @@ def get_cajas_mx(
         if isinstance(current_user, UserCoordinadorMX):
             query = query.filter(CajaMX.coordinador_id == current_user.id)
         elif isinstance(current_user, UserPracticanteMX):
-            query = query.filter(CajaMX.practicante_id == current_user.user_id)
+            query = query.filter(CajaMX.practicante_id == current_user.id)
 
     return query.offset(skip).limit(limit).all()
 

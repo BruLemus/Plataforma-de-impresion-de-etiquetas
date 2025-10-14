@@ -35,14 +35,14 @@ def get_user_coordinadores(db: Session, skip: int = 0, limit: int = 100) -> List
 # -----------------------------
 # OBTENER COORDINADOR POR ID
 # -----------------------------
-def get_user_coordinador_by_id(db: Session, user_id: int) -> Optional[UserCoordinador]:
-    return db.query(UserCoordinador).filter(UserCoordinador.id == user_id).first()
+def get_user_coordinador_by_id(db: Session, id: int) -> Optional[UserCoordinador]:
+    return db.query(UserCoordinador).filter(UserCoordinador.id == id).first()
 
 # -----------------------------
 # ACTUALIZAR COORDINADOR
 # -----------------------------
-def update_user_coordinador(db: Session, user_id: int, payload: UserCoordinadorUpdate) -> Optional[UserCoordinador]:
-    db_user = get_user_coordinador_by_id(db, user_id)
+def update_user_coordinador(db: Session, id: int, payload: UserCoordinadorUpdate) -> Optional[UserCoordinador]:
+    db_user = get_user_coordinador_by_id(db, id)
     if not db_user:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -56,8 +56,8 @@ def update_user_coordinador(db: Session, user_id: int, payload: UserCoordinadorU
 # -----------------------------
 # ELIMINAR COORDINADOR
 # -----------------------------
-def delete_user_coordinador(db: Session, user_id: int) -> bool:
-    db_user = get_user_coordinador_by_id(db, user_id)
+def delete_user_coordinador(db: Session, id: int) -> bool:
+    db_user = get_user_coordinador_by_id(db, id)
     if not db_user:
         return False
     db.delete(db_user)

@@ -147,7 +147,7 @@ async guardarDatos() {
 
   try {
     const token = localStorage.getItem("token");
-    const user_id = localStorage.getItem("user_id");
+    const id = localStorage.getItem("id");
     const username = localStorage.getItem("username");
     const role = localStorage.getItem("rol"); // "coordinador" o "practicante"
 
@@ -168,8 +168,8 @@ async guardarDatos() {
         : 0,
 
       // 🔹 Estos dos se asignan dinámicamente según el rol
-      practicante_id: role === "Practicante" ? Number(user_id) : null,
-      coordinador_id: role === "Coordinador" ? Number(user_id) : null,
+      practicante_id: role === "Practicante" ? Number(id) : null,
+      coordinador_id: role === "Coordinador" ? Number(id) : null,
 
       nombre_user_practicante:
         role === "Practicante" ? username || "" : "string",

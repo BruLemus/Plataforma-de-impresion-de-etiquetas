@@ -15,7 +15,7 @@ class TarimaMX(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     coordinador_id = Column(Integer, ForeignKey("user_coordinadores_mx.id"), nullable=True)
-    practicante_id = Column(Integer, ForeignKey("user_practicantes_mx.user_id"), nullable=True)
+    practicante_id = Column(Integer, ForeignKey("user_practicantes_mx.id"), nullable=True)
 
     nombre_user_practicante = Column(String(255), nullable=True)
     nombre_user_coordinador = Column(String(255), nullable=True)

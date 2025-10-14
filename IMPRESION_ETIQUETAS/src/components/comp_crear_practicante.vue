@@ -71,7 +71,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(p, index) in practicantes" :key="p.user_id">
+            <tr v-for="(p, index) in practicantes" :key="p.id">
               <td>{{ index + 1 }}</td>
               <td><input v-model="p.nombre" autocomplete="name" /></td>
               <td>
@@ -95,7 +95,7 @@
               </td>
               <td class="actions">
                 <button @click="editarPracticante(p)" class="btn btn-edit">Editar</button>
-                <button @click="eliminarPracticante(p.user_id)" class="btn btn-delete">Eliminar</button>
+                <button @click="eliminarPracticante(p.id)" class="btn btn-delete">Eliminar</button>
               </td>
             </tr>
           </tbody>
@@ -120,14 +120,14 @@ export default {
     }
     const headers = { Authorization: `Bearer ${token}` }; 
 
-    const coordinador = ref({ nombre: "", user_id: "" });
+    const coordinador = ref({ nombre: "", id: "" });
     const username = localStorage.getItem("username") || "";
 
     const cargarPerfil = async () => {
       try {
         const res = await axios.get("http://127.0.0.1:8000/user_coordinadors/perfil", { headers });
         coordinador.value.nombre = res.data?.nombre || "Nombre no disponible";
-        coordinador.value.user_id = res.data?.user_id || "";
+        coordinador.value.id = res.data?.id || "";
       } catch (error) {
         console.error("Error al cargar perfil:", error);
         coordinador.value.nombre = "Error al cargar";
@@ -184,7 +184,7 @@ export default {
           contrasena: p.contrasena || undefined,
           mesa_trabajo: p.mesa_trabajo.toUpperCase() // 🔹 Ajuste
         };
-        await axios.put(`http://127.0.0.1:8000/user_practicantes/${p.user_id}`, cambios, { headers });
+        await axios.put(`http://127.0.0.1:8000/user_practicantes/${p.id}`, cambios, { headers });
         alert(`Practicante "${p.nombre}" actualizado correctamente`);
         await cargarPracticantes();
       } catch (error) {
@@ -198,7 +198,7 @@ export default {
 
       try {
         await axios.delete(`http://127.0.0.1:8000/user_practicantes/${id}`, { headers });
-        practicantes.value = practicantes.value.filter(p => p.user_id !== id);
+        practicantes.value = practicantes.value.filter(p => p.id !== id);
         alert("Practicante eliminado correctamente");
       } catch (error) {
         console.error("Error al eliminar practicante:", error);

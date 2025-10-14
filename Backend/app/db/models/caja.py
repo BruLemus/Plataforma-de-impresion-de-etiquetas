@@ -12,7 +12,7 @@ class Caja(Base):
 
     # Relaciones con usuarios
     coordinador_id = Column(Integer, ForeignKey("user_coordinadores.id"), nullable=True)
-    practicante_id = Column(Integer, ForeignKey("user_practicantes.user_id"), nullable=True)
+    practicante_id = Column(Integer, ForeignKey("user_practicantes.id"), nullable=True)
 
     # Campos solicitados
     nombre_user_practicante = Column(String(255), nullable=True)

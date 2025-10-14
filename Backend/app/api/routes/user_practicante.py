@@ -81,9 +81,9 @@ def login_practicante(
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
     if not verify_password(contrasena, user.contrasena):
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
-    token_data = {"user_id": user.user_id, "sub": user.nombre, "tipo": "practicante"}
+    token_data = {"id": user.id, "sub": user.nombre, "tipo": "practicante"}
     token = create_access_token(token_data)
-    return {"nombre": user.nombre, "id": user.user_id, "token": token}
+    return {"nombre": user.nombre, "id": user.id, "token": token}
 
 # Ver perfil (protegido)
 @router.get("/me", response_model=UserPracticanteResponse)
@@ -99,25 +99,25 @@ def update_perfil_practicante(
 ):
     try:
         data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = data.get("user_id")
+        id = data.get("id")
         tipo = data.get("tipo", "").lower()
         if tipo != "practicante":
             raise HTTPException(status_code=403, detail="No autorizado")
     except JWTError:
         raise HTTPException(status_code=401, detail="Inicia Sesión nuevamente")
-    user = update_user_practicante(db, user_id, payload)
+    user = update_user_practicante(db, id, payload)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return user
 
 # Actualizar practicante por coordinador
-@router.put("/{user_id}", response_model=UserPracticanteResponse)
+@router.put("/{id}", response_model=UserPracticanteResponse)
 def update_practicante_by_coordinador(
-    user_id: int,
+    id: int,
     payload: UserPracticanteUpdate,
     db: Session = Depends(get_db)
 ):
-    user = update_user_practicante(db, user_id, payload)
+    user = update_user_practicante(db, id, payload)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return user

@@ -88,7 +88,7 @@ def login_coordinador_mx(
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
     
     token_data = {
-        "user_id": user.id,
+        "id": user.id,
         "sub": user.nombre,
         "tipo": "coordinador"
     }
@@ -115,14 +115,14 @@ def update_perfil_coordinador_mx(
 ):
     try:
         data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = data.get("user_id")
+        id = data.get("id")
         tipo = data.get("tipo", "").lower()
         if tipo != "coordinador":
             raise HTTPException(status_code=403, detail="No autorizado")
     except JWTError:
         raise HTTPException(status_code=401, detail="Inicia Sesión nuevamente")
 
-    user = db.query(UserCoordinadorMX).filter(UserCoordinadorMX.id == user_id).first()
+    user = db.query(UserCoordinadorMX).filter(UserCoordinadorMX.id == id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 

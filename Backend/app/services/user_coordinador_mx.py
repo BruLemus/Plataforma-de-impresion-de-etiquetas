@@ -34,14 +34,14 @@ def get_user_coordinadores_mx(db: Session, skip: int = 0, limit: int = 100) -> L
 # -----------------------------
 # OBTENER COORDINADOR MX POR ID
 # -----------------------------
-def get_user_coordinador_mx_by_id(db: Session, user_id: int) -> Optional[UserCoordinadorMX]:
-    return db.query(UserCoordinadorMX).filter(UserCoordinadorMX.id == user_id).first()
+def get_user_coordinador_mx_by_id(db: Session, id: int) -> Optional[UserCoordinadorMX]:
+    return db.query(UserCoordinadorMX).filter(UserCoordinadorMX.id == id).first()
 
 # -----------------------------
 # ACTUALIZAR COORDINADOR MX
 # -----------------------------
-def update_user_coordinador_mx(db: Session, user_id: int, payload: UserCoordinadorMXUpdate) -> Optional[UserCoordinadorMX]:
-    db_user = get_user_coordinador_mx_by_id(db, user_id)
+def update_user_coordinador_mx(db: Session, id: int, payload: UserCoordinadorMXUpdate) -> Optional[UserCoordinadorMX]:
+    db_user = get_user_coordinador_mx_by_id(db, id)
     if not db_user:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -55,8 +55,8 @@ def update_user_coordinador_mx(db: Session, user_id: int, payload: UserCoordinad
 # -----------------------------
 # ELIMINAR COORDINADOR MX
 # -----------------------------
-def delete_user_coordinador_mx(db: Session, user_id: int) -> bool:
-    db_user = get_user_coordinador_mx_by_id(db, user_id)
+def delete_user_coordinador_mx(db: Session, id: int) -> bool:
+    db_user = get_user_coordinador_mx_by_id(db, id)
     if not db_user:
         return False
     db.delete(db_user)

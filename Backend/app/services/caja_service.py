@@ -27,7 +27,7 @@ def create_caja(db: Session, payload: CajaCreate, current_user) -> Caja:
         nombre_user_coordinador=current_user.nombre if isinstance(current_user, UserCoordinador) else None,
         nombre_user_practicante=current_user.nombre if isinstance(current_user, UserPracticante) else None,
         coordinador_id=current_user.id if isinstance(current_user, UserCoordinador) else None,
-        practicante_id=current_user.user_id if isinstance(current_user, UserPracticante) else None,
+        practicante_id=current_user.id if isinstance(current_user, UserPracticante) else None,
     )
     db.add(db_caja)
     db.commit()
@@ -59,7 +59,7 @@ def get_cajas(
         if isinstance(current_user, UserCoordinador):
             query = query.filter(Caja.coordinador_id == current_user.id)
         elif isinstance(current_user, UserPracticante):
-            query = query.filter(Caja.practicante_id == current_user.user_id)
+            query = query.filter(Caja.practicante_id == current_user.id)
 
     return query.offset(skip).limit(limit).all()
 

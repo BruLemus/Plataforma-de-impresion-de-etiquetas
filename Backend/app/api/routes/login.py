@@ -67,7 +67,7 @@ def login(
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
 
     # Crear token
-    token_data = {"user_id": user.id, "tipo": tipo, "ciudad": ciudad}
+    token_data = {"id": user.id, "tipo": tipo, "ciudad": ciudad}
     token = create_access_token(token_data)
 
     return {"nombre": user.nombre, "token": token, "ciudad": ciudad, "tipo": tipo}
@@ -82,11 +82,11 @@ def get_current_user(ciudad: str, role: str, token: str = Header(...), db: Sessi
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("user_id")
+        id = payload.get("id")
         token_role = payload.get("tipo")
         token_city = payload.get("ciudad")
 
-        if not user_id or token_role != role or token_city != ciudad:
+        if not id or token_role != role or token_city != ciudad:
             raise HTTPException(status_code=401, detail="Token inválido o no autorizado")
 
     except JWTError:
@@ -100,7 +100,7 @@ def get_current_user(ciudad: str, role: str, token: str = Header(...), db: Sessi
     else:
         raise HTTPException(status_code=400, detail="Ciudad inválida")
 
-    user = db.query(model).filter(model.id == user_id).first()
+    user = db.query(model).filter(model.id == id).first()
     if not user:
         raise HTTPException(status_code=401, detail=f"{role.capitalize()} no encontrado")
 

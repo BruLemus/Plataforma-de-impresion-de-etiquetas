@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from app.db.models.enums import mesaTrabajoEnum
 
 class UserPracticanteMXBase(BaseModel):
     nombre: str
@@ -18,8 +19,9 @@ class UserPracticanteMXUpdate(BaseModel):
     mesa_trabajo: Optional[str] = None
 
 class UserPracticanteMXResponse(UserPracticanteMXBase):
-    user_id: int
-    token: Optional[str] = None
+    id: int
+    nombre: str
+    mesa_trabajo: mesaTrabajoEnum
 
     model_config = {
         "from_attributes": True

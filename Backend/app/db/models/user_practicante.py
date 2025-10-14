@@ -14,7 +14,7 @@ class UserPracticante(Base):
     __tablename__ = "user_practicantes"
 
     # 🔹 Campos principales
-    user_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nombre = Column(String(100), nullable=False)
     contrasena = Column(String(100), nullable=False)  # almacenar hash
     mesa_trabajo = Column(Enum(mesaTrabajoEnum, native_enum=False), nullable=True)

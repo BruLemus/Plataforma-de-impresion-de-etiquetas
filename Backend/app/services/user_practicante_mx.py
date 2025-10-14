@@ -20,12 +20,12 @@ def get_user_practicantes_mx(db: Session, skip: int = 0, limit: int = 100) -> Li
     return db.query(UserPracticanteMX).offset(skip).limit(limit).all()
 
 # Obtener por ID
-def get_user_practicante_mx_by_id(db: Session, user_id: int) -> Optional[UserPracticanteMX]:
-    return db.query(UserPracticanteMX).filter(UserPracticanteMX.user_id == user_id).first()
+def get_user_practicante_mx_by_id(db: Session, id: int) -> Optional[UserPracticanteMX]:
+    return db.query(UserPracticanteMX).filter(UserPracticanteMX.id == id).first()
 
 # Actualizar
-def update_user_practicante_mx(db: Session, user_id: int, payload: UserPracticanteMXUpdate) -> Optional[UserPracticanteMX]:
-    user = get_user_practicante_mx_by_id(db, user_id)
+def update_user_practicante_mx(db: Session, id: int, payload: UserPracticanteMXUpdate) -> Optional[UserPracticanteMX]:
+    user = get_user_practicante_mx_by_id(db, id)
     if not user:
         return None
     if payload.nombre:
@@ -39,8 +39,8 @@ def update_user_practicante_mx(db: Session, user_id: int, payload: UserPractican
     return user
 
 # Eliminar
-def delete_user_practicante_mx(db: Session, user_id: int) -> bool:
-    user = get_user_practicante_mx_by_id(db, user_id)
+def delete_user_practicante_mx(db: Session, id: int) -> bool:
+    user = get_user_practicante_mx_by_id(db, id)
     if not user:
         return False
     db.delete(user)

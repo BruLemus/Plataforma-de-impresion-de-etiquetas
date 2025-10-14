@@ -5,16 +5,24 @@ from fastapi import Depends, HTTPException, Security, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.db.models.user_coordinador import UserCoordinador
-from app.db.models.user_practicante import UserPracticante
 
+# 🔹 Importa todos los modelos de usuarios (GDL y MX)
+from app.db.models.user_coordinador import UserCoordinador  # Guadalajara
+from app.db.models.user_coordinador_mx import UserCoordinadorMX  # México
+from app.db.models.user_practicante import UserPracticante  # Guadalajara
+from app.db.models.user_practicante_mx import UserPracticanteMX  # México
+
+
+# ==========================================================
 # 🔹 Configuración de seguridad
+# ==========================================================
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = "SUPER_SECRET_KEY"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 720  # Duración del token: 12 horas
+ACCESS_TOKEN_EXPIRE_MINUTES = 720  # 12 horas
 
 security = HTTPBearer()
+
 
 # ==========================================================
 # 🔹 Funciones de hashing
@@ -35,8 +43,7 @@ def hash_password(password: str) -> str:
 def create_access_token(data: dict, expires_delta: int = None) -> str:
     """
     Crea un token JWT con los datos del usuario.
-    data: Diccionario con información del usuario (ej. {"user_id": id})
-    expires_delta: Tiempo en minutos de expiración del token.
+    data: Diccionario con información del usuario (ej. {"id": id, "tipo": "coordinador", "region": "mx"})
     """
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=expires_delta or ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -45,65 +52,60 @@ def create_access_token(data: dict, expires_delta: int = None) -> str:
 
 
 # ==========================================================
-# 🔹 Obtener usuario coordinador logueado
-# ==========================================================
-def get_current_coordinator(
-    credentials: HTTPAuthorizationCredentials = Security(security),
-    db: Session = Depends(get_db)
-):
-    """
-    Valida el token del coordinador y retorna su información.
-    """
-    token = credentials.credentials
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("user_id")
-        if user_id is None:
-            raise HTTPException(status_code=401, detail="Token inválido")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Token inválido o expirado")
-
-    user = db.query(UserCoordinador).filter(UserCoordinador.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="Usuario coordinador no encontrado")
-    return user
-
-
-# ==========================================================
-# 🔹 Obtener usuario (coordinador o practicante) logueado
+# 🔹 Obtener usuario actual (automático según tipo y región)
 # ==========================================================
 def get_current_user(
-    role: str,
-    token: str = Header(...),  # Se espera header "token: <JWT>"
+    token: str = Header(...),  # Header personalizado: token: <JWT>
     db: Session = Depends(get_db)
 ):
     """
-    Verifica el token JWT y devuelve el usuario correspondiente según el rol.
-    role: "coordinador" o "practicante"
-    token: JWT enviado en el header 'token'
+    Valida el token JWT y obtiene al usuario correspondiente según:
+    - tipo: coordinador / practicante
+    - region: gdl / mx
     """
     if not token:
         raise HTTPException(status_code=401, detail="Token requerido")
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("user_id")
-        if user_id is None:
+        id = payload.get("id")
+        tipo = payload.get("tipo")
+        region = payload.get("region", "gdl")  # Por defecto Guadalajara
+
+        if not id or not tipo:
             raise HTTPException(status_code=401, detail="Token inválido")
+
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
-    if role == "coordinador":
-        user = db.query(UserCoordinador).filter(UserCoordinador.id == user_id).first()
+    # =====================================
+    # 🔸 Coordinadores
+    # =====================================
+    if tipo == "coordinador":
+        if region.lower() == "mx":
+            user = db.query(UserCoordinadorMX).filter(UserCoordinadorMX.id == id).first()
+        else:
+            user = db.query(UserCoordinador).filter(UserCoordinador.id == id).first()
+
         if not user:
             raise HTTPException(status_code=401, detail="Usuario coordinador no encontrado")
         return user
 
-    elif role == "practicante":
-        user = db.query(UserPracticante).filter(UserPracticante.user_id == user_id).first()
+    # =====================================
+    # 🔸 Practicantes
+    # =====================================
+    elif tipo == "practicante":
+        if region.lower() == "mx":
+            user = db.query(UserPracticanteMX).filter(UserPracticanteMX.id == id).first()
+        else:
+            user = db.query(UserPracticante).filter(UserPracticante.id == id).first()
+
         if not user:
             raise HTTPException(status_code=401, detail="Usuario practicante no encontrado")
         return user
 
+    # =====================================
+    # ❌ Rol inválido
+    # =====================================
     else:
-        raise HTTPException(status_code=400, detail="Rol no válido (usa 'coordinador' o 'practicante')")
+        raise HTTPException(status_code=400, detail="Tipo de usuario no válido (usa 'coordinador' o 'practicante')")

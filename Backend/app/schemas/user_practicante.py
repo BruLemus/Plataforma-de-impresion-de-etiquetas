@@ -19,7 +19,7 @@ class UserPracticanteUpdate(BaseModel):
 
 # 🔹 Esquema interno que incluye ID y contraseña (para la DB)
 class UserPracticanteInDB(UserPracticanteBase):
-    user_id: int
+    id: int
     contrasena: str  # hash de la contraseña
 
     class Config:
@@ -27,7 +27,7 @@ class UserPracticanteInDB(UserPracticanteBase):
 
 # 🔹 Esquema de respuesta al cliente (sin contraseña)
 class UserPracticanteResponse(BaseModel):
-    user_id: int
+    id: int
     nombre: str
     mesa_trabajo: mesaTrabajoEnum
 

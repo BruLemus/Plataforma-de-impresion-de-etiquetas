@@ -61,8 +61,8 @@ def login_practicante_mx(nombre: str = Form(...), contrasena: str = Form(...), d
     user = db.query(UserPracticanteMX).filter(UserPracticanteMX.nombre == nombre).first()
     if not user or not user.verify_password(contrasena):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
-    token = create_access_token({"user_id": user.user_id, "sub": user.nombre, "tipo": "practicante"})
-    return {"nombre": user.nombre, "user_id": user.user_id, "token": token, "mesa_trabajo": user.mesa_trabajo}
+    token = create_access_token({"id": user.id, "sub": user.nombre, "tipo": "practicante"})
+    return {"nombre": user.nombre, "id": user.id, "token": token, "mesa_trabajo": user.mesa_trabajo}
 
 # Ver perfil
 @router.get("/me", response_model=UserPracticanteMXResponse)
@@ -74,16 +74,16 @@ def get_me_practicante_mx(current_user: UserPracticanteMX = Depends(get_current_
 def update_perfil_practicante_mx(payload: UserPracticanteMXUpdate, token: str = Header(...), db: Session = Depends(get_db)):
     try:
         data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = data.get("user_id")
+        id = data.get("id")
         tipo = data.get("tipo", "").lower()
         if tipo != "practicante":
             raise HTTPException(status_code=403, detail="No autorizado")
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido")
-    user = get_user_practicante_mx_by_id(db, user_id)
+    user = get_user_practicante_mx_by_id(db, id)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return update_user_practicante_mx(db, user_id, payload)
+    return update_user_practicante_mx(db, id, payload)
 
 # Listar todos practicantes
 @router.get("/", response_model=List[UserPracticanteMXResponse])
