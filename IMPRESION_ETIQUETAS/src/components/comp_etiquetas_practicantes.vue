@@ -5,7 +5,7 @@
     <header class="header no-print">
       <div class="header-content">
         <h1 class="logo">
-          <i class="fas fa-box"></i> Proceso de Embalaje
+          <i class="fas fa-box"></i> Proceso de Embalaje <span class="green-dot">GDL.</span>
         </h1>
         <h2 class="coordinador-title">
           <i class="fas fa-user-graduate"></i> Practicante
@@ -358,6 +358,11 @@ export default {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+.green-dot {
+  color: #22c55e;
+  font-weight: bold;
+ 
+}
 
 /* ==== AGREGADO: ESTILOS PARA NUEVAS FILAS ==== */
 .fila-general, .fila-dimensiones { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }

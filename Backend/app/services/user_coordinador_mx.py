@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.db.models.user_coordinador_mx import UserCoordinadorMX
-from app.schemas.user_coordinador_mx_schemas import UserCoordinadorMXCreate, UserCoordinadorMXUpdate
+from app.schemas.user_coordinador_mx import UserCoordinadorMXCreate, UserCoordinadorMXUpdate
 from typing import List, Optional
 from passlib.context import CryptContext
 

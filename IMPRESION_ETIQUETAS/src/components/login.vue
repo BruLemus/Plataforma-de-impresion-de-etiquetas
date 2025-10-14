@@ -2,15 +2,11 @@
   <div class="login-wrapper">
     <div class="login-card" :class="{ 'enter-card': animateCard }">
       
-      <!-- Imagen con rebote -->
       <img src="@/assets/login.svg" alt="Login Imagen" class="login-img"/>
-
-      <!-- Título -->
       <h1 class="login-title">
         <span class="highlight">BIENVENIDO<span class="green-dot">.</span></span>
       </h1>
 
-      <!-- Formulario con animación secuencial -->
       <transition-group name="fade-slide" tag="div">
 
         <!-- Sede -->
@@ -69,86 +65,84 @@ export default {
     };
   },
   mounted() {
-    // Animación inicial
-    setTimeout(() => {
-      this.animateCard = true;
-    }, 100);
+    setTimeout(() => { this.animateCard = true }, 100);
   },
-  methods: {
-    async login() {
-      if (!this.username || !this.password || !this.rol || !this.sede) {
-        alert("Debes ingresar usuario, contraseña, sede y rol");
-        return;
-      }
-
-      try {
-        const formData = new FormData();
-        formData.append("nombre", this.username);
-        formData.append("contrasena", this.password);
-
-        let url = "";
-
-        // Login para cada tipo de usuario
-        if (this.rol === "Practicante") {
-          url = "http://127.0.0.1:8000/user_practicantes/login";
-        } else if (this.rol === "Coordinador") {
-          url = "http://127.0.0.1:8000/user_coordinadors/login";
-        }
-
-        const res = await axios.post(url, formData);
-
-        // Guardar datos en localStorage
-        localStorage.setItem("username", res.data.nombre);
-        localStorage.setItem("rol", this.rol);
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("sede", this.sede);
-        localStorage.setItem("user_id", res.data.id);
-
-        // 🔹 Redirección según sede
-        let destino = "";
-
-        if (this.sede === "Mexico") {
-          // Para México
-          if (this.rol === "Practicante") {
-            destino = "/tarima_mx";
-          } else if (this.rol === "Coordinador") {
-            destino = "/inf_mx";
-          }
-        } else {
-          // Para Guadalajara
-          if (this.rol === "Practicante") {
-            destino = "/tarima";
-          } else if (this.rol === "Coordinador") {
-            destino = "/inf";
-          }
-        }
-
-        this.$router.push(destino);
-
-      } catch (err) {
-        console.error("❌ Error en login:", err);
-        alert(err.response?.data?.detail || "Error al iniciar sesión");
-      }
-    },
-
-    registrarCoordinador() {
-      // 🔹 Redirección correcta del registro según sede
-      if (!this.sede) {
-        alert("Primero selecciona la sede para registrar coordinador");
-        return;
-      }
-
-      if (this.sede === "Mexico") {
-        this.$router.push("/registro_mx");
-      } else if (this.sede === "Guadalajara") {
-        this.$router.push("/registro");
-      } else {
-        alert("Sede no válida, selecciona Guadalajara o México");
-      }
-    }
+methods: {
+async login() {
+  if (!this.username || !this.password || !this.rol || !this.sede) {
+    alert("Debes ingresar usuario, contraseña, sede y rol");
+    return;
   }
+
+  try {
+    const ciudad = this.sede.toLowerCase(); // "mexico" o "guadalajara"
+    const tipo = this.rol.toLowerCase();    // "coordinador" o "practicante"
+
+    // ✅ Selección de endpoint según sede y rol
+    let url = "";
+    if (ciudad === "guadalajara" && tipo === "coordinador") {
+      url = "http://127.0.0.1:8000/user_coordinadors/login";
+    } else if (ciudad === "guadalajara" && tipo === "practicante") {
+      url = "http://127.0.0.1:8000/user_practicantes/login";
+    } else if (ciudad === "mexico" && tipo === "coordinador") {
+      url = "http://127.0.0.1:8000/user_coordinadors_mx/login";
+    } else if (ciudad === "mexico" && tipo === "practicante") {
+      // 🔸 cuando confirmes este endpoint, cámbialo aquí
+      url = "http://127.0.0.1:8000/user_practicantes_mx/login";
+    } else {
+      alert("Combinación de sede y rol inválida");
+      return;
+    }
+
+    // ===== Enviar los datos =====
+    const formData = new FormData();
+    formData.append("nombre", this.username);
+    formData.append("contrasena", this.password);
+
+    const res = await axios.post(url, formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+
+    // ===== Guardar datos en localStorage =====
+    localStorage.setItem("username", res.data.nombre);
+    localStorage.setItem("rol", this.rol);
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("sede", this.sede);
+    localStorage.setItem("user_id", res.data.id || res.data.user_id);
+    if (res.data.codigo_secreto) {
+      localStorage.setItem("codigo_secreto", res.data.codigo_secreto);
+    }
+
+    // ===== Redirección según rol y sede =====
+    let destino = "";
+    if (ciudad === "mexico") {
+      destino = tipo === "practicante" ? "/practicante_mx" : "/coordinador_mx";
+    } else {
+      destino = tipo === "practicante" ? "/practicante" : "/coordinador";
+    }
+
+    this.$router.push(destino);
+
+  } catch (err) {
+    console.error("❌ Error en login:", err);
+    alert(err.response?.data?.detail || "Error al iniciar sesión");
+  }
+},
+
+
+  registrarCoordinador() {
+    if (!this.sede) {
+      alert("Primero selecciona la sede para registrar coordinador");
+      return;
+    }
+    if (this.sede === "Mexico") this.$router.push("/registro_mx");
+    else this.$router.push("/registro");
+  }
+}
+
 };
 </script>
+
 
 
 <style scoped>

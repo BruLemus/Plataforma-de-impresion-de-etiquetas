@@ -51,9 +51,11 @@ def get_current_coordinator_mx(credentials: HTTPAuthorizationCredentials = Secur
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
     return user
 
+
 # ---------------------------
 # Endpoints Coordinador MX
 # ---------------------------
+
 
 # Crear coordinador
 @router.post("/", response_model=UserCoordinadorMXResponse)

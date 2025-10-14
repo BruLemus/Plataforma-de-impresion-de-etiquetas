@@ -4,7 +4,7 @@
     <header class="header no-print">
       <div class="header-content">
         <h1 class="logo">
-          <i class="fas fa-box"></i> Proceso de Embalaje
+          <i class="fas fa-box"></i> Proceso de Embalaje <span class="green-dot">GDL.</span> 
         </h1>
         <h2 class="coordinador-title">
           <i class="fas fa-user-tie"></i> Coordinador
@@ -343,6 +343,12 @@ async guardarDatos() {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+.green-dot {
+  color: #22c55e;
+  font-weight: bold;
+ 
+}
 
 /* ==== VARIABLES ==== */
 :root {

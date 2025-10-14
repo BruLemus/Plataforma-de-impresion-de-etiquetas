@@ -247,7 +247,7 @@ export default {
     async fetchHistorial() {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://127.0.0.1:8000/historial/registros/", {
+        const response = await axios.get("http://127.0.0.1:8000/registros_mx/registros/", {
           headers: { Authorization: `Bearer ${token}` },
         });
         this.historial = response.data;
@@ -279,8 +279,8 @@ export default {
       const tipo = this.registroEditando.tipo_pedido;
       const url =
         tipo === "Caja"
-          ? `http://127.0.0.1:8000/historial/registros/caja/${this.registroEditando.id}`
-          : `http://127.0.0.1:8000/historial/registros/tarima/${this.registroEditando.id}`;
+          ? `http://127.0.0.1:8000//registros/caja/${this.registroEditando.id}`
+          : `http://127.0.0.1:8000//registros/tarima/${this.registroEditando.id}`;
       try {
         const token = localStorage.getItem("token");
         await axios.put(url, this.registroEditando, {

@@ -10,15 +10,13 @@ class TipoEmbalajeEnum(int, enum.Enum):
     TIPO2 = 2
     TIPO3 = 3
 
-class Tarima_mx(Base):
+class TarimaMX(Base):
     __tablename__ = "tarimas_mx"
 
-    # Relaciones con usuarios
     id = Column(Integer, primary_key=True, index=True)
     coordinador_id = Column(Integer, ForeignKey("user_coordinadores_mx.id"), nullable=True)
     practicante_id = Column(Integer, ForeignKey("user_practicantes_mx.user_id"), nullable=True)
 
-    # Campos solicitados
     nombre_user_practicante = Column(String(255), nullable=True)
     nombre_user_coordinador = Column(String(255), nullable=True)
     numero_facturas = Column(String(50), nullable=False)
@@ -32,8 +30,6 @@ class Tarima_mx(Base):
     alto = Column(Float, default=0)
     peso = Column(Float, default=0)
     peso_volumetrico = Column(Float, default=0)
-    
-    # Fecha y hora de creación/registro
     fecha_hora = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relaciones ORM

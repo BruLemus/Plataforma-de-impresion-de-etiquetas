@@ -1,6 +1,13 @@
+from passlib.context import CryptContext
+
+
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
+from passlib.context import CryptContext
 from app.db.database import Base
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class UserCoordinadorMX(Base):
     __tablename__ = "user_coordinadores_mx"
@@ -10,6 +17,13 @@ class UserCoordinadorMX(Base):
     contrasena = Column(String(100), nullable=False)
     codigo_secreto = Column(String(100), nullable=False)
     
-    # Relaciones con cajas y tarimas MX
-    cajas = relationship("CajaMX", back_populates="coordinador")
+    # Relaciones
+    cajas_mx = relationship("CajaMX", back_populates="coordinador")        
     tarimas_mx = relationship("TarimaMX", back_populates="coordinador")
+
+    # Métodos de contraseña
+    def set_password(self, password: str):
+        self.contrasena = pwd_context.hash(password)
+
+    def verify_password(self, password: str) -> bool:
+        return pwd_context.verify(password, self.contrasena)

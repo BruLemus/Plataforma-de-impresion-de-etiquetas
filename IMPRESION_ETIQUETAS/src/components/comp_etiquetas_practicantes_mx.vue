@@ -5,7 +5,7 @@
     <header class="header no-print">
       <div class="header-content">
         <h1 class="logo">
-          <i class="fas fa-box"></i> Proceso de Embalaje MX
+          <i class="fas fa-box"></i> Proceso de Embalaje <span class="green-dot">MX</span>
         </h1>
         <h2 class="coordinador-title">
           <i class="fas fa-user-graduate"></i> Practicante
@@ -187,7 +187,7 @@
         </section>
 
         <!-- TARIMA -->
-        <section v-if="currentView === 'tarima'"><comp_tarima /></section>
+        <section v-if="currentView === 'tarima'"><comp_tarima_mx /></section>
 
         <!-- OTRAS ETIQUETAS -->
         <section v-if="currentView === 'otras_etiquetas'"><comp_otras_etiquetas /></section>
@@ -202,13 +202,13 @@
 <script>
 import axios from "axios";
 import QrcodeVue from "qrcode.vue";
-import comp_tarima from "@/components/comp_tarima_mx.vue";
+import comp_tarima_mx from "@/components/comp_tarima_mx.vue";
 import comp_inf from "@/components/comp_inf.vue";
 import comp_otras_etiquetas from "./comp_otras_etiquetas.vue";
 
 export default {
   name: "CompEtiquetasPracticantes",
-  components: { QrcodeVue, comp_tarima, comp_inf, comp_otras_etiquetas },
+  components: { QrcodeVue, comp_tarima_mx, comp_inf, comp_otras_etiquetas },
   data() {
     return {
       username: localStorage.getItem("username") || "",
@@ -358,6 +358,12 @@ export default {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+.green-dot {
+  color: #22c55e;
+  font-weight: bold;
+ 
+}
 
 /* ==== AGREGADO: ESTILOS PARA NUEVAS FILAS ==== */
 .fila-general, .fila-dimensiones { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }

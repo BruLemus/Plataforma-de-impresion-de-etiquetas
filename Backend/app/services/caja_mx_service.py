@@ -1,17 +1,17 @@
 from sqlalchemy.orm import Session
-from app.db.models.caja_mx import Caja_mx
+from app.db.models.caja_mx import CajaMX
 from app.schemas.caja_mx import CajaMXCreate
 from typing import List, Optional
 from app.db.models.user_coordinador_mx import UserCoordinadorMX
 from app.db.models.user_practicante_mx import UserPracticanteMX
 
 
-def create_caja_mx(db: Session, payload: CajaMXCreate, current_user) -> Caja_mx:
+def create_caja_mx(db: Session, payload: CajaMXCreate, current_user) -> CajaMX:
     """
     Crea una caja MX y asigna coordinador o practicante según el rol del usuario logueado.
     current_user: objeto UserCoordinadorMX o UserPracticanteMX
     """
-    db_caja = Caja_mx(
+    db_caja = CajaMX(
         paqueteria=payload.paqueteria,
         n_facturas=payload.n_facturas,
         t_embalaje=payload.t_embalaje,
@@ -41,34 +41,34 @@ def get_cajas_mx(
     paqueteria: Optional[str] = None,
     n_facturas: Optional[str] = None,
     current_user=None
-) -> List[Caja_mx]:
+) -> List[CajaMX]:
     """
     Lista cajas MX, opcionalmente filtradas por paquetería, factura o usuario logueado.
     current_user: objeto UserCoordinadorMX o UserPracticanteMX
     """
-    query = db.query(Caja_mx)
+    query = db.query(CajaMX)
 
     if paqueteria:
-        query = query.filter(Caja_mx.paqueteria == paqueteria)
+        query = query.filter(CajaMX.paqueteria == paqueteria)
     if n_facturas:
-        query = query.filter(Caja_mx.n_facturas == n_facturas)
+        query = query.filter(CajaMX.n_facturas == n_facturas)
 
     # Filtrar por rol si se pasa current_user
     if current_user:
         if isinstance(current_user, UserCoordinadorMX):
-            query = query.filter(Caja_mx.coordinador_id == current_user.id)
+            query = query.filter(CajaMX.coordinador_id == current_user.id)
         elif isinstance(current_user, UserPracticanteMX):
-            query = query.filter(Caja_mx.practicante_id == current_user.user_id)
+            query = query.filter(CajaMX.practicante_id == current_user.user_id)
 
     return query.offset(skip).limit(limit).all()
 
 
-def get_caja_mx_by_id(db: Session, caja_id: int) -> Optional[Caja_mx]:
-    return db.query(Caja_mx).filter(Caja_mx.id == caja_id).first()
+def get_caja_mx_by_id(db: Session, caja_id: int) -> Optional[CajaMX]:
+    return db.query(CajaMX).filter(CajaMX.id == caja_id).first()
 
 
-def update_caja_mx(db: Session, caja_id: int, update_data: dict) -> Optional[Caja_mx]:
-    db_caja = db.query(Caja_mx).filter(Caja_mx.id == caja_id).first()
+def update_caja_mx(db: Session, caja_id: int, update_data: dict) -> Optional[CajaMX]:
+    db_caja = db.query(CajaMX).filter(CajaMX.id == caja_id).first()
     if not db_caja:
         return None
 
@@ -85,7 +85,7 @@ def update_caja_mx(db: Session, caja_id: int, update_data: dict) -> Optional[Caj
 
 
 def delete_caja_mx(db: Session, caja_id: int) -> bool:
-    db_caja = db.query(Caja_mx).filter(Caja_mx.id == caja_id).first()
+    db_caja = db.query(CajaMX).filter(CajaMX.id == caja_id).first()
     if not db_caja:
         return False
     db.delete(db_caja)

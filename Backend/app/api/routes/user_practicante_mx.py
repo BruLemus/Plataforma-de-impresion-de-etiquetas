@@ -48,6 +48,8 @@ def get_current_practicante_mx(credentials: HTTPAuthorizationCredentials = Secur
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
     return user
 
+
+
 # Crear practicante
 @router.post("/", response_model=UserPracticanteMXResponse)
 def create_practicante_mx(payload: UserPracticanteMXCreate, db: Session = Depends(get_db)):

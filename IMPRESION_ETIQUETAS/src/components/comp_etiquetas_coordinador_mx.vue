@@ -4,7 +4,7 @@
     <header class="header no-print">
       <div class="header-content">
         <h1 class="logo">
-          <i class="fas fa-box"></i> Proceso de Embalaje MX
+          <i class="fas fa-box"></i> Proceso de Embalaje <span class="green-dot">MX</span>
         </h1>
         <h2 class="coordinador-title">
           <i class="fas fa-user-tie"></i> Coordinador 
@@ -167,11 +167,11 @@
         </section>
 
         <!-- OTROS COMPONENTES -->
-        <section v-if="currentView === 'tarima'"><comp_tarima /></section>
+        <section v-if="currentView === 'tarima'"><comp_tarima_mx /></section>
         <section v-if="currentView === 'otras_etiquetas'"><comp_otras_etiquetas /></section>
-        <section v-if="currentView === 'historial'"><comp_historial /></section>
+        <section v-if="currentView === 'historial'"><comp_historial_mx /></section>
         <section v-if="currentView === 'info'"><comp_inf /></section>
-        <section v-if="currentView === 'crear_practicante'"><comp_crear_practicante /></section>
+        <section v-if="currentView === 'crear_practicante'"><comp_crear_practicante_mx /></section>
       </main>
     </div>
   </div>
@@ -180,15 +180,15 @@
 <script>
 import axios from "axios";
 import QrcodeVue from "qrcode.vue";
-import comp_tarima from "@/components/comp_tarima_mx.vue";
+import comp_tarima_mx from "@/components/comp_tarima_mx.vue";
 import comp_inf from "@/components/comp_inf.vue";
 import comp_otras_etiquetas from "./comp_otras_etiquetas.vue";
-import comp_historial from "./comp_historial_mx.vue";
-import comp_crear_practicante from "./comp_crear_practicante_mx.vue";
+import comp_historial_mx from "./comp_historial_mx.vue";
+import comp_crear_practicante_mx from "./comp_crear_practicante_mx.vue"
 
 export default {
-  name: "CompEtiquetas",
-  components: { QrcodeVue, comp_tarima, comp_inf, comp_otras_etiquetas, comp_historial, comp_crear_practicante },
+  name: "dashboard_coordinadores_mx",
+  components: { QrcodeVue, comp_tarima_mx, comp_inf, comp_otras_etiquetas, comp_historial_mx, comp_crear_practicante_mx},
   data() {
     return {
       username: localStorage.getItem("username") || "",
@@ -343,6 +343,13 @@ async guardarDatos() {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+
+.green-dot {
+  color: #22c55e;
+  font-weight: bold;
+ 
+}
 
 /* ==== VARIABLES ==== */
 :root {

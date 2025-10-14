@@ -1,33 +1,14 @@
-# app/routers/registros_mx.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import Optional
 from app.db.database import get_db
-from app.db.models.caja_mx import Caja_mx
-from app.db.models.tarima_mx import Tarima_mx
+from app.db.models.caja_mx import CajaMX
+from app.db.models.tarima_mx import TarimaMX
 from app.db.models.enums import PaqueteriaEnum, TipoEmbalajeEnum
 from pydantic import BaseModel
 
 router = APIRouter()
-
-
-# ------------------------------------------------------------------
-# ✏️ Modelo para actualización
-# ------------------------------------------------------------------
-class RegistroUpdate(BaseModel):
-    numero_factura: Optional[str] = None
-    paqueteria: Optional[str] = None
-    cantidad_piezas: Optional[int] = None
-    clave_producto: Optional[str] = None
-    tipo_embalaje: Optional[int] = None
-    largo: Optional[float] = None
-    ancho: Optional[float] = None
-    alto: Optional[float] = None
-    peso: Optional[float] = None
-    peso_volumetrico: Optional[float] = None
-    numero_tarimas: Optional[int] = None  # Solo para Tarimas
-
 
 # ------------------------------------------------------------------
 # ✅ GET: Obtener todos los registros (Cajas y Tarimas)
@@ -36,8 +17,8 @@ class RegistroUpdate(BaseModel):
 def obtener_registros(db: Session = Depends(get_db)):
     registros = []
 
-    # 🔹 Cajas
-    cajas = db.query(Caja_mx).all()
+    # 🔹 Obtener cajas
+    cajas = db.query(CajaMX).all()
     for c in cajas:
         usuario = c.nombre_user_coordinador or c.nombre_user_practicante or "Desconocido"
         registros.append({
@@ -57,8 +38,8 @@ def obtener_registros(db: Session = Depends(get_db)):
             "peso_volumetrico": c.peso_volumetrico
         })
 
-    # 🔹 Tarimas
-    tarimas = db.query(Tarima_mx).all()
+    # 🔹 Obtener tarimas
+    tarimas = db.query(TarimaMX).all()
     for t in tarimas:
         usuario = t.nombre_user_coordinador or t.nombre_user_practicante or "Desconocido"
         registros.append({
@@ -83,11 +64,11 @@ def obtener_registros(db: Session = Depends(get_db)):
 
 
 # ------------------------------------------------------------------
-# 🗑️ DELETE: Caja o Tarima
+# 🗑️ DELETE: Eliminar Caja o Tarima
 # ------------------------------------------------------------------
 @router.delete("/caja/{caja_id}")
 def eliminar_caja(caja_id: int, db: Session = Depends(get_db)):
-    caja = db.query(Caja_mx).filter(Caja_mx.id == caja_id).first()
+    caja = db.query(CajaMX).filter(CajaMX.id == caja_id).first()
     if not caja:
         raise HTTPException(status_code=404, detail="Caja no encontrada")
     db.delete(caja)
@@ -97,12 +78,79 @@ def eliminar_caja(caja_id: int, db: Session = Depends(get_db)):
 
 @router.delete("/tarima/{tarima_id}")
 def eliminar_tarima(tarima_id: int, db: Session = Depends(get_db)):
-    tarima = db.query(Tarima_mx).filter(Tarima_mx.id == tarima_id).first()
+    tarima = db.query(TarimaMX).filter(TarimaMX.id == tarima_id).first()
     if not tarima:
         raise HTTPException(status_code=404, detail="Tarima no encontrada")
     db.delete(tarima)
     db.commit()
     return {"mensaje": "Tarima eliminada correctamente"}
+
+
+# ------------------------------------------------------------------
+# ✏️ PUT: Modelos de actualización
+# ------------------------------------------------------------------
+class RegistroUpdate(BaseModel):
+    numero_factura: Optional[str] = None
+    paqueteria: Optional[str] = None
+    cantidad_piezas: Optional[int] = None
+    clave_producto: Optional[str] = None
+    tipo_embalaje: Optional[int] = None
+    largo: Optional[float] = None
+    ancho: Optional[float] = None
+    alto: Optional[float] = None
+    peso: Optional[float] = None
+    peso_volumetrico: Optional[float] = None
+    numero_tarimas: Optional[int] = None  # Solo para Tarimas
+
+
+# ------------------------------------------------------------------
+# ✏️ PUT: Editar Caja
+# ------------------------------------------------------------------
+@router.put("/caja/{caja_id}")
+def editar_caja(caja_id: int, data: RegistroUpdate, db: Session = Depends(get_db)):
+    caja = db.query(CajaMX).filter(CajaMX.id == caja_id).first()
+    if not caja:
+        raise HTTPException(status_code=404, detail="Caja no encontrada")
+
+    if data.paqueteria:
+        caja.paqueteria = PaqueteriaEnum(data.paqueteria)
+    if data.tipo_embalaje:
+        caja.t_embalaje = TipoEmbalajeEnum(data.tipo_embalaje)
+
+    for field, value in data.dict(exclude_unset=True).items():
+        if field not in ["paqueteria", "tipo_embalaje"]:
+            if hasattr(caja, field):
+                setattr(caja, field, value)
+
+    caja.fecha_hora = datetime.now()
+    db.commit()
+    db.refresh(caja)
+    return {"mensaje": "Caja actualizada correctamente"}
+
+
+# ------------------------------------------------------------------
+# ✏️ PUT: Editar Tarima
+# ------------------------------------------------------------------
+@router.put("/tarima/{tarima_id}")
+def editar_tarima(tarima_id: int, data: RegistroUpdate, db: Session = Depends(get_db)):
+    tarima = db.query(TarimaMX).filter(TarimaMX.id == tarima_id).first()
+    if not tarima:
+        raise HTTPException(status_code=404, detail="Tarima no encontrada")
+
+    if data.paqueteria:
+        tarima.paqueteria = PaqueteriaEnum(data.paqueteria)
+    if data.tipo_embalaje:
+        tarima.tipo_embalaje = TipoEmbalajeEnum(data.tipo_embalaje)
+
+    for field, value in data.dict(exclude_unset=True).items():
+        if field not in ["paqueteria", "tipo_embalaje"]:
+            if hasattr(tarima, field):
+                setattr(tarima, field, value)
+
+    tarima.fecha_hora = datetime.now()
+    db.commit()
+    db.refresh(tarima)
+    return {"mensaje": "Tarima actualizada correctamente"}
 
 
 # ------------------------------------------------------------------
@@ -114,26 +162,20 @@ def editar_registro(tipo: str, registro_id: int, data: RegistroUpdate, db: Sessi
     if tipo not in ["caja", "tarima"]:
         raise HTTPException(status_code=400, detail="Tipo inválido, debe ser 'caja' o 'tarima'")
 
-    modelo = Caja_mx if tipo == "caja" else Tarima_mx
+    modelo = CajaMX if tipo == "caja" else TarimaMX
     registro = db.query(modelo).filter(modelo.id == registro_id).first()
+
     if not registro:
         raise HTTPException(status_code=404, detail=f"{tipo.capitalize()} no encontrada")
 
-    # 🔹 Validación y asignación de enums
+    # Enums
     if data.paqueteria:
-        try:
-            registro.paqueteria = PaqueteriaEnum(data.paqueteria)
-        except ValueError:
-            raise HTTPException(status_code=400, detail=f"Paquetería inválida: {data.paqueteria}")
-
-    if data.tipo_embalaje is not None:
+        registro.paqueteria = PaqueteriaEnum(data.paqueteria)
+    if data.tipo_embalaje:
         campo_enum = "t_embalaje" if tipo == "caja" else "tipo_embalaje"
-        try:
-            setattr(registro, campo_enum, TipoEmbalajeEnum(data.tipo_embalaje))
-        except ValueError:
-            raise HTTPException(status_code=400, detail=f"Tipo de embalaje inválido: {data.tipo_embalaje}")
+        setattr(registro, campo_enum, TipoEmbalajeEnum(data.tipo_embalaje))
 
-    # 🔹 Campos comunes
+    # Campos comunes
     for field, value in data.dict(exclude_unset=True).items():
         if field not in ["paqueteria", "tipo_embalaje"]:
             if hasattr(registro, field):
@@ -143,4 +185,4 @@ def editar_registro(tipo: str, registro_id: int, data: RegistroUpdate, db: Sessi
     db.commit()
     db.refresh(registro)
 
-    return {"mensaje": f"{tipo.capitalize()} actualizada correctamente", "registro": registro}
+    return {"mensaje": f"{tipo.capitalize()} actualizada correctamente"}
