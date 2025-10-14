@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from app.db.models.user_coordinador import UserCoordinador
-from app.schemas.user_coordinador import UserCoordinadorCreate, UserCoordinadorUpdate
+from app.db.models.user_coordinador_mx import UserCoordinadorMX
+from app.schemas.user_coordinador_mx_schemas import UserCoordinadorMXCreate, UserCoordinadorMXUpdate
 from typing import List, Optional
 from passlib.context import CryptContext
 
@@ -8,17 +8,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_CODE = "UPPER"  # Cambia por tu código real
 
 # -----------------------------
-# CREAR COORDINADOR
+# CREAR COORDINADOR MX
 # -----------------------------
-def create_user_coordinador(db: Session, payload: UserCoordinadorCreate) -> UserCoordinador:
+def create_user_coordinador_mx(db: Session, payload: UserCoordinadorMXCreate) -> UserCoordinadorMX:
     if payload.codigo_secreto != SECRET_CODE:
         raise ValueError("Código secreto incorrecto")
     
-    hashed_password = pwd_context.hash(payload.contraseña)
-    db_user = UserCoordinador(
-        
+    hashed_password = pwd_context.hash(payload.contrasena)
+    db_user = UserCoordinadorMX(
         nombre=payload.nombre,
-        contraseña=hashed_password,
+        contrasena=hashed_password,
         codigo_secreto=payload.codigo_secreto
     )
     db.add(db_user)
@@ -27,26 +26,26 @@ def create_user_coordinador(db: Session, payload: UserCoordinadorCreate) -> User
     return db_user
 
 # -----------------------------
-# OBTENER TODOS LOS COORDINADORES
+# OBTENER TODOS LOS COORDINADORES MX
 # -----------------------------
-def get_user_coordinadores(db: Session, skip: int = 0, limit: int = 100) -> List[UserCoordinador]:
-    return db.query(UserCoordinador).offset(skip).limit(limit).all()
+def get_user_coordinadores_mx(db: Session, skip: int = 0, limit: int = 100) -> List[UserCoordinadorMX]:
+    return db.query(UserCoordinadorMX).offset(skip).limit(limit).all()
 
 # -----------------------------
-# OBTENER COORDINADOR POR ID
+# OBTENER COORDINADOR MX POR ID
 # -----------------------------
-def get_user_coordinador_by_id(db: Session, user_id: int) -> Optional[UserCoordinador]:
-    return db.query(UserCoordinador).filter(UserCoordinador.id == user_id).first()
+def get_user_coordinador_mx_by_id(db: Session, user_id: int) -> Optional[UserCoordinadorMX]:
+    return db.query(UserCoordinadorMX).filter(UserCoordinadorMX.id == user_id).first()
 
 # -----------------------------
-# ACTUALIZAR COORDINADOR
+# ACTUALIZAR COORDINADOR MX
 # -----------------------------
-def update_user_coordinador(db: Session, user_id: int, payload: UserCoordinadorUpdate) -> Optional[UserCoordinador]:
-    db_user = get_user_coordinador_by_id(db, user_id)
+def update_user_coordinador_mx(db: Session, user_id: int, payload: UserCoordinadorMXUpdate) -> Optional[UserCoordinadorMX]:
+    db_user = get_user_coordinador_mx_by_id(db, user_id)
     if not db_user:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
-        if key == "contraseña":
+        if key == "contrasena" and value is not None:
             value = pwd_context.hash(value)
         setattr(db_user, key, value)
     db.commit()
@@ -54,10 +53,10 @@ def update_user_coordinador(db: Session, user_id: int, payload: UserCoordinadorU
     return db_user
 
 # -----------------------------
-# ELIMINAR COORDINADOR
+# ELIMINAR COORDINADOR MX
 # -----------------------------
-def delete_user_coordinador(db: Session, user_id: int) -> bool:
-    db_user = get_user_coordinador_by_id(db, user_id)
+def delete_user_coordinador_mx(db: Session, user_id: int) -> bool:
+    db_user = get_user_coordinador_mx_by_id(db, user_id)
     if not db_user:
         return False
     db.delete(db_user)

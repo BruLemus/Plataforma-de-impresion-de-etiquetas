@@ -10,8 +10,8 @@ from app.db.models.enums import mesaTrabajoEnum
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # 🔹 Modelo UserPracticante
-class UserPracticante(Base):
-    __tablename__ = "user_practicantes"
+class UserPracticanteMX(Base):
+    __tablename__ = "user_practicantes_mx"
 
     # 🔹 Campos principales
     user_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -20,8 +20,8 @@ class UserPracticante(Base):
     mesa_trabajo = Column(Enum(mesaTrabajoEnum, native_enum=False), nullable=True)
 
     # 🔹 Relaciones
-    cajas = relationship("Caja", back_populates="practicante")
-    tarimas = relationship("Tarima", back_populates="practicante")
+    cajas = relationship("Caja", back_populates="practicante_mx")
+    tarimas = relationship("Tarima", back_populates="practicante_mx")
 
     # 🔹 Métodos de contraseña
     def set_password(self, password: str):

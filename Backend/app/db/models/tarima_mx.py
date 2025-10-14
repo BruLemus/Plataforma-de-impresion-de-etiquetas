@@ -1,4 +1,3 @@
-# app/db/models/tarima.py
 import enum
 from sqlalchemy import Column, Integer, String, Float, Enum, DateTime, ForeignKey
 from sqlalchemy.sql import func
@@ -11,14 +10,13 @@ class TipoEmbalajeEnum(int, enum.Enum):
     TIPO2 = 2
     TIPO3 = 3
 
-class Tarima(Base):
-    __tablename__ = "tarimas"
-    #relaciones con usuarios
-    
+class Tarima_mx(Base):
+    __tablename__ = "tarimas_mx"
+
+    # Relaciones con usuarios
     id = Column(Integer, primary_key=True, index=True)
-     
-    coordinador_id = Column(Integer, ForeignKey("user_coordinadores.id"), nullable=True)
-    practicante_id = Column(Integer, ForeignKey("user_practicantes.user_id"), nullable=True)
+    coordinador_id = Column(Integer, ForeignKey("user_coordinadores_mx.id"), nullable=True)
+    practicante_id = Column(Integer, ForeignKey("user_practicantes_mx.user_id"), nullable=True)
 
     # Campos solicitados
     nombre_user_practicante = Column(String(255), nullable=True)
@@ -37,9 +35,7 @@ class Tarima(Base):
     
     # Fecha y hora de creación/registro
     fecha_hora = Column(DateTime(timezone=True), server_default=func.now())
-    # Relaciones con usuarios
-   
 
     # Relaciones ORM
-    coordinador = relationship("UserCoordinador", back_populates="tarimas")
-    practicante = relationship("UserPracticante", back_populates="tarimas")
+    coordinador = relationship("UserCoordinadorMX", back_populates="tarimas_mx")
+    practicante = relationship("UserPracticanteMX", back_populates="tarimas_mx")

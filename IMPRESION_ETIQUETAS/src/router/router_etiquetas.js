@@ -10,6 +10,12 @@ import comp_etiquetas_practicantes from "../components/comp_etiquetas_practicant
 import comp_etiquetas_coordinador from "../components/comp_etiquetas_coordinador.vue";
 import comp_otras_etiquetas from "../components/comp_otras_etiquetas.vue";
 
+// Dashboards Mexico
+import comp_practicantes_mx from "../components/comp_practicantes_mx.vue";
+import comp_etiquetas_coordinador_mx from "../components/comp_etiquetas_coordinador_mx.vue";
+import comp_registro_coordinadores_mx from "../components/comp_registro_coordinadores_mx.vue";
+
+
 
 const routes = [
   { path: "/", name: "login", component: login },
@@ -19,6 +25,13 @@ const routes = [
   { path: "/registro", name: "registro", component: comp_registro  },
   { path: "/otrasetiquetas", name: "comp_otras_etiquetas", component: comp_otras_etiquetas, meta: { requiresAuth: true } },
   { path: "/crearpracticante", name: "comp_crear_practicante", component: crear_practicante, meta: { requiresAuth: true } },
+  // Rutas para Mexico
+  { path: "/tarima_mx", name: "comp_tarima_mx", component: comp_tarima, meta: { requiresAuth: true } },
+  { path: "/historial_mx", name: "comp_historial_mx", component: comp_historial, meta: { requiresAuth: true } },
+  { path: "/inf_mx", name: "comp_inf_mx", component: comp_inf, meta: { requiresAuth: true } },
+  { path: "/registro_mx", name: "registro_mx", component: comp_registro_coordinadores_mx },
+  { path: "/crearpracticante_mx", name: "comp_crear_practicante_mx", component: crear_practicante, meta: { requiresAuth: true } },
+
 
   // Dashboards fijos
   {
@@ -31,6 +44,48 @@ const routes = [
     path: "/coordinador",
     name: "dashboard_coordinadores",
     component: comp_etiquetas_coordinador,
+    meta: { requiresAuth: true }
+  },
+
+
+
+  // Rutas para Mexico
+  {
+    path: "/practicante_mx",
+    name: "dashboard_practicante_mx",
+    component: comp_practicantes_mx,
+    meta: { requiresAuth: true }
+  },
+
+  {
+    path: "/coordinador_mx",
+    name: "dashboard_coordinadores_mx",
+    component: comp_etiquetas_coordinador_mx,
+    meta: { requiresAuth: true }
+  },
+
+
+  {
+    path: "/historial_mx",
+    name: "comp_historial_mx",
+    component: comp_historial,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: "/inf_mx",
+    name: "comp_inf_mx",
+    component: comp_inf,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: "/registro_mx",
+    name: "registro_mx",
+    component: comp_registro
+  },
+  {
+    path: "/crearpracticante_mx",
+    name: "comp_crear_practicante_mx",
+    component: crear_practicante,
     meta: { requiresAuth: true }
   },
 

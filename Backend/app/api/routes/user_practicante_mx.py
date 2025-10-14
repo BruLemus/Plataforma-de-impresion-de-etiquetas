@@ -1,25 +1,25 @@
-# routers/user_practicante.py
-from fastapi import APIRouter, Depends, HTTPException, Security, Form, Header
+from fastapi import APIRouter, Depends, HTTPException, Form, Header, Security
 from sqlalchemy.orm import Session
-from app.db.database import get_db
-from app.db.models.user_practicante import UserPracticante
-from app.schemas.user_practicante import (
-    UserPracticanteCreate,
-    UserPracticanteUpdate,
-    UserPracticanteResponse
-)
-from app.services.user_practicante import (
-    create_user_practicante,
-    get_user_practicantes,
-    update_user_practicante,
-    delete_user_practicante
-)
+from typing import List
 from passlib.context import CryptContext
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
-from typing import List
-from app.db.models.enums import mesaTrabajoEnum
+
+from app.db.database import get_db
+from app.db.models.user_practicante_mx import UserPracticanteMX
+from app.schemas.user_practicante_mx import (
+    UserPracticanteMXCreate,
+    UserPracticanteMXUpdate,
+    UserPracticanteMXResponse
+)
+from app.services.user_practicante_mx import (
+    create_user_practicante_mx,
+    get_user_practicantes_mx,
+    get_user_practicante_mx_by_id,
+    update_user_practicante_mx,
+    delete_user_practicante_mx
+)
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -28,20 +28,13 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 security = HTTPBearer()
 
-
-# ---------------------------
-# Seguridad y login
-# ---------------------------
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
 def create_access_token(data: dict, expires_delta: int = None):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=expires_delta or ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def get_current_practicante(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
+def get_current_practicante_mx(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
     token = credentials.credentials
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -50,53 +43,33 @@ def get_current_practicante(credentials: HTTPAuthorizationCredentials = Security
             raise HTTPException(status_code=401, detail="Token inválido")
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido")
-    user = db.query(UserPracticante).filter(UserPracticante.nombre == username).first()
+    user = db.query(UserPracticanteMX).filter(UserPracticanteMX.nombre == username).first()
     if not user:
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
     return user
 
-
-# ---------------------------
-# Endpoints Practicante
-# ---------------------------
-
 # Crear practicante
-@router.post("/", response_model=UserPracticanteResponse)
-def create_practicante(payload: UserPracticanteCreate, db: Session = Depends(get_db)):
-    try:
-        user = create_user_practicante(db, payload)  # ✅ Usamos el service, que asigna correctamente el Enum
-        return user
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+@router.post("/", response_model=UserPracticanteMXResponse)
+def create_practicante_mx(payload: UserPracticanteMXCreate, db: Session = Depends(get_db)):
+    return create_user_practicante_mx(db, payload)
 
 # Login practicante
 @router.post("/login")
-def login_practicante(
-    nombre: str = Form(...),
-    contrasena: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    user = db.query(UserPracticante).filter(UserPracticante.nombre == nombre).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="Usuario no encontrado")
-    if not verify_password(contrasena, user.contrasena):
-        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
-    token_data = {"user_id": user.user_id, "sub": user.nombre, "tipo": "practicante"}
-    token = create_access_token(token_data)
-    return {"nombre": user.nombre, "id": user.user_id, "token": token}
+def login_practicante_mx(nombre: str = Form(...), contrasena: str = Form(...), db: Session = Depends(get_db)):
+    user = db.query(UserPracticanteMX).filter(UserPracticanteMX.nombre == nombre).first()
+    if not user or not user.verify_password(contrasena):
+        raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+    token = create_access_token({"user_id": user.user_id, "sub": user.nombre, "tipo": "practicante"})
+    return {"nombre": user.nombre, "user_id": user.user_id, "token": token, "mesa_trabajo": user.mesa_trabajo}
 
-# Ver perfil (protegido)
-@router.get("/me", response_model=UserPracticanteResponse)
-def get_me(current_user: UserPracticante = Depends(get_current_practicante)):
+# Ver perfil
+@router.get("/me", response_model=UserPracticanteMXResponse)
+def get_me_practicante_mx(current_user: UserPracticanteMX = Depends(get_current_practicante_mx)):
     return current_user
 
-# Actualizar perfil (protegido)
-@router.put("/perfil", response_model=UserPracticanteResponse)
-def update_perfil_practicante(
-    payload: UserPracticanteUpdate,
-    token: str = Header(...),
-    db: Session = Depends(get_db)
-):
+# Actualizar perfil
+@router.put("/perfil", response_model=UserPracticanteMXResponse)
+def update_perfil_practicante_mx(payload: UserPracticanteMXUpdate, token: str = Header(...), db: Session = Depends(get_db)):
     try:
         data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = data.get("user_id")
@@ -104,33 +77,21 @@ def update_perfil_practicante(
         if tipo != "practicante":
             raise HTTPException(status_code=403, detail="No autorizado")
     except JWTError:
-        raise HTTPException(status_code=401, detail="Inicia Sesión nuevamente")
-    user = update_user_practicante(db, user_id, payload)
+        raise HTTPException(status_code=401, detail="Token inválido")
+    user = get_user_practicante_mx_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return user
+    return update_user_practicante_mx(db, user_id, payload)
 
-# Actualizar practicante por coordinador
-@router.put("/{user_id}", response_model=UserPracticanteResponse)
-def update_practicante_by_coordinador(
-    user_id: int,
-    payload: UserPracticanteUpdate,
-    db: Session = Depends(get_db)
-):
-    user = update_user_practicante(db, user_id, payload)
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return user
+# Listar todos practicantes
+@router.get("/", response_model=List[UserPracticanteMXResponse])
+def get_all_practicantes_mx(db: Session = Depends(get_db)):
+    return get_user_practicantes_mx(db)
 
-# Listar todos los practicantes
-@router.get("/", response_model=List[UserPracticanteResponse])
-def get_all_practicantes(db: Session = Depends(get_db)):
-    return get_user_practicantes(db)
-
-# Eliminar practicante por ID
+# Eliminar practicante
 @router.delete("/{practicante_id}")
-def delete_practicante(practicante_id: int, db: Session = Depends(get_db)):
-    success = delete_user_practicante(db, practicante_id)
-    if not success:
+def delete_practicante_mx(practicante_id: int, db: Session = Depends(get_db)):
+    deleted = delete_user_practicante_mx(db, practicante_id)
+    if not deleted:
         raise HTTPException(status_code=404, detail="Practicante no encontrado")
     return {"detail": "Practicante eliminado"}

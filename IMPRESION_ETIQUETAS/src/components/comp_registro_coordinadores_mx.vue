@@ -7,7 +7,7 @@
 
       <!-- Título -->
       <h1 class="register-title">
-        <span class="highlight">Registro de Coordinador GDL</span>
+        <span class="highlight">Registro de Coordinador MX</span>
       </h1>
 
       <!-- Inputs animados -->
@@ -71,7 +71,7 @@ export default {
           codigo_secreto: this.codigoSecreto
         };
 
-        const res = await axios.post("http://127.0.0.1:8000/user_coordinadors/", payload, {
+        const res = await axios.post("http://127.0.0.1:8000/user_coordinadors_mx/", payload, {
           headers: { "Content-Type": "application/json" }
         });
 

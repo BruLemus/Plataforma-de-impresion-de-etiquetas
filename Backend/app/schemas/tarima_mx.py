@@ -1,11 +1,10 @@
-# app/schemas/tarima_schemas.py
 from pydantic import BaseModel
 from typing import Optional
-from app.db.models.tarima import TipoEmbalajeEnum
+from app.db.models.tarima_mx import TipoEmbalajeEnum
 from app.db.models.enums import PaqueteriaEnum
 from datetime import datetime
 
-class TarimaBase(BaseModel):
+class TarimaMXBase(BaseModel):
     nombre_user_practicante: Optional[str] = None
     nombre_user_coordinador: Optional[str] = None
     numero_facturas: str
@@ -20,11 +19,11 @@ class TarimaBase(BaseModel):
     peso: Optional[float] = 0
     peso_volumetrico: Optional[float] = 0
 
-class TarimaCreate(TarimaBase):
+class TarimaMXCreate(TarimaMXBase):
     practicante_id: Optional[int] = None
     coordinador_id: Optional[int] = None
     
-class TarimaRead(TarimaBase):
+class TarimaMXRead(TarimaMXBase):
     id: int
     fecha_hora: datetime
     practicante_id: Optional[int] = None

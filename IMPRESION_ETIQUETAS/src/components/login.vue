@@ -104,11 +104,24 @@ export default {
         localStorage.setItem("sede", this.sede);
         localStorage.setItem("user_id", res.data.id);
 
-        // Redirigir según rol y sede
-        const destino =
-          this.rol === "Practicante"
-            ? `/${this.sede.toLowerCase()}/practicante`
-            : `/${this.sede.toLowerCase()}/coordinador`;
+        // 🔹 Redirección según sede
+        let destino = "";
+
+        if (this.sede === "Mexico") {
+          // Para México
+          if (this.rol === "Practicante") {
+            destino = "/tarima_mx";
+          } else if (this.rol === "Coordinador") {
+            destino = "/inf_mx";
+          }
+        } else {
+          // Para Guadalajara
+          if (this.rol === "Practicante") {
+            destino = "/tarima";
+          } else if (this.rol === "Coordinador") {
+            destino = "/inf";
+          }
+        }
 
         this.$router.push(destino);
 
@@ -119,11 +132,24 @@ export default {
     },
 
     registrarCoordinador() {
-      this.$router.push("/registro");
+      // 🔹 Redirección correcta del registro según sede
+      if (!this.sede) {
+        alert("Primero selecciona la sede para registrar coordinador");
+        return;
+      }
+
+      if (this.sede === "Mexico") {
+        this.$router.push("/registro_mx");
+      } else if (this.sede === "Guadalajara") {
+        this.$router.push("/registro");
+      } else {
+        alert("Sede no válida, selecciona Guadalajara o México");
+      }
     }
   }
 };
 </script>
+
 
 <style scoped>
 /* Fondo principal */

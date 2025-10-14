@@ -5,8 +5,8 @@ from app.db.database import Base
 from app.db.models.enums import PaqueteriaEnum, TipoEmbalajeEnum
 
 
-class Caja(Base):
-    __tablename__ = "cajas"
+class Caja_mx(Base):
+    __tablename__ = "cajas_mx"
 
     id = Column(Integer, primary_key=True, index=True)
 
@@ -33,5 +33,5 @@ class Caja(Base):
     fecha_hora = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relaciones ORM
-    coordinador = relationship("UserCoordinador", back_populates="cajas")
-    practicante = relationship("UserPracticante", back_populates="cajas")
+    coordinador = relationship("UserCoordinador", back_populates="cajas_mx")
+    practicante = relationship("UserPracticante", back_populates="cajas_mx")

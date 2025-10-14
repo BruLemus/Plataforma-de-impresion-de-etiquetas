@@ -1,28 +1,25 @@
 from pydantic import BaseModel
+from typing import Optional
 
-class UserCoordinadorBase(BaseModel):
+class UserCoordinadorMXBase(BaseModel):
     nombre: str
     codigo_secreto: str
 
-class UserCoordinadorCreate(UserCoordinadorBase):
-    
+class UserCoordinadorMXCreate(UserCoordinadorMXBase):
     contrasena: str
 
-
-class UserCoordinadorLogin(BaseModel):
+class UserCoordinadorMXLogin(BaseModel):
     nombre: str
     contrasena: str
-    
-class UserCoordinadorUpdate(BaseModel):
-    nombre: str | None = None
-    contrasena: str | None = None
+
+class UserCoordinadorMXUpdate(BaseModel):
+    nombre: Optional[str] = None
+    contrasena: Optional[str] = None
     codigo_secreto: str
-    
-     
-class UserCoordinadorResponse(UserCoordinadorBase):
+
+class UserCoordinadorMXResponse(UserCoordinadorMXBase):
     id: int
-    nombre: str
-    token: str | None = None
+    token: Optional[str] = None
 
     model_config = {
         "from_attributes": True

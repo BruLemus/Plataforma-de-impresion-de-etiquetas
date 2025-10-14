@@ -1,15 +1,18 @@
-# routers/user_coordinador.py
-from fastapi import APIRouter, Depends, HTTPException, Security, Form
+from fastapi import APIRouter, Depends, HTTPException, Security, Form, Header
 from sqlalchemy.orm import Session
-from app.db.database import get_db
-from app.db.models.user_coordinador import UserCoordinador
-from app.schemas.user_coordinador import UserCoordinadorCreate, UserCoordinadorUpdate, UserCoordinadorResponse
+from typing import List
 from passlib.context import CryptContext
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
-from typing import List
-from fastapi import Header
+
+from app.db.database import get_db
+from app.db.models.user_coordinador_mx import UserCoordinadorMX
+from app.schemas.user_coordinador_mx import (
+    UserCoordinadorMXCreate,
+    UserCoordinadorMXUpdate,
+    UserCoordinadorMXResponse
+)
 
 router = APIRouter()
 
@@ -33,7 +36,7 @@ def create_access_token(data: dict, expires_delta: int = None):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def get_current_coordinator(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
+def get_current_coordinator_mx(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
     token = credentials.credentials
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -43,22 +46,22 @@ def get_current_coordinator(credentials: HTTPAuthorizationCredentials = Security
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido")
 
-    user = db.query(UserCoordinador).filter(UserCoordinador.nombre == username).first()
+    user = db.query(UserCoordinadorMX).filter(UserCoordinadorMX.nombre == username).first()
     if not user:
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
     return user
 
 # ---------------------------
-# Endpoints Coordinador
+# Endpoints Coordinador MX
 # ---------------------------
 
 # Crear coordinador
-@router.post("/", response_model=UserCoordinadorResponse)
-def create_coordinador(payload: UserCoordinadorCreate, db: Session = Depends(get_db)):
+@router.post("/", response_model=UserCoordinadorMXResponse)
+def create_coordinador_mx(payload: UserCoordinadorMXCreate, db: Session = Depends(get_db)):
     if payload.codigo_secreto != SECRET_CODE:
         raise HTTPException(status_code=403, detail="Código secreto incorrecto")
     hashed_password = pwd_context.hash(payload.contrasena)
-    user = UserCoordinador(
+    user = UserCoordinadorMX(
         nombre=payload.nombre,
         contrasena=hashed_password,
         codigo_secreto=payload.codigo_secreto
@@ -70,19 +73,18 @@ def create_coordinador(payload: UserCoordinadorCreate, db: Session = Depends(get
 
 # Login coordinador
 @router.post("/login")
-def login_coordinador(
+def login_coordinador_mx(
     nombre: str = Form(...),
     contrasena: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    user = db.query(UserCoordinador).filter(UserCoordinador.nombre == nombre).first()
+    user = db.query(UserCoordinadorMX).filter(UserCoordinadorMX.nombre == nombre).first()
     if not user:
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
     
     if not verify_password(contrasena, user.contrasena):
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
     
-    # 🔹 Agregamos el ID y tipo al token
     token_data = {
         "user_id": user.id,
         "sub": user.nombre,
@@ -98,18 +100,17 @@ def login_coordinador(
     }
 
 # Ver perfil (protegido)
-@router.get("/me", response_model=UserCoordinadorResponse)
-def get_me(current_user: UserCoordinador = Depends(get_current_coordinator)):
+@router.get("/me", response_model=UserCoordinadorMXResponse)
+def get_me_mx(current_user: UserCoordinadorMX = Depends(get_current_coordinator_mx)):
     return current_user
 
 # Actualizar perfil (protegido)
-@router.put("/perfil", response_model=UserCoordinadorResponse)
-def update_perfil_coordinador(
-    payload: UserCoordinadorUpdate,
-    token: str = Header(...),  # Se espera que Vue envíe token en header
+@router.put("/perfil", response_model=UserCoordinadorMXResponse)
+def update_perfil_coordinador_mx(
+    payload: UserCoordinadorMXUpdate,
+    token: str = Header(...),
     db: Session = Depends(get_db)
 ):
-    # 🔹 Validar token
     try:
         data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = data.get("user_id")
@@ -119,16 +120,13 @@ def update_perfil_coordinador(
     except JWTError:
         raise HTTPException(status_code=401, detail="Inicia Sesión nuevamente")
 
-    # 🔹 Buscar usuario en DB
-    user = db.query(UserCoordinador).filter(UserCoordinador.id == user_id).first()
+    user = db.query(UserCoordinadorMX).filter(UserCoordinadorMX.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    # 🔹 Verificar código secreto
     if payload.codigo_secreto != user.codigo_secreto:
         raise HTTPException(status_code=403, detail="Código secreto inválido")
 
-    # 🔹 Actualizar campos
     if payload.nombre:
         user.nombre = payload.nombre
     if payload.contrasena:
@@ -139,16 +137,15 @@ def update_perfil_coordinador(
 
     return user
 
+# Listar todos los coordinadores
+@router.get("/", response_model=List[UserCoordinadorMXResponse])
+def get_all_coordinadores_mx(db: Session = Depends(get_db)):
+    return db.query(UserCoordinadorMX).all()
 
-# Listar todos los coordinadores (opcional)
-@router.get("/", response_model=List[UserCoordinadorResponse])
-def get_all_coordinadores(db: Session = Depends(get_db)):
-    return db.query(UserCoordinador).all()
-
-# Eliminar coordinador por ID (sin token)
+# Eliminar coordinador por ID
 @router.delete("/{coordinador_id}")
-def delete_coordinador(coordinador_id: int, db: Session = Depends(get_db)):
-    user = db.query(UserCoordinador).filter(UserCoordinador.id == coordinador_id).first()
+def delete_coordinador_mx(coordinador_id: int, db: Session = Depends(get_db)):
+    user = db.query(UserCoordinadorMX).filter(UserCoordinadorMX.id == coordinador_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Coordinador no encontrado")
     db.delete(user)

@@ -4,7 +4,7 @@ from app.db.models.enums import PaqueteriaEnum, TipoEmbalajeEnum
 from typing import Optional
 
 
-class CajaBase(BaseModel):
+class CajaMXBase(BaseModel):
     nombre_user_practicante: Optional[str] = None
     nombre_user_coordinador: Optional[str] = None
     n_facturas: str
@@ -20,12 +20,12 @@ class CajaBase(BaseModel):
     peso_volumetrico: Optional[float] = None
 
 
-class CajaCreate(CajaBase):
+class CajaMXCreate(CajaMXBase):
     practicante_id: Optional[int] = None
     coordinador_id: Optional[int] = None
 
 
-class CajaRead(CajaBase):
+class CajaMXRead(CajaMXBase):
     id: int
     fecha_hora: datetime
     practicante_id: Optional[int] = None
