@@ -247,7 +247,7 @@ export default {
     async fetchHistorial() {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://127.0.0.1:8000/registros_mx/registros/", {
+        const response = await axios.get("http://127.0.0.1:8000/registros_mx/", {
           headers: { Authorization: `Bearer ${token}` },
         });
         this.historial = response.data;
