@@ -21,9 +21,3 @@ class UserCoordinadorMX(Base):
     cajas_mx = relationship("CajaMX", back_populates="coordinador")        
     tarimas_mx = relationship("TarimaMX", back_populates="coordinador")
 
-    # Métodos de contraseña
-    def set_password(self, password: str):
-        self.contrasena = pwd_context.hash(password)
-
-    def verify_password(self, password: str) -> bool:
-        return pwd_context.verify(password, self.contrasena)

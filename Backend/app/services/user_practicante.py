@@ -22,12 +22,12 @@ def get_user_practicantes(db: Session, skip: int = 0, limit: int = 100) -> List[
     return db.query(UserPracticante).offset(skip).limit(limit).all()
 
 # 🔹 Obtener practicante por ID
-def get_user_practicante_by_id(db: Session, id: int) -> Optional[UserPracticante]:
-    return db.query(UserPracticante).filter(UserPracticante.id == id).first()
+def get_user_practicante_by_id(db: Session, user_id: int) -> Optional[UserPracticante]:
+    return db.query(UserPracticante).filter(UserPracticante.user_id == user_id).first()
 
 # 🔹 Actualizar usuario con contraseña opcional
-def update_user_practicante(db: Session, id: int, payload: UserPracticanteUpdate) -> Optional[UserPracticante]:
-    db_user = get_user_practicante_by_id(db, id)
+def update_user_practicante(db: Session, user_id: int, payload: UserPracticanteUpdate) -> Optional[UserPracticante]:
+    db_user = get_user_practicante_by_id(db, user_id)
     if not db_user:
         return None
 
@@ -50,8 +50,8 @@ def update_user_practicante(db: Session, id: int, payload: UserPracticanteUpdate
     return db_user
 
 # 🔹 Eliminar usuario
-def delete_user_practicante(db: Session, id: int) -> bool:
-    db_user = get_user_practicante_by_id(db, id)
+def delete_user_practicante(db: Session, user_id: int) -> bool:
+    db_user = get_user_practicante_by_id(db, user_id)
     if not db_user:
         return False
     db.delete(db_user)

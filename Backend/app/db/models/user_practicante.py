@@ -23,11 +23,4 @@ class UserPracticante(Base):
     cajas = relationship("Caja", back_populates="practicante")
     tarimas = relationship("Tarima", back_populates="practicante")
 
-    # 🔹 Métodos de contraseña
-    def set_password(self, password: str):
-        """Hashea la contraseña y la guarda en el campo 'contrasena'"""
-        self.contrasena = pwd_context.hash(password)
-
-    def verify_password(self, password: str) -> bool:
-        """Verifica la contraseña ingresada contra el hash almacenado"""
-        return pwd_context.verify(password, self.contrasena)
+  

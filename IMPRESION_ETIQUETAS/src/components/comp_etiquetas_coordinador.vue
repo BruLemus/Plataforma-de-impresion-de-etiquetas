@@ -277,7 +277,7 @@ async guardarDatos() {
 
   // Nombres desde localStorage
   const nombrePracticante = localStorage.getItem("nombre_practicante") || this.nombrePracticante || "string";
-  const nombreCoordinador = localStorage.getItem("nombre_coordinador") || this.nombreCoordinador || "Meli";
+  const nombreCoordinador = localStorage.getItem("nombre_coordinador") || this.nombreCoordinador || "String";
 
   // Token JWT
   const token = localStorage.getItem("token");
@@ -307,7 +307,7 @@ async guardarDatos() {
 
   try {
     const response = await axios.post(
-      "http://127.0.0.1:8000/cajas/?role=coordinador",
+      "http://127.0.0.1:8000/cajas/?sede=guadalajara&role=coordinador",
       payload,
       {
         headers: {
@@ -336,7 +336,6 @@ async guardarDatos() {
   },
 };
 </script>
-
 
 
 

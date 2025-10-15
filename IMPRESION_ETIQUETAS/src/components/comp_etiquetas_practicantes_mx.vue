@@ -263,7 +263,7 @@ export default {
       try {
         const payload = { nombre: this.editUser.nombre, contrasena: this.editUser.contrasena, numMesa: this.editUser.numMesa };
         const token = localStorage.getItem("token");
-        await axios.put("http://127.0.0.1:8000/user_practicantes/perfil", payload, { headers: token ? { token } : {} });
+        await axios.put("http://127.0.0.1:8000/user_practicantes_mx/perfil", payload, { headers: token ? { token } : {} });
         alert("Perfil actualizado");
         this.username = this.editUser.nombre;
         this.numMesa = this.editUser.numMesa;
@@ -292,49 +292,73 @@ export default {
     },
     async imprimirZebra() { alert("Función de impresión en Zebra"); },
     async imprimirRemoto() { alert("Función de impresión en servidor (ZPL)"); },
-    async guardarDatosPracticante() {
-      if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada.nombre || !this.claveProducto) {
-        return alert("Completa todos los campos obligatorios");
-      }
-      try {
-        const payload = {
-          nombre_user_practicante: this.username,
-          numero_mesa: this.numMesa,
-          nombre_user_coordinador: "",
-          n_facturas: String(this.factura),
-          n_cajas: Number(this.numCajas) || 0,
-          paqueteria: String(this.paqueteriaSeleccionada.nombre),
-          t_embalaje: Number(this.tipoEmbalaje),
-          clave_producto: String(this.claveProducto),
-          cantidad_piezas: this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0),
-          ancho: Number(this.anchoCaja) || 0,
-          alto: Number(this.altoCaja) || 0,
-          largo: Number(this.largoCaja) || 0,
-          peso: Number(this.peso) || 0,
-          peso_volumetrico: this.pesoVolumetrico,
-          practicante_id: Number(localStorage.getItem("practicante_id")) || 0,
-          coordinador_id: 0
-        };
-        console.log("Payload enviado:", JSON.stringify(payload, null, 2));
-        const token = localStorage.getItem("token");
-        const response = await fetch("http://127.0.0.1:8000/cajas_mx/?role=practicante", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...(token ? { token } : {}) },
-          body: JSON.stringify(payload)
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Error en API:", errorData);
-          alert("Error en API: " + JSON.stringify(errorData, null, 2));
-          throw new Error("Error al guardar en la base de datos");
+async guardarDatosPracticante() {
+  // Validar campos obligatorios
+  if (!this.paqueteriaSeleccionada.nombre || !this.factura || !this.numCajas || !this.tipoEmbalaje || !this.claveProducto) {
+    alert("Completa los campos obligatorios.");
+    return;
+  }
+
+  // Total de piezas
+  const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
+
+  // IDs desde localStorage
+  const practicante_id = Number(localStorage.getItem("practicante_id")) || 0;
+  const coordinador_id = Number(localStorage.getItem("coordinador_id")) || 5; // por ejemplo
+
+  // Nombres desde localStorage
+  const nombrePracticante = localStorage.getItem("nombre_practicante") || this.nombrePracticante || "string";
+  const nombreCoordinador = localStorage.getItem("nombre_coordinador") || this.nombreCoordinador || "Meli";
+
+  // Token JWT
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Inicia sesión nuevamente.");
+    return;
+  }
+
+  // Estructura del payload
+  const payload = {
+    nombre_user_practicante: nombrePracticante,
+    nombre_user_coordinador: nombreCoordinador,
+    n_facturas: String(this.factura),
+    n_cajas: Number(this.numCajas),
+    paqueteria: this.paqueteriaSeleccionada.nombre,
+    t_embalaje: Number(this.tipoEmbalaje),
+    clave_producto: String(this.claveProducto),
+    cantidad_piezas: totalPiezas,
+    ancho: Number(this.anchoCaja) || 0,
+    largo: Number(this.largoCaja) || 0,
+    alto: Number(this.altoCaja) || 0,
+    peso: Number(this.peso) || 0,
+    peso_volumetrico: Number(this.pesoVolumetrico.toFixed(2)) || 0,
+    practicante_id,
+    coordinador_id
+  };
+
+  try {
+    const response = await axios.post(
+      "http://127.0.0.1:8000/cajas_mx/?sede=mexico&role=practicante",
+      payload,
+      {
+        headers: {
+          "accept": "application/json",
+          "Content-Type": "application/json",
+          "token": token
         }
-        alert("✅ Datos guardados correctamente");
-        this.reiniciar();
-      } catch (err) {
-        console.error(err);
-        alert("Ocurrió un error al guardar los datos");
       }
-    },
+    );
+
+    console.log("✅ Respuesta API:", response.data);
+    alert("✅ Datos guardados correctamente");
+    this.reiniciar();
+
+  } catch (error) {
+    console.error("❌ Error en API:", error.response || error);
+    const msg = error.response?.data?.detail || "Error al guardar. Revisa los datos.";
+    alert(msg);
+  }
+},
     async getUserInfo() {
       try {
         const token = localStorage.getItem("token");

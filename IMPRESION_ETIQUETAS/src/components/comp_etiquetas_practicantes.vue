@@ -206,24 +206,24 @@ import comp_tarima from "@/components/comp_tarima.vue";
 import comp_inf from "@/components/comp_inf.vue";
 import comp_otras_etiquetas from "./comp_otras_etiquetas.vue";
 
+
 export default {
-  name: "CompEtiquetasPracticantes",
-  components: { QrcodeVue, comp_tarima, comp_inf, comp_otras_etiquetas },
+  name: "CompEtiquetas",
+  components: { QrcodeVue, comp_tarima, comp_inf, comp_otras_etiquetas},
   data() {
     return {
       username: localStorage.getItem("username") || "",
       horaEntrada: localStorage.getItem("horaEntrada") || "",
-      numMesa: localStorage.getItem("numMesa") || "",
       currentView: "caja",
       showEditUserModal: false,
-      editUser: { nombre: "", contrasena: "", numMesa: "" },
+      editUser: { nombre: "", contrasena: "" },
       paqueterias: [
         { nombre: "Paquetexpress", logo: new URL("@/assets/pExp.png", import.meta.url).href },
         { nombre: "FedEx", logo: new URL("@/assets/fedex.png", import.meta.url).href },
         { nombre: "DHL", logo: new URL("@/assets/dhl.png", import.meta.url).href },
         { nombre: "Estafeta", logo: new URL("@/assets/estafeta.png", import.meta.url).href },
         { nombre: "Mercado Libre", logo: new URL("@/assets/mercadolibre.png", import.meta.url).href },
-        { nombre: "UPS", logo: new URL("@/assets/ups.png", import.meta.url).href }
+        { nombre: "UPS", logo: new URL("@/assets/ups.png", import.meta.url).href },
       ],
       paqueteriaSeleccionada: { nombre: "", logo: "" },
       factura: "",
@@ -234,123 +234,127 @@ export default {
       anchoCaja: "",
       altoCaja: "",
       largoCaja: "",
-      peso: 0,
+      peso: "",
       qrSize: 130,
+      impresoraOnline: false,
+      nombrePracticante: localStorage.getItem("username") || "",
+      nombreCoordinador: "Coordinador Principal",
     };
-  },
-  created() {
-    this.getUserInfo();
-    if (!this.horaEntrada) {
-      const hora = new Date().toLocaleString();
-      localStorage.setItem("horaEntrada", hora);
-      this.horaEntrada = hora;
-    }
   },
   computed: {
     totalPiezas() { return this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0); },
-    pesoVolumetrico() { return ((this.anchoCaja * this.altoCaja * this.largoCaja) / 5000) || 0; }
+    pesoVolumetrico() {
+      if (this.anchoCaja && this.altoCaja && this.largoCaja) {
+        return (this.anchoCaja * this.altoCaja * this.largoCaja) / 5000; //PESO VOLUMETRICO ENTRE 5000 -----------------------------------------------
+      }
+      return 0;
+    },
+  },
+  created() {
+    const hora = new Date().toLocaleString();
+    localStorage.setItem("horaEntrada", hora);
+    this.horaEntrada = hora;
+    this.checkPrinterStatus();
+    setInterval(this.checkPrinterStatus, 5000);
   },
   methods: {
-    logout() { localStorage.clear(); this.$router.push("/"); },
     setView(view) { this.currentView = view; },
-    openEditUserModal() {
-      this.showEditUserModal = true;
-      this.editUser.nombre = this.username;
-      this.editUser.numMesa = this.numMesa;
-    },
+    openEditUserModal() { this.showEditUserModal = true; },
     closeEditUserModal() { this.showEditUserModal = false; },
-    async saveUser() {
-      try {
-        const payload = { nombre: this.editUser.nombre, contrasena: this.editUser.contrasena, numMesa: this.editUser.numMesa };
-        const token = localStorage.getItem("token");
-        await axios.put("http://127.0.0.1:8000/user_practicantes/perfil", payload, { headers: token ? { token } : {} });
-        alert("Perfil actualizado");
-        this.username = this.editUser.nombre;
-        this.numMesa = this.editUser.numMesa;
-        localStorage.setItem("username", this.username);
-        localStorage.setItem("numMesa", this.numMesa);
-        this.closeEditUserModal();
-      } catch (err) {
-        console.error(err);
-        alert("Error al actualizar perfil");
-      }
+    saveUser() { alert("Función de guardar usuario aquí"); },
+    logout() { localStorage.clear();this.$router.push("/") },
+    goToCrearPracticante() {
+      this.$router.push('/crearpracticante');
     },
+    checkPrinterStatus() { this.impresoraOnline = true; },
     reiniciar() {
       this.factura = "";
       this.numCajas = 0;
       this.piezas = [];
-      this.paqueteriaSeleccionada = { nombre: "", logo: "" };
       this.tipoEmbalaje = "";
-      this.claveProducto = "";
+      this.claveProducto = "";  
       this.anchoCaja = "";
       this.altoCaja = "";
       this.largoCaja = "";
-      this.peso = 0;
+      this.peso = "";
     },
-    generateQR(index) {
-      return JSON.stringify({ factura: this.factura, caja: index + 1, piezas: this.piezas[index] || 0, peso: this.peso, mesa: this.numMesa });
-    },
-    async imprimirZebra() { alert("Función de impresión en Zebra"); },
-    async imprimirRemoto() { alert("Función de impresión en servidor (ZPL)"); },
-    async guardarDatosPracticante() {
-      if (!this.factura || !this.tipoEmbalaje || !this.paqueteriaSeleccionada.nombre || !this.claveProducto) {
-        return alert("Completa todos los campos obligatorios");
-      }
-      try {
-        const payload = {
-          nombre_user_practicante: this.username,
-          numero_mesa: this.numMesa,
-          nombre_user_coordinador: "",
-          n_facturas: String(this.factura),
-          n_cajas: Number(this.numCajas) || 0,
-          paqueteria: String(this.paqueteriaSeleccionada.nombre),
-          t_embalaje: Number(this.tipoEmbalaje),
-          clave_producto: String(this.claveProducto),
-          cantidad_piezas: this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0),
-          ancho: Number(this.anchoCaja) || 0,
-          alto: Number(this.altoCaja) || 0,
-          largo: Number(this.largoCaja) || 0,
-          peso: Number(this.peso) || 0,
-          peso_volumetrico: this.pesoVolumetrico,
-          practicante_id: Number(localStorage.getItem("practicante_id")) || 0,
-          coordinador_id: 0
-        };
-        console.log("Payload enviado:", JSON.stringify(payload, null, 2));
-        const token = localStorage.getItem("token");
-        const response = await fetch("http://127.0.0.1:8000/cajas/?role=practicante", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...(token ? { token } : {}) },
-          body: JSON.stringify(payload)
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Error en API:", errorData);
-          alert("Error en API: " + JSON.stringify(errorData, null, 2));
-          throw new Error("Error al guardar en la base de datos");
-        }
-        alert("✅ Datos guardados correctamente");
-        this.reiniciar();
-      } catch (err) {
-        console.error(err);
-        alert("Ocurrió un error al guardar los datos");
-      }
-    },
-    async getUserInfo() {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get("http://127.0.0.1:8000/user_practicantes/me", {  headers: { Authorization: `Bearer ${token}` } });
-        if (response.data) {
-          this.username = response.data.username || this.username;
-          this.numMesa = response.data.mesa_trabajo || this.numMesa;
-          localStorage.setItem("username", this.username);
-          localStorage.setItem("numMesa", this.numMesa);
-        }
-        console.log(response.data);
-      } catch (err) {
-        console.error("Error al obtener info del usuario:", err);
-      }
-    }
+    imprimirZebra() { alert("Impresión en Zebra"); },
+    imprimirRemoto() { alert("Impresión Servidor/ZPL"); },
+    generateQR(index) { return `Factura:${this.factura || "—"}|Caja:${index+1}|Practicante:${this.nombrePracticante}`; },
+
+async guardarDatosPracticante() {
+  // Validar campos obligatorios
+  if (!this.paqueteriaSeleccionada.nombre || !this.factura || !this.numCajas || !this.tipoEmbalaje || !this.claveProducto) {
+    alert("Completa los campos obligatorios.");
+    return;
   }
+
+  // Total de piezas
+  const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
+
+  // IDs desde localStorage
+  const practicante_id = Number(localStorage.getItem("practicante_id")) || 0;
+  const coordinador_id = Number(localStorage.getItem("coordinador_id")) || 5; // por ejemplo
+
+  // Nombres desde localStorage
+  const nombrePracticante = localStorage.getItem("nombre_practicante") || this.nombrePracticante || "string";
+  const nombreCoordinador = localStorage.getItem("nombre_coordinador") || this.nombreCoordinador || "Meli";
+
+  // Token JWT
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Inicia sesión nuevamente.");
+    return;
+  }
+
+  // Estructura del payload
+  const payload = {
+    nombre_user_practicante: nombrePracticante,
+    nombre_user_coordinador: nombreCoordinador,
+    n_facturas: String(this.factura),
+    n_cajas: Number(this.numCajas),
+    paqueteria: this.paqueteriaSeleccionada.nombre,
+    t_embalaje: Number(this.tipoEmbalaje),
+    clave_producto: String(this.claveProducto),
+    cantidad_piezas: totalPiezas,
+    ancho: Number(this.anchoCaja) || 0,
+    largo: Number(this.largoCaja) || 0,
+    alto: Number(this.altoCaja) || 0,
+    peso: Number(this.peso) || 0,
+    peso_volumetrico: Number(this.pesoVolumetrico.toFixed(2)) || 0,
+    practicante_id,
+    coordinador_id
+  };
+
+  try {
+    const response = await axios.post(
+      "http://127.0.0.1:8000/cajas/?sede=guadalajara&role=practicante",
+      payload,
+      {
+        headers: {
+          "accept": "application/json",
+          "Content-Type": "application/json",
+          "token": token
+        }
+      }
+    );
+
+    console.log("✅ Respuesta API:", response.data);
+    alert("✅ Datos guardados correctamente");
+    this.reiniciar();
+
+  } catch (error) {
+    console.error("❌ Error en API:", error.response || error);
+    const msg = error.response?.data?.detail || "Error al guardar. Revisa los datos.";
+    alert(msg);
+  }
+}
+
+
+
+
+
+  },
 };
 </script>
 

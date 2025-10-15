@@ -149,7 +149,10 @@ async guardarDatos() {
     const token = localStorage.getItem("token");
     const id = localStorage.getItem("id");
     const username = localStorage.getItem("username");
-    const role = localStorage.getItem("rol"); // "coordinador" o "practicante"
+    const sede = localStorage.getItem("sede")
+    let role = localStorage.getItem("rol"); // "coordinador" o "practicante"
+    role = role?.toLowerCase() || "practicante"; // asegurar minúsculas
+
 
     // 🔹 Construcción del payload
     const payload = {
@@ -167,20 +170,20 @@ async guardarDatos() {
         ? Number(this.pesoVolumetrico.toFixed(2))
         : 0,
 
-      // 🔹 Estos dos se asignan dinámicamente según el rol
-      practicante_id: role === "Practicante" ? Number(id) : null,
-      coordinador_id: role === "Coordinador" ? Number(id) : null,
+      practicante_id: role === "practicante" ? Number(id) : null,
+      coordinador_id: role === "coordinador" ? Number(id) : null,
 
       nombre_user_practicante:
-        role === "Practicante" ? username || "" : "string",
+        role === "practicante" ? username || "" : "",
       nombre_user_coordinador:
-        role === "Coordinador" ? username || "" : "C Bruno",
+        role === "coordinador" ? username || "" : "",
     };
 
     console.log("📦 Enviando payload:", payload);
 
+    // 🔹 URL con sede y role
     const response = await fetch(
-      `http://127.0.0.1:8000/tarimas_mx/?role=${role?.toLowerCase() || "practicante"}`,
+      `http://127.0.0.1:8000/tarimas_mx/?sede=${sede}&role=${role}`,
       {
         method: "POST",
         headers: {
@@ -208,7 +211,6 @@ async guardarDatos() {
     alert("❌ Ocurrió un error al guardar los datos");
   }
 },
-
 
 
     async imprimir() {

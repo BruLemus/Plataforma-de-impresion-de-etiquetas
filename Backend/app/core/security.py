@@ -1,111 +1,93 @@
-from datetime import datetime, timedelta
-from jose import jwt, JWTError
-from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, Security, Header
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, Header
 from sqlalchemy.orm import Session
+from jose import jwt, JWTError, ExpiredSignatureError
+from datetime import datetime, timedelta
+import logging
+from passlib.context import CryptContext
 from app.db.database import get_db
+from app.db.models.user_coordinador_mx import UserCoordinadorMX
+from app.db.models.user_practicante_mx import UserPracticanteMX
+from app.db.models.user_coordinador import UserCoordinador
+from app.db.models.user_practicante import UserPracticante
 
-# 🔹 Importa todos los modelos de usuarios (GDL y MX)
-from app.db.models.user_coordinador import UserCoordinador  # Guadalajara
-from app.db.models.user_coordinador_mx import UserCoordinadorMX  # México
-from app.db.models.user_practicante import UserPracticante  # Guadalajara
-from app.db.models.user_practicante_mx import UserPracticanteMX  # México
-
-
-# ==========================================================
-# 🔹 Configuración de seguridad
-# ==========================================================
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = "SUPER_SECRET_KEY"
+# --------------------------------
+# CONFIGURACIÓN
+# --------------------------------
+SECRET_KEY = "SUPER_SECRET_KEY_GLOBAL"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 720  # 12 horas
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-security = HTTPBearer()
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger("security")
 
 
-# ==========================================================
-# 🔹 Funciones de hashing
-# ==========================================================
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica que la contraseña en texto plano coincida con el hash."""
+# --------------------------------
+# FUNCIONES AUXILIARES
+# --------------------------------
+def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def hash_password(password: str) -> str:
-    """Genera el hash seguro de una contraseña."""
-    return pwd_context.hash(password)
-
-
-# ==========================================================
-# 🔹 Generación de JWT
-# ==========================================================
-def create_access_token(data: dict, expires_delta: int = None) -> str:
-    """
-    Crea un token JWT con los datos del usuario.
-    data: Diccionario con información del usuario (ej. {"id": id, "tipo": "coordinador", "region": "mx"})
-    """
+def create_access_token(data: dict, expires_delta: int = None):
+    """Crea un token JWT con todos los datos necesarios."""
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=expires_delta or ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+    logger.info(f"🟢 Token generado para {data.get('nombre')} ({data.get('tipo')} - {data.get('sede')})")
+    return token
 
 
-# ==========================================================
-# 🔹 Obtener usuario actual (automático según tipo y región)
-# ==========================================================
-def get_current_user(
-    token: str = Header(...),  # Header personalizado: token: <JWT>
-    db: Session = Depends(get_db)
-):
-    """
-    Valida el token JWT y obtiene al usuario correspondiente según:
-    - tipo: coordinador / practicante
-    - region: gdl / mx
-    """
+# --------------------------------
+# VALIDACIÓN DEL TOKEN
+# --------------------------------
+def get_current_user(sede: str, role: str, token: str = Header(...), db: Session = Depends(get_db)):
+    """Valida el token JWT y devuelve el usuario autenticado."""
+
     if not token:
         raise HTTPException(status_code=401, detail="Token requerido")
 
     try:
+        # 🔍 Intentamos decodificar el token
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        id = payload.get("id")
-        tipo = payload.get("tipo")
-        region = payload.get("region", "gdl")  # Por defecto Guadalajara
-
-        if not id or not tipo:
-            raise HTTPException(status_code=401, detail="Token inválido")
-
-    except JWTError:
+    except ExpiredSignatureError:
+        logger.error("❌ El token ha expirado")
+        raise HTTPException(status_code=401, detail="Token expirado")
+    except JWTError as e:
+        logger.error(f"❌ Error al decodificar token: {e}")
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
-    # =====================================
-    # 🔸 Coordinadores
-    # =====================================
-    if tipo == "coordinador":
-        if region.lower() == "mx":
-            user = db.query(UserCoordinadorMX).filter(UserCoordinadorMX.id == id).first()
-        else:
-            user = db.query(UserCoordinador).filter(UserCoordinador.id == id).first()
+    # Extraer los datos
+    user_id = payload.get("id")
+    nombre = payload.get("nombre")
+    token_role = payload.get("tipo")
+    token_sede = payload.get("sede")
 
-        if not user:
-            raise HTTPException(status_code=401, detail="Usuario coordinador no encontrado")
-        return user
+    logger.info(f"📦 Token decodificado correctamente → id={user_id}, nombre={nombre}, rol={token_role}, sede={token_sede}")
 
-    # =====================================
-    # 🔸 Practicantes
-    # =====================================
-    elif tipo == "practicante":
-        if region.lower() == "mx":
-            user = db.query(UserPracticanteMX).filter(UserPracticanteMX.id == id).first()
-        else:
-            user = db.query(UserPracticante).filter(UserPracticante.id == id).first()
+    # Validar datos dentro del token
+    if not user_id or not token_role or not token_sede:
+        raise HTTPException(status_code=401, detail="Token incompleto o corrupto")
 
-        if not user:
-            raise HTTPException(status_code=401, detail="Usuario practicante no encontrado")
-        return user
+    # ⚠️ Convertimos todo a minúsculas para evitar errores de comparación
+    if token_role.lower() != role.lower() or token_sede.lower() != sede.lower():
+        raise HTTPException(status_code=401, detail=f"Token no autorizado para esta sede o rol")
 
-    # =====================================
-    # ❌ Rol inválido
-    # =====================================
+    # Seleccionar modelo según la sede y tipo de usuario
+    if token_sede.lower() == "mexico":
+        model = UserCoordinadorMX if token_role.lower() == "coordinador" else UserPracticanteMX
+    elif token_sede.lower() == "guadalajara":
+        model = UserCoordinador if token_role.lower() == "coordinador" else UserPracticante
     else:
-        raise HTTPException(status_code=400, detail="Tipo de usuario no válido (usa 'coordinador' o 'practicante')")
+        raise HTTPException(status_code=400, detail="Sede inválida")
+
+    # Buscar el usuario en la base de datos
+    user = db.query(model).filter(model.id == user_id).first()
+    if not user:
+        logger.warning(f"⚠ Usuario con id={user_id} no encontrado en {token_sede}")
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    logger.info(f"🟩 Usuario autenticado correctamente: {user.nombre} ({token_role} - {token_sede})")
+    return user

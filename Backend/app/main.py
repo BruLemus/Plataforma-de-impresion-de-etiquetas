@@ -43,11 +43,11 @@ app.add_middleware(
 database.Base.metadata.create_all(bind=database.engine)
 
 # Routers
-app.include_router(caja.router, prefix="/cajas", tags=["Cajas"])
-app.include_router(tarima.router, prefix="/tarimas", tags=["Tarimas"])
-app.include_router(user_practicante.router, prefix="/user_practicantes", tags=["Usuarios Practicantes"])
-app.include_router(user_coordinador.router, prefix="/user_coordinadors", tags=["Usuarios Coordinadores"])
-app.include_router(registro.router, prefix="/historial", tags=["Registros"])
+app.include_router(caja.router, prefix="/cajas", tags=["Cajas GDL"])
+app.include_router(tarima.router, prefix="/tarimas", tags=["Tarimas GDL"])
+app.include_router(user_practicante.router, prefix="/user_practicantes", tags=["Usuarios Practicantes GDL"])
+app.include_router(user_coordinador.router, prefix="/user_coordinadors", tags=["Usuarios Coordinadores GDL"])
+app.include_router(registro.router, prefix="/historial", tags=["Registros GDL"])
 
 app.include_router(registro_mx.router, prefix="/registros_mx", tags=["Registros Mexico"])
 app.include_router(tarima_mx.router, prefix="/tarimas_mx", tags=["Tarimas Mexico"])

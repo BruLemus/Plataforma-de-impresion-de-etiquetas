@@ -279,8 +279,8 @@ export default {
       const tipo = this.registroEditando.tipo_pedido;
       const url =
         tipo === "Caja"
-          ? `http://127.0.0.1:8000//registros/caja/${this.registroEditando.id}`
-          : `http://127.0.0.1:8000//registros/tarima/${this.registroEditando.id}`;
+          ? `http://127.0.0.1:8000/registros/caja/${this.registroEditando.id}`
+          : `http://127.0.0.1:8000/registros/tarima/${this.registroEditando.id}`;
       try {
         const token = localStorage.getItem("token");
         await axios.put(url, this.registroEditando, {
@@ -300,8 +300,8 @@ export default {
         const token = localStorage.getItem("token");
         const url =
           registro.tipo_pedido === "Caja"
-            ? `http://127.0.0.1:8000/historial/registros/caja/${registro.id}`
-            : `http://127.0.0.1:8000/historial/registros/tarima/${registro.id}`;
+            ? `http://127.0.0.1:8000/registros/caja/${registro.id}`
+            : `http://127.0.0.1:8000/registros/tarima/${registro.id}`;
         await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
         this.fetchHistorial();
       } catch (err) {
