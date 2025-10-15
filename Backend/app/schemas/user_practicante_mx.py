@@ -4,7 +4,7 @@ from app.db.models.enums import mesaTrabajoEnum
 
 class UserPracticanteMXBase(BaseModel):
     nombre: str
-    mesa_trabajo: Optional[str] = None
+    mesa_trabajo: mesaTrabajoEnum
 
 class UserPracticanteMXCreate(UserPracticanteMXBase):
     contrasena: str
@@ -16,7 +16,7 @@ class UserPracticanteMXLogin(BaseModel):
 class UserPracticanteMXUpdate(BaseModel):
     nombre: Optional[str] = None
     contrasena: Optional[str] = None
-    mesa_trabajo: Optional[str] = None
+    mesa_trabajo: mesaTrabajoEnum
 
 class UserPracticanteMXResponse(UserPracticanteMXBase):
     id: int

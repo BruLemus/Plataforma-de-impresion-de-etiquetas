@@ -6,6 +6,7 @@ from typing import List
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 
+from app.db.models.enums import mesaTrabajoEnum
 from app.db.database import get_db
 from app.db.models.user_practicante import UserPracticante
 from app.schemas.user_practicante import (
@@ -61,6 +62,7 @@ def create_practicante(payload: UserPracticanteCreate, db: Session = Depends(get
     user = UserPracticante(
         nombre=payload.nombre,
         contrasena=hashed_password,
+        mesa_trabajo=mesaTrabajoEnum(payload.mesa_trabajo)
     )
     db.add(user)
     db.commit()

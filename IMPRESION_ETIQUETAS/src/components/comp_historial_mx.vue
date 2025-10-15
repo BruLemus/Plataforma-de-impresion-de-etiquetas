@@ -300,8 +300,8 @@ export default {
         const token = localStorage.getItem("token");
         const url =
           registro.tipo_pedido === "Caja"
-            ? `http://127.0.0.1:8000/registros/caja/${registro.id}`
-            : `http://127.0.0.1:8000/registros/tarima/${registro.id}`;
+            ? `http://127.0.0.1:8000/registros_mx/caja/${registro.id}`
+            : `http://127.0.0.1:8000/registros_mx/tarima/${registro.id}`;
         await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
         this.fetchHistorial();
       } catch (err) {

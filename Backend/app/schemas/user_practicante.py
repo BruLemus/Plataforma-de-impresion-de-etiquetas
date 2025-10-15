@@ -10,11 +10,11 @@ class UserPracticanteBase(BaseModel):
 # 🔹 Esquema para crear usuario (incluye contraseña)
 class UserPracticanteCreate(UserPracticanteBase):
     contrasena: str = Field(..., min_length=6)  # obligatoria al crear
-
+    
 # 🔹 Esquema para actualizar usuario (opcional)
 class UserPracticanteUpdate(BaseModel):
     nombre: str | None = None
-    mesa_trabajo: mesaTrabajoEnum | None = None
+    mesa_trabajo: mesaTrabajoEnum 
     contrasena: str | None = Field(None, min_length=6)
 
 # 🔹 Esquema interno que incluye ID y contraseña (para la DB)

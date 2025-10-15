@@ -7,15 +7,19 @@ from app.db.models.enums import mesaTrabajoEnum
 
 # 🔹 Crear usuario con contraseña hasheada
 def create_user_practicante(db: Session, payload: UserPracticanteCreate) -> UserPracticante:
+    if not payload.mesa_trabajo:
+        raise ValueError("El campo 'mesa_trabajo' es obligatorio")
+    
     db_user = UserPracticante(
         nombre=payload.nombre,
-        mesa_trabajo=mesaTrabajoEnum(payload.mesa_trabajo),  # cast explícito al Enum
+        mesa_trabajo=mesaTrabajoEnum(payload.mesa_trabajo),
     )
-    db_user.set_password(payload.contrasena)  # hash de la contraseña
+    db_user.set_password(payload.contrasena)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
+
 
 # 🔹 Listar todos los practicantes
 def get_user_practicantes(db: Session, skip: int = 0, limit: int = 100) -> List[UserPracticante]:

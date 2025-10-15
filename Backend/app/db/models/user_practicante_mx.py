@@ -13,7 +13,7 @@ class UserPracticanteMX(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nombre = Column(String(100), nullable=False) 
     contrasena = Column(String(100), nullable=False)
-    mesa_trabajo = Column(Enum(mesaTrabajoEnum, native_enum=False), nullable=True)
+    mesa_trabajo = Column(Enum(mesaTrabajoEnum, native_enum=False), nullable=False)
 
     # Relaciones
     cajas_mx = relationship("CajaMX", back_populates="practicante")
