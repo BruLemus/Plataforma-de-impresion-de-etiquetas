@@ -331,45 +331,68 @@ export default {
       XLSX.utils.book_append_sheet(wb, ws, "Historial");
       XLSX.writeFile(wb, "Registros.xlsx");
     },
-    exportarPDF() {
-      const doc = new jsPDF();
-      doc.text("Historial de Registros", 14, 10);
-      autoTable(doc, {
-        head: [
-          [
-            "Usuario",
-            "Factura",
-            "Cantidad",
-            "Tipo Embalaje",
-            "Paquetería",
-            "Clave Producto",
-            "Largo",
-            "Ancho",
-            "Alto",
-            "Peso",
-            "Peso Volumétrico",
-            "Tipo Pedido",
-            "Fecha Creación",
-          ],
-        ],
-        body: this.historialFiltrado.map((r) => [
-          r.nombre_usuario,
-          r.factura || r.numero_factura || r.n_facturas,
-          r.cantidad || r.cantidad_piezas,
-          r.tipo_embalaje,
-          r.paqueteria,
-          r.clave_producto,
-          r.largo,
-          r.ancho,
-          r.alto,
-          r.peso,
-          r.peso_volumetrico,
-          r.tipo_pedido,
-          new Date(r.fecha_creacion).toLocaleString(),
-        ]),
-      });
-      doc.save("Registros.pdf");
+exportarPDF() {
+  const doc = new jsPDF({
+    orientation: 'landscape', 
+    unit: 'mm',
+    format: 'a4'
+  });
+
+  doc.text("Historial de Registros", 14, 10);
+
+  autoTable(doc, {
+    head: [
+      [
+        "Usuario",
+        "Factura",
+        "Cantidad",
+        "Tipo Embalaje",
+        "Paquetería",
+        "Clave Producto",
+        "Largo",
+        "Ancho",
+        "Alto",
+        "Peso",
+        "Peso Volumétrico",
+        "Tipo Pedido",
+        "Fecha Creación",
+      ],
+    ],
+    body: this.historialFiltrado.map((r) => [
+      r.nombre_usuario,
+      r.factura || r.numero_factura || r.n_facturas,
+      r.cantidad || r.cantidad_piezas,
+      r.tipo_embalaje,
+      r.paqueteria,
+      r.clave_producto,
+      r.largo,
+      r.ancho,
+      r.alto,
+      r.peso,
+      r.peso_volumetrico,
+      r.tipo_pedido,
+      new Date(r.fecha_creacion).toLocaleString(),
+    ]),
+    styles: {
+      fontSize: 8,          
+      cellWidth: 'wrap',    
+      overflow: 'linebreak',
     },
+    headStyles: {
+      fillColor: [41, 128, 185], 
+      textColor: 255,
+      halign: 'center',
+    },
+    bodyStyles: {
+      halign: 'center',
+      valign: 'middle',
+    },
+    tableWidth: 'auto', 
+    margin: { top: 20, left: 10, right: 10 },
+  });
+
+  doc.save("Registros.pdf");
+}
   },
 };
 </script>

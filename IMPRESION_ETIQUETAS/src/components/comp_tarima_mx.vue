@@ -247,17 +247,121 @@ Total piezas: ${this.totalPiezas}
 </script>
 
 <style scoped>
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 20px; }
-.form-field { background: #f9fafb; border-radius: 12px; padding: 14px 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-.crud-label { font-weight: 600; margin-bottom: 8px; display: block; color: #1e3a8a; }
-.crud-input { border: 1px solid #d1d5db; border-radius: 8px; width: 100%; padding: 10px; font-size: 0.95rem; }
-.crud-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
-.crud-subtitle { font-size: 28px; font-weight: 700; color: #1f618d; margin-bottom: 20px; border-left: 6px solid #2980b9; padding-left: 12px; }
-.crud-total { font-weight: bold; margin-top: 10px; color: #1e40af; }
-.crud-actions { display: flex; gap: 12px; margin-top: 16px; }
-.btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-.btn-print { background: #126330; color: white; }
-.btn-reset { background: #cd981c; color: white; }
-.btn-save { background: #2559ac; color: white; }
-.bg-gray-100 { background: #f3f4f6; }
+/* ==== FORM GRID ==== */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* ==== FORM FIELDS ==== */
+.form-field {
+  background: #f9fafb;
+  border-radius: 16px;
+  padding: 14px 18px;
+  box-shadow: 4px 4px 10px rgba(0,0,0,0.08), -4px -4px 10px #ffffff;
+  transition: all 0.25s ease-in-out;
+}
+.form-field:hover {
+  box-shadow: 6px 6px 16px rgba(0,0,0,0.08), -6px -6px 16px #ffffff;
+}
+
+/* ==== LABELS ==== */
+.crud-label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+  color: #1e3a8a;
+}
+
+/* ==== INPUTS ==== */
+.crud-input, select.crud-input {
+  border: none;
+  border-radius: 12px;
+  width: 100%;
+  padding: 10px;
+  font-size: 0.95rem;
+  background: #f9f9ff;
+  box-shadow: inset 2px 2px 6px rgba(0,0,0,0.08), inset -2px -2px 6px #ffffff;
+  transition: all 0.25s ease-in-out;
+}
+.crud-input:focus, select.crud-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+  background: #ffffff;
+}
+
+/* ==== TARIMAS CARD ==== */
+.crud-card {
+  background: white;
+  border-radius: 20px;
+  padding: 26px;
+  box-shadow: 12px 12px 24px rgba(0,0,0,0.08), -12px -12px 24px #ffffff;
+  transition: all 0.3s ease-in-out;
+}
+.crud-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 16px 16px 32px rgba(0,0,0,0.08), -16px -16px 32px #ffffff;
+}
+
+/* ==== SUBTITLES ==== */
+.crud-subtitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f618d;
+  margin-bottom: 20px;
+  border-left: 6px solid #2980b9;
+  padding-left: 12px;
+}
+
+/* ==== TOTAL PIEZAS ==== */
+.crud-total {
+  font-weight: bold;
+  margin-top: 10px;
+  color: #1e40af;
+}
+
+/* ==== BOTONES CENTRADOS ==== */
+.crud-actions {
+  display: flex;
+  justify-content: center; /* centrado horizontal */
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.btn {
+  padding: 12px 22px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  transition: all 0.25s ease-in-out;
+  box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -6px -6px 12px #ffffff;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 8px 8px 16px rgba(0,0,0,0.08), -8px -8px 16px #ffffff;
+}
+.btn-print { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+.btn-reset { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
+.btn-save { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
+
+/* ==== INPUT DESHABILITADO ==== */
+.bg-gray-100 {
+  background: #f3f4f6;
+  box-shadow: inset 2px 2px 6px rgba(0,0,0,0.08), inset -2px -2px 6px #ffffff;
+  border-radius: 12px;
+}
+
+/* ==== PIEZAS POR TARIMA ==== */
+.form-grid > .form-field {
+  min-width: 100px;
+}
 </style>
+
+
