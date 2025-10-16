@@ -121,16 +121,15 @@
                 </div>
               </div>
             </div>
+            <div class="crud-total">Total de piezas: {{ totalPiezas }}</div>
 
             <!-- BOTONES CRUD CENTRADOS -->
             <div class="crud-actions centered no-print">
               <button @click="imprimirZebra" class="btn btn-print">
-                <i class="fas fa-print"></i> Imprimir en Zebra
+                <i class="fas fa-print"></i> Imprimir
               </button>
               
-              <button @click="reiniciar" class="btn btn-reset">
-                <i class="fas fa-redo-alt"></i> Reiniciar
-              </button>
+              
               <button @click="guardarDatos" class="btn btn-save">
                 <i class="fas fa-save"></i> Guardar
               </button>
@@ -140,31 +139,44 @@
           <!-- ETIQUETAS PARA IMPRESIÓN -->
           <div class="labels-container print-only" v-if="numCajas > 0">
             <div v-for="n in numCajas" :key="'etiqueta-' + n" class="etiqueta">
-              <div class="contenido">
-                <div class="logo-wrapper">
-                  <img :src="paqueteriaSeleccionada.logo" :alt="paqueteriaSeleccionada.nombre + ' Logo'" class="logo-etiqueta" />
-                </div>
-                <div class="etiqueta-content">
-                  <div class="etiqueta-datos">
-                    <div class="dato"><strong>Factura:</strong> {{ factura || '—' }}</div>
-                    <div class="dato"><strong>Caja:</strong> {{ n }} de {{ numCajas }}</div>
-                    <div class="dato"><strong>Piezas:</strong> {{ piezas[n-1] || 0 }}</div>
-                    <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'">
-                      <div class="dato"><strong>Ancho:</strong> {{ anchoCaja || 0 }} cm</div>
-                      <div class="dato"><strong>Alto:</strong> {{ altoCaja || 0 }} cm</div>
-                      <div class="dato"><strong>Largo:</strong> {{ largoCaja || 0 }} cm</div>
-                      <div class="dato"><strong>Peso:</strong> {{ peso || 0 }} kg</div>
-                      <div class="dato"><strong>Peso Volumétrico:</strong> {{ pesoVolumetrico.toFixed(2) }} kg</div>
-                    </div>
+
+          <!-- 🔹 Logo FMM en la esquina superior izquierda -->
+          <img src="@/assets/fmm.png" alt="Logo FMM" class="logo-fmm" />
+
+          <div class="contenido">
+            <div class="logo-wrapper">
+              <img :src="paqueteriaSeleccionada.logo" class="logo-etiqueta" />
+            </div>
+
+            <div class="etiqueta-content">
+              <div class="etiqueta-datos">
+                <div class="dato"><strong>Factura:</strong> {{ factura || '—' }}</div>
+                <div class="dato"><strong>Caja:</strong> {{ n }} de {{ numCajas }}</div>
+                <div class="dato"><strong>Piezas:</strong> {{ piezas[n-1] || 0 }}</div>
+
+                <div
+                  v-if="
+                    paqueteriaSeleccionada.nombre === 'Estafeta' ||
+                    paqueteriaSeleccionada.nombre === 'Paquetexpress'
+                  "
+                >
+                  <div class="dato">
+                    <strong>Dimensiones (ANxALxL):</strong> {{ anchoCaja }}x{{ altoCaja }}x{{ largoCaja }} cm
                   </div>
-                  <div class="etiqueta-qr">
-                    <qrcode-vue :value="generateQR(n-1)" :size="qrSize" level="H" />
+                  <div class="dato"><strong>Peso:</strong> {{ peso || 0 }} kg</div>
+                  <div class="dato">
+                    <strong>Volumétrico:</strong> {{ pesoVolumetrico.toFixed(2) }} kg
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
+      <div class="etiqueta-qr">
+        <qrcode-vue :value="generateQR(n - 1)" :size="100" level="H" />
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+ </section>
 
         <!-- OTROS COMPONENTES -->
         <section v-if="currentView === 'tarima'"><comp_tarima /></section>
@@ -237,6 +249,18 @@ export default {
     setInterval(this.checkPrinterStatus, 5000);
   },
   methods: {
+    reiniciar() {
+      this.factura = "";
+      this.numCajas = 0;
+      this.paqueteriaSeleccionada = "";
+      this.tipoEmbalaje = null;
+      this.claveProducto = "";
+      this.ancho = 0;
+      this.largo = 0;
+      this.alto = 0;
+      this.peso = 0;
+      this.piezas = [];
+    },
     setView(view) { this.currentView = view; },
     openEditUserModal() { this.showEditUserModal = true; },
     closeEditUserModal() { this.showEditUserModal = false; },
@@ -246,17 +270,7 @@ export default {
       this.$router.push('/crearpracticante');
     },
     checkPrinterStatus() { this.impresoraOnline = true; },
-    reiniciar() {
-      this.factura = "";
-      this.numCajas = 0;
-      this.piezas = [];
-      this.tipoEmbalaje = "";
-      this.claveProducto = "";  
-      this.anchoCaja = "";
-      this.altoCaja = "";
-      this.largoCaja = "";
-      this.peso = "";
-    },
+   
     imprimirZebra() { alert("Impresión en Zebra"); },
     imprimirRemoto() { alert("Impresión Servidor/ZPL"); },
     generateQR(index) { return `Factura:${this.factura || "—"}|Caja:${index+1}|Practicante:${this.nombrePracticante}`; },
@@ -347,6 +361,12 @@ async guardarDatos() {
   font-weight: bold;
  
 }
+.crud-total {
+  font-weight: bold;
+  margin-top: 10px;
+  color: #1e40af;
+}
+
 
 /* ==== VARIABLES ==== */
 :root {
@@ -518,7 +538,91 @@ async guardarDatos() {
 .logo-etiqueta { width: 120px; margin-bottom: 8px; }
 .etiqueta-datos { font-size: 1rem; }
 .etiqueta-datos .dato { margin-bottom: 12px; }
-.etiqueta-qr { margin-left: 0px; }
+.etiqueta-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+/* ==== 🎨 NUEVO DISEÑO PROFESIONAL DE ETIQUETAS ==== */
+.labels-container {
+  justify-content: center;
+}
+
+.etiqueta {
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 6px;
+  padding: 14px 18px;
+  width: 380px;
+  min-height: 230px;
+  font-family: 'Courier New', monospace;
+  color: #111;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+  transition: all 0.25s ease-in-out;
+}
+.etiqueta:hover {
+  transform: scale(1.02);
+  box-shadow: 5px 5px 16px rgba(0, 0, 0, 0.15);
+}
+.logo-wrapper {
+  text-align: right;
+  margin-bottom: 4px;
+}
+.logo-etiqueta {
+  width: 100px;
+  object-fit: contain;
+}
+.etiqueta-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  border-top: 1px dashed #000;
+  padding-top: 8px;
+}
+.etiqueta-datos .dato {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.etiqueta-datos strong {
+  display: inline-block;
+  width: 120px;
+}
+.barcode {
+  position: absolute;
+  bottom: 12px;
+  left: 18px;
+  right: 18px;
+  height: 32px;
+  background: repeating-linear-gradient(
+    to right,
+    #000 0px,
+    #000 2px,
+    #fff 2px,
+    #fff 4px
+  );
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+}
+@media print {
+  @page { size: 100mm 150mm; margin: 4mm; }
+  .labels-container {
+    gap: 0;
+    justify-content: flex-start;
+  }
+  .etiqueta {
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+    width: 100%;
+    page-break-inside: avoid;
+  }
+  .barcode {
+    background: #000;
+    height: 3mm;
+  }
+}
 
 /* ==== IMPRESIÓN ==== */
 @media print {
@@ -529,6 +633,12 @@ async guardarDatos() {
   .labels-container { position: absolute; top: 0; left: 0; width: 100%; }
   .etiqueta { display: block; margin: 0; width: 100%; background: none !important; box-shadow: none !important; }  
   .no-print { display: none !important; }
+  .logo-fmm {
+    width: 70px;
+    top: 8px;
+    left: 8px;
+    opacity: 1;
+  }
 }
 
 /* ==== PRINTER STATUS ==== */
@@ -543,5 +653,16 @@ async guardarDatos() {
 .modal-card .form-field { margin-bottom: 12px; }
 .modal-card .form-field label { font-weight: 600; margin-bottom: 4px; display: block; }
 .modal-card .form-field input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #d1d5db; background: #f9fafb; box-shadow: inset 2px 2px 6px var(--shadow-light), inset -2px -2px 6px #ffffff; }
+/* ==== LOGO FMM GLOBAL ==== */
+.logo-fmm {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 85px;
+  height: auto;
+  opacity: 0.95;
+  object-fit: contain;
+}
+
 </style>
 

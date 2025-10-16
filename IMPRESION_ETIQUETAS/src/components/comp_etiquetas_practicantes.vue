@@ -1,21 +1,20 @@
-<!-- src/components/CompEtiquetasPracticantes.vue -->
+
 <template>
   <div class="app-container">
     <!-- BARRA SUPERIOR -->
     <header class="header no-print">
       <div class="header-content">
         <h1 class="logo">
-          <i class="fas fa-box"></i> Proceso de Embalaje <span class="green-dot">GDL.</span>
+          <i class="fas fa-box"></i> Proceso de Embalaje <span class="green-dot">MX</span>
         </h1>
         <h2 class="coordinador-title">
-          <i class="fas fa-user-graduate"></i> Practicante
+          <i class="fas fa-user-tie"></i> Practicante
         </h2>
         <div class="user-info">
           🕖 Entrada: <strong v-if="horaEntrada">{{ horaEntrada }}</strong> |
           Mesa: <strong v-if="mesa_trabajo">{{ mesa_trabajo }}</strong> |
           <button class="btn-logout" @click="logout"><i class="fas fa-sign-out-alt"></i> Salir</button>
         </div>
-
       </div>
     </header>
 
@@ -25,10 +24,11 @@
       <aside class="sidebar no-print">
         <nav class="menu">
           <ul>
-            <div class="sidebar-user" @click="openEditUserModal">
-              <i class="fas fa-user-circle"></i>
-              <span>{{ username }}</span>
-            </div>
+            <div class="sidebar-user" @click="setView('crear_practicante')" style="cursor:pointer;">
+            <i class="fas fa-user-circle"></i>
+            <span>{{ username }}</span>
+          </div>
+
             <li :class="{active: currentView === 'caja'}" @click="setView('caja')">
               <i class="fas fa-box-open"></i> Etiquetas por Caja
             </li>
@@ -38,6 +38,9 @@
             <li :class="{active: currentView === 'otras_etiquetas'}" @click="setView('otras_etiquetas')">
               <i class="fas fa-exclamation-triangle"></i> Otras Etiquetas
             </li>
+            <li :class="{active: currentView === 'historial'}" @click="setView('historial')">
+              <i class="fas fa-chart-bar"></i> Registros
+            </li>
             <li :class="{active: currentView === 'info'}" @click="setView('info')">
               <i class="fas fa-info-circle"></i> Acerca de . . .
             </li>
@@ -45,109 +48,72 @@
         </nav>
       </aside>
 
-      <!-- MODAL EDITAR PERFIL -->
-<div v-if="showEditUserModal" class="modal-overlay" @click.self="closeEditUserModal">
-  <div class="modal-card">
-    <h3 class="modal-title">
-      <i class="fas fa-user-edit"></i> Editar Perfil
-    </h3>
-
-    <div class="form-field">
-      <label class="crud-label">Nombre</label>
-      <input v-model="editUser.nombre" class="crud-input" placeholder="Nombre completo" />
-    </div>
-
-    <div class="form-field">
-    <label class="crud-label">Mesa de trabajo</label>
-    <select v-model="editUser.mesa_trabajo" class="crud-input" required>
-      <option disabled value="">Selecciona la mesa</option>
-      <option v-for="n in 10" :key="n" :value="`MESA${n}`">MESA{{ n }}</option>
-    </select>
-  </div>
-
-
-    <div class="form-field">
-      <label class="crud-label">Contraseña</label>
-      <input v-model="editUser.contrasena" type="password" class="crud-input" placeholder="Nueva contraseña" />
-    </div>
-
-    
-
-    <div class="crud-actions centered">
-      <button @click="saveUser" class="btn btn-save">
-        <i class="fas fa-save"></i> Guardar Cambios
-      </button>
-      <button @click="closeEditUserModal" class="btn btn-reset">
-        <i class="fas fa-times"></i> Cancelar
-      </button>
-    </div>
-  </div>
-</div>
-
       <!-- CONTENIDO PRINCIPAL -->
       <main class="content">
         <!-- ETIQUETAS POR CAJA -->
         <section v-if="currentView === 'caja'">
           <div class="crud-card no-print">
             <h2 class="crud-subtitle">Etiquetas por Caja</h2>
-            <!-- FORMULARIO REORGANIZADO -->
-            <div class="etiquetas-container">
-              <!-- FILA 1: Datos generales -->
-              <div class="fila-general">
-                <div class="form-field">
-                  <label class="crud-label">Paquetería</label>
-                  <select v-model="paqueteriaSeleccionada" class="crud-input">
-                    <option disabled value="">-- Selecciona --</option>
-                    <option v-for="paq in paqueterias" :key="paq.nombre" :value="paq">{{ paq.nombre }}</option>
-                  </select>
-                </div>
-                <div class="form-field">
-                  <label class="crud-label">Número de Factura</label>
-                  <input v-model="factura" type="text" class="crud-input" placeholder="Factura" />
-                </div>
-                <div class="form-field">
-                  <label class="crud-label">Número de Cajas</label>
-                  <input v-model.number="numCajas" type="number" min="0" class="crud-input" placeholder="Ej: 3" />
-                </div>
-                <div class="form-field">
-                  <label class="crud-label">Tipo de Embalaje</label>
-                  <select v-model="tipoEmbalaje" class="crud-input">
-                    <option disabled value="">-- Selecciona --</option>
-                    <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
-                  </select>
-                </div>
-                <div class="form-field">
-                  <label class="crud-label">Clave de Producto</label>
-                  <input v-model="claveProducto" type="text" class="crud-input" placeholder="Clave del producto" />
-                </div>
+
+            <!-- FORMULARIO -->
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="crud-label">Paquetería</label>
+                <select v-model="paqueteriaSeleccionada" class="crud-input">
+                  <option disabled value="">-- Selecciona --</option>
+                  <option v-for="paq in paqueterias" :key="paq.nombre" :value="paq">{{ paq.nombre }}</option>
+                </select>
               </div>
 
-              <!-- FILA 2: Dimensiones y peso -->
-              <div class="fila-dimensiones" v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'">
-                <div class="form-field">
-                  <label class="crud-label">Ancho de la Caja (cm)</label>
-                  <input v-model.number="anchoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 40" />
-                </div>
-                <div class="form-field">
-                  <label class="crud-label">Alto de la Caja (cm)</label>
-                  <input v-model.number="altoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 60" />
-                </div>
-                <div class="form-field">
-                  <label class="crud-label">Largo de la Caja (cm)</label>
-                  <input v-model.number="largoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 50" />
-                </div>
-                <div class="form-field">
-                  <label class="crud-label">Peso (kg)</label>
-                  <input v-model.number="peso" type="number" min="0" step="0.01" class="crud-input" placeholder="Ej: 2.5" />
-                </div>
-                <div class="form-field">
-                  <label class="crud-label">Peso Volumétrico (kg)</label>
-                  <input :value="pesoVolumetrico.toFixed(2)" type="number" class="crud-input" disabled />
-                </div>
+              <div class="form-field">
+                <label class="crud-label">Número de Factura</label>
+                <input v-model="factura" type="text" class="crud-input" placeholder="Factura" />
+              </div>
+
+              <div class="form-field">
+                <label class="crud-label">Número de Cajas</label>
+                <input v-model.number="numCajas" type="number" min="0" class="crud-input" placeholder="Ej: 3" />
+              </div>
+
+              <div class="form-field">
+                <label class="crud-label">Tipo de Embalaje</label>
+                <select v-model="tipoEmbalaje" class="crud-input">
+                  <option disabled value="">-- Selecciona --</option>
+                  <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label class="crud-label">Clave de Producto</label>
+                <input v-model="claveProducto" type="text" class="crud-input" placeholder="Clave del producto" />
+              </div>
+
+              <!-- SOLO PARA ESTAFETA Y PAQUETEXPRESS -->
+              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'" class="form-field">
+                <label class="crud-label">Ancho de la Caja (cm)</label>
+                <input v-model.number="anchoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 40" />
+              </div>
+              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'" class="form-field">
+                <label class="crud-label">Alto de la Caja (cm)</label>
+                <input v-model.number="altoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 60" />
+              </div>
+              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'" class="form-field">
+                <label class="crud-label">Largo de la Caja (cm)</label>
+                <input v-model.number="largoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 50" />
+              </div>
+
+              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'" class="form-field">
+                <label class="crud-label">Peso (kg)</label>
+                <input v-model.number="peso" type="number" min="0" step="0.01" class="crud-input" placeholder="Ej: 2.5" />
+              </div>
+
+              <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'" class="form-field">
+                <label class="crud-label">Peso Volumétrico (kg)</label>
+                <input :value="pesoVolumetrico.toFixed(2)" type="number" class="crud-input" disabled />
               </div>
             </div>
 
-            <!-- PIEZAS Y BOTONES -->
+            <!-- PIEZAS POR CAJA -->
             <div v-if="numCajas > 0" class="mb-4">
               <h3 class="crud-subtitle">Piezas por Caja</h3>
               <div class="pieces-grid">
@@ -157,65 +123,73 @@
                 </div>
               </div>
             </div>
+              <div class="crud-total">Total de piezas: {{ totalPiezas }}</div>
 
+
+            <!-- BOTONES CRUD CENTRADOS -->
             <div class="crud-actions centered no-print">
               <button @click="imprimirZebra" class="btn btn-print">
-                <i class="fas fa-print"></i> Imprimir en Zebra
+                <i class="fas fa-print"></i> Imprimir
               </button>
-              <button @click="imprimirRemoto" class="btn btn-print">
-                <i class="fas fa-server"></i> Imprimir en Servidor (ZPL)
-              </button>
-              <button @click="reiniciar" class="btn btn-reset">
-                <i class="fas fa-redo-alt"></i> Reiniciar
-              </button>
+              
+              
               <button @click="guardarDatosPracticante" class="btn btn-save">
                 <i class="fas fa-save"></i> Guardar
               </button>
             </div>
           </div>
 
-          <!-- ETIQUETAS DE CAJA -->
-          <div class="labels-container print-only" v-if="numCajas > 0">
+          <!-- ETIQUETAS PARA IMPRESIÓN -->
+         <div class="labels-container print-only" v-if="numCajas > 0">
             <div v-for="n in numCajas" :key="'etiqueta-' + n" class="etiqueta">
-              <div class="contenido">
-                <div class="logo-wrapper">
-                  <img :src="paqueteriaSeleccionada.logo" :alt="paqueteriaSeleccionada.nombre + ' Logo'" class="logo-etiqueta" />
-                </div>
-                <div class="etiqueta-content">
-                  <div class="etiqueta-datos">
-                    <div class="dato"><strong>Factura:</strong> {{ factura || '—' }}</div>
-                    <div class="dato"><strong>Mesa:</strong> {{ numMesa || '—' }}</div>
-                    <div class="dato"><strong>Caja:</strong> {{ n }} de {{ numCajas }}</div>
-                    <div class="dato"><strong>Piezas:</strong> {{ piezas[n-1] || 0 }}</div>
-                    <div class="dato"><strong>Peso:</strong> {{ peso || 0 }} kg</div>
-                    <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'">
-                      <div class="dato"><strong>Ancho:</strong> {{ anchoCaja || 0 }} cm</div>
-                      <div class="dato"><strong>Alto:</strong> {{ altoCaja || 0 }} cm</div>
-                      <div class="dato"><strong>Largo:</strong> {{ largoCaja || 0 }} cm</div>
-                      <div class="dato"><strong>Peso Volumétrico:</strong> {{ pesoVolumetrico.toFixed(2) }} kg</div>
-                    </div>
+
+            <!-- 🔹 Logo FMM en la esquina superior izquierda -->
+            <img src="@/assets/fmm.png" alt="Logo FMM" class="logo-fmm" />
+
+            <div class="contenido">
+            <div class="logo-wrapper">
+              <img :src="paqueteriaSeleccionada.logo" class="logo-etiqueta" />
+            </div>
+
+            <div class="etiqueta-content">
+              <div class="etiqueta-datos">
+                <div class="dato"><strong>Factura:</strong> {{ factura || '—' }}</div>
+                <div class="dato"><strong>Caja:</strong> {{ n }} de {{ numCajas }}</div>
+                <div class="dato"><strong>Piezas:</strong> {{ piezas[n-1] || 0 }}</div>
+
+                <div
+                  v-if="
+                    paqueteriaSeleccionada.nombre === 'Estafeta' ||
+                    paqueteriaSeleccionada.nombre === 'Paquetexpress'
+                  "
+                >
+                  <div class="dato">
+                    <strong>Dimensiones (ANxALxL):</strong> {{ anchoCaja }}x{{ altoCaja }}x{{ largoCaja }} cm
                   </div>
-                  <div class="etiqueta-qr">
-                    <qrcode-vue :value="generateQR(n-1)" :size="qrSize" level="H" />
+                  <div class="dato"><strong>Peso:</strong> {{ peso || 0 }} kg</div>
+                  <div class="dato">
+                    <strong>Volumétrico :</strong> {{ pesoVolumetrico.toFixed(2) }} kg
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
+            <div class="etiqueta-qr">
+            <qrcode-vue :value="generateQR(n - 1)" :size="100" level="H" />
+         </div>
+    </div>
+  </div>
+</div>
+</div>
+ </section>
 
-        <!-- TARIMA -->
+        <!-- OTROS COMPONENTES -->
         <section v-if="currentView === 'tarima'"><comp_tarima /></section>
-
-        <!-- OTRAS ETIQUETAS -->
         <section v-if="currentView === 'otras_etiquetas'"><comp_otras_etiquetas /></section>
-
-        <!-- INFO -->
         <section v-if="currentView === 'info'"><comp_inf /></section>
       </main>
     </div>
   </div>
 </template>
+
 
 <script>
 import axios from "axios";
@@ -280,6 +254,18 @@ export default {
 
   },
   methods: {
+    reiniciar() {
+      this.factura = "";
+      this.numTarimas = 0;
+      this.paqueteriaSeleccionada = "";
+      this.tipoEmbalaje = null;
+      this.claveProducto = "";
+      this.ancho = 0;
+      this.largo = 0;
+      this.alto = 0;
+      this.peso = 0;
+      this.piezas = [];
+    },
     setView(view) { this.currentView = view; },
 
 async cargarDatosPracticante() {
@@ -378,19 +364,9 @@ async saveUser() {
       this.$router.push('/crearpracticante');
     },
     checkPrinterStatus() { this.impresoraOnline = true; },
-    reiniciar() {
-      this.factura = "";
-      this.numCajas = 0;
-      this.piezas = [];
-      this.tipoEmbalaje = "";
-      this.claveProducto = "";  
-      this.anchoCaja = "";
-      this.altoCaja = "";
-      this.largoCaja = "";
-      this.peso = "";
-    },
+    
     imprimirZebra() { alert("Impresión en Zebra"); },
-    imprimirRemoto() { alert("Impresión Servidor/ZPL"); },
+   
     generateQR(index) { return `Factura:${this.factura || "—"}|Caja:${index+1}|Practicante:${this.nombrePracticante}`; },
 
 async guardarDatosPracticante() {
@@ -478,6 +454,11 @@ async guardarDatosPracticante() {
   font-weight: bold;
  
 }
+.crud-total {
+  font-weight: bold;
+  margin-top: 10px;
+  color: #1e40af;
+}
 
 
 /* ==== VARIABLES ==== */
@@ -556,7 +537,7 @@ async guardarDatosPracticante() {
 .content { flex: 1; padding: 20px; background: var(--bg); }
 
 /* ==== FORM GRID ==== */
-.form-grid, .etiquetas-container, .fila-general, .fila-dimensiones {
+.form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
@@ -640,72 +621,140 @@ async guardarDatosPracticante() {
   background: var(--card);
   border-radius: 16px;
   padding: 16px;
-  box-shadow: 12px 12px 24px var(--shadow-light), -12px -12px 24px #ffffff;
+  box-shadow: 8px 8px 16px var(--shadow-light), -8px -8px 16px #ffffff;
+  page-break-inside: avoid;
+  width: 100%;
+  transition: all 0.25s ease-in-out;
+}
+.etiqueta:hover { transform: translateY(-2px); box-shadow: 12px 12px 24px var(--shadow-light), -12px -12px 24px #ffffff; }
+.etiqueta-content { display: flex; justify-content: flex-start; align-items: center; gap: 50px; }
+.logo-etiqueta { width: 120px; margin-bottom: 8px; }
+.etiqueta-datos { font-size: 1rem; }
+.etiqueta-datos .dato { margin-bottom: 12px; }
+.etiqueta-qr {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  min-width: 160px;
-  text-align: center;
+  gap: 8px;
 }
-.etiqueta h3 { font-size: 1.1rem; font-weight: 700; color: #1e40af; margin: 0; }
-.etiqueta p { font-size: 0.9rem; color: var(--muted); margin: 0; }
-.etiqueta canvas { margin-top: 6px; }
-
-/* ==== RESPONSIVE ==== */
-@media (max-width: 1024px) {
-  .layout { flex-direction: column; }
-  .sidebar { width: 100%; min-height: auto; }
-  .content { padding: 12px; }
-  .form-grid, .etiquetas-container { grid-template-columns: 1fr; }
+/* ==== 🎨 NUEVO DISEÑO PROFESIONAL DE ETIQUETAS ==== */
+.labels-container {
+  justify-content: center;
 }
 
+.etiqueta {
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 6px;
+  padding: 14px 18px;
+  width: 380px;
+  min-height: 230px;
+  font-family: 'Courier New', monospace;
+  color: #111;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+  transition: all 0.25s ease-in-out;
+}
+.etiqueta:hover {
+  transform: scale(1.02);
+  box-shadow: 5px 5px 16px rgba(0, 0, 0, 0.15);
+}
+.logo-wrapper {
+  text-align: right;
+  margin-bottom: 4px;
+}
+.logo-etiqueta {
+  width: 100px;
+  object-fit: contain;
+}
+.etiqueta-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  border-top: 1px dashed #000;
+  padding-top: 8px;
+}
+.etiqueta-datos .dato {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.etiqueta-datos strong {
+  display: inline-block;
+  width: 120px;
+}
+.barcode {
+  position: absolute;
+  bottom: 12px;
+  left: 18px;
+  right: 18px;
+  height: 32px;
+  background: repeating-linear-gradient(
+    to right,
+    #000 0px,
+    #000 2px,
+    #fff 2px,
+    #fff 4px
+  );
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+}
+@media print {
+  @page { size: 100mm 150mm; margin: 4mm; }
+  .labels-container {
+    gap: 0;
+    justify-content: flex-start;
+  }
+  .etiqueta {
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+    width: 100%;
+    page-break-inside: avoid;
+  }
+  .barcode {
+    background: #000;
+    height: 3mm;
+  }
+}
+
+/* ==== IMPRESIÓN ==== */
+@media print {
+  @page { size: auto; margin: 0; }
+  body { background: none !important; }
+  body * { visibility: hidden; background: none !important; box-shadow: none !important; }
+  .labels-container, .labels-container * { visibility: visible; background: none !important; box-shadow: none !important; color: black !important; }
+  .labels-container { position: absolute; top: 0; left: 0; width: 100%; }
+  .etiqueta { display: block; margin: 0; width: 100%; background: none !important; box-shadow: none !important; }  
+  .no-print { display: none !important; }
+  .logo-fmm {
+    width: 70px;
+    top: 8px;
+    left: 8px;
+    opacity: 1;
+  }
+}
+
+/* ==== PRINTER STATUS ==== */
+.printer-status { background: #f3f4f6; color: #111827; font-weight: bold; text-align: center; padding: 8px; border-bottom: 2px solid #e5e7eb; }
+.online { color: #22c55e; font-weight: bold; }
+.offline { color: #ef4444; font-weight: bold; }
 
 /* ==== MODAL ==== */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-  animation: fadeIn 0.25s ease-in-out;
+.modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 200; }
+.modal-card { background: #fff; padding: 20px; border-radius: 16px; width: 400px; max-width: 90%; box-shadow: 8px 8px 20px var(--shadow-light), -8px -8px 20px #ffffff; }
+.modal-card h3 { margin-bottom: 16px; color: #1e40af; }
+.modal-card .form-field { margin-bottom: 12px; }
+.modal-card .form-field label { font-weight: 600; margin-bottom: 4px; display: block; }
+.modal-card .form-field input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #d1d5db; background: #f9fafb; box-shadow: inset 2px 2px 6px var(--shadow-light), inset -2px -2px 6px #ffffff; }
+/* ==== LOGO FMM GLOBAL ==== */
+.logo-fmm {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 85px;
+  height: auto;
+  opacity: 0.95;
+  object-fit: contain;
 }
-
-.modal-card {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 30px 34px;
-  width: 90%;
-  max-width: 420px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-  animation: slideUp 0.3s ease-in-out;
-}
-
-.modal-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e3a8a;
-  margin-bottom: 18px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Animaciones suaves */
-@keyframes fadeIn {
-  from { opacity: 0; } to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(40px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-
 
 </style>
