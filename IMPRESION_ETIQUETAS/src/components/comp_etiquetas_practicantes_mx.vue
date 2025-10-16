@@ -12,7 +12,7 @@
         </h2>
         <div class="user-info">
           🕖 Entrada: <strong v-if="horaEntrada">{{ horaEntrada }}</strong> |
-             <strong v-if="numMesa">{{ numMesa }}</strong> |
+          Mesa: <strong v-if="mesa_trabajo">{{ mesa_trabajo }}</strong> |
           <button class="btn-logout" @click="logout"><i class="fas fa-sign-out-alt"></i> Salir</button>
         </div>
       </div>
@@ -44,27 +44,44 @@
         </nav>
       </aside>
 
-      <!-- MODAL EDITAR PERFIL -->
-      <div v-if="showEditUserModal" class="modal-overlay" @click.self="closeEditUserModal">
-        <div class="modal-card">
-          <h3>Editar Perfil</h3>
-          <div class="form-field">
-            <label>Nombre</label>
-            <input v-model="editUser.nombre" placeholder="Nombre completo" />
-          </div>
-          <div class="form-field">
-            <label>Contraseña</label>
-            <input v-model="editUser.contrasena" type="password" placeholder="Nueva contraseña" />
-          </div>
-          
-          <div class="crud-actions">
-            <button @click="saveUser" class="btn btn-save">
-              <i class="fas fa-save"></i> Guardar
-            </button>
-            <button @click="closeEditUserModal" class="btn btn-reset"> Cancelar </button>
-          </div>
-        </div>
-      </div>
+     <!-- MODAL EDITAR PERFIL -->
+<div v-if="showEditUserModal" class="modal-overlay" @click.self="closeEditUserModal">
+  <div class="modal-card">
+    <h3 class="modal-title">
+      <i class="fas fa-user-edit"></i> Editar Perfil
+    </h3>
+
+    <div class="form-field">
+      <label class="crud-label">Nombre</label>
+      <input v-model="editUser.nombre" class="crud-input" placeholder="Nombre completo" />
+    </div>
+
+    <div class="form-field">
+    <label class="crud-label">Mesa de trabajo</label>
+    <select v-model="editUser.mesa_trabajo" class="crud-input" required>
+      <option disabled value="">Selecciona la mesa</option>
+      <option v-for="n in 10" :key="n" :value="`MESA${n}`">MESA{{ n }}</option>
+    </select>
+  </div>
+
+
+    <div class="form-field">
+      <label class="crud-label">Contraseña</label>
+      <input v-model="editUser.contrasena" type="password" class="crud-input" placeholder="Nueva contraseña" />
+    </div>
+
+    
+
+    <div class="crud-actions centered">
+      <button @click="saveUser" class="btn btn-save">
+        <i class="fas fa-save"></i> Guardar Cambios
+      </button>
+      <button @click="closeEditUserModal" class="btn btn-reset">
+        <i class="fas fa-times"></i> Cancelar
+      </button>
+    </div>
+  </div>
+</div>
 
       <!-- CONTENIDO PRINCIPAL -->
       <main class="content">
@@ -213,10 +230,10 @@ export default {
     return {
       username: localStorage.getItem("username") || "",
       horaEntrada: localStorage.getItem("horaEntrada") || "",
-      numMesa: localStorage.getItem("numMesa") || "",
       currentView: "caja",
       showEditUserModal: false,
-      editUser: { nombre: "", contrasena: "", numMesa: "" },
+      mesa_trabajo: localStorage.getItem("mesa_trabajo") || "", 
+      editUser: {     practicanteId: null,nombre: "", contrasena: "" , mesa_trabajo: "" },
       paqueterias: [
         { nombre: "Paquetexpress", logo: new URL("@/assets/pExp.png", import.meta.url).href },
         { nombre: "FedEx", logo: new URL("@/assets/fedex.png", import.meta.url).href },
@@ -244,6 +261,8 @@ export default {
       const hora = new Date().toLocaleString();
       localStorage.setItem("horaEntrada", hora);
       this.horaEntrada = hora;
+      this.cargarDatosPracticante();
+
     }
   },
   computed: {
@@ -253,28 +272,89 @@ export default {
   methods: {
     logout() { localStorage.clear(); this.$router.push("/"); },
     setView(view) { this.currentView = view; },
-    openEditUserModal() {
-      this.showEditUserModal = true;
-      this.editUser.nombre = this.username;
-      this.editUser.numMesa = this.numMesa;
-    },
+async cargarDatosPracticante() {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await axios.get("http://127.0.0.1:8000/user_practicantes_mx/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const user = response.data;
+
+      this.username = user.nombre || this.username;
+      this.mesa_trabajo = user.mesa_trabajo || "";
+      localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
+      localStorage.setItem("nombre_practicante", this.username);
+
+    } catch (error) {
+      console.error("Error al cargar datos del practicante:", error);
+    }
+  },
+async openEditUserModal() {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("No se encontró token");
+
+    const response = await axios.get("http://127.0.0.1:8000/user_practicantes_mx/me", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const user = response.data;
+
+    this.practicanteId = user.id;  // <-- Guardamos el ID
+    this.editUser.nombre = user.nombre || "";
+    this.editUser.mesa_trabajo = user.mesa_trabajo || "";
+
+     // 🔹 Actualizamos el header y localStorage
+    this.mesa_trabajo = this.editUser.mesa_trabajo;
+    localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
+    
+    this.editUser.contrasena = "";
+    this.showEditUserModal = true;
+
+  } catch (error) {
+    console.error("Error al cargar los datos del usuario:", error);
+    alert("Error al cargar los datos del usuario");
+  }
+},
     closeEditUserModal() { this.showEditUserModal = false; },
-    async saveUser() {
-      try {
-        const payload = { nombre: this.editUser.nombre, contrasena: this.editUser.contrasena, numMesa: this.editUser.numMesa };
-        const token = localStorage.getItem("token");
-        await axios.put("http://127.0.0.1:8000/user_practicantes_mx/perfil", payload, { headers: token ? { token } : {} });
-        alert("Perfil actualizado");
-        this.username = this.editUser.nombre;
-        this.numMesa = this.editUser.numMesa;
-        localStorage.setItem("username", this.username);
-        localStorage.setItem("numMesa", this.numMesa);
-        this.closeEditUserModal();
-      } catch (err) {
-        console.error(err);
-        alert("Error al actualizar perfil");
+async saveUser() {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("No se encontró el token de autenticación");
+      return;
+    }
+
+    // Solo ejecutar la petición PUT, no necesitamos guardar la respuesta
+    await axios.put(
+`http://127.0.0.1:8000/user_practicantes_mx/${this.practicanteId}`,
+      {
+        nombre: this.editUser.nombre || undefined,
+        mesa_trabajo: this.editUser.mesa_trabajo || undefined,
+        contrasena: this.editUser.contrasena || undefined,
+        
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
       }
-    },
+    );
+    this.mesa_trabajo = this.editUser.mesa_trabajo;
+    localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
+
+    alert("✅ Perfil actualizado correctamente");
+    this.showEditUserModal = false;
+
+  } catch (error) {
+    console.error("Error al actualizar el perfil:", error.response || error);
+    alert("❌ Ocurrió un error al actualizar el perfil");
+  }
+},
     reiniciar() {
       this.factura = "";
       this.numCajas = 0;
@@ -566,5 +646,55 @@ async guardarDatosPracticante() {
   .content { padding: 12px; }
   .form-grid, .etiquetas-container { grid-template-columns: 1fr; }
 }
+
+
+/* ==== MODAL ==== */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 30px 34px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  animation: slideUp 0.3s ease-in-out;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Animaciones suaves */
+@keyframes fadeIn {
+  from { opacity: 0; } to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+
+
 </style>
+
 

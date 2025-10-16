@@ -27,6 +27,7 @@ def login(
     tipo: str,
     nombre: str = Form(...),
     contrasena: str = Form(...),
+    
     db: Session = Depends(get_db)
 ):
     sede = sede.lower()
