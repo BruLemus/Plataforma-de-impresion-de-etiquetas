@@ -122,6 +122,38 @@ def update_practicante_profile_mx(
     db.refresh(current_user)
     return current_user
 
+#editar paracticante MX
+
+@router.put("/{practicante_id}")
+def update_practicante(practicante_id: int, payload: UserPracticanteUpdate, db: Session = Depends(get_db)):
+    # Buscar practicante existente
+    user = db.query(UserPracticanteMX).filter(UserPracticanteMX.id == practicante_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # Actualizar nombre si se envía
+    if payload.nombre is not None:
+        user.nombre = payload.nombre
+
+    # Actualizar mesa_trabajo (validar Enum)
+    if payload.mesa_trabajo is not None:
+        try:
+            user.mesa_trabajo = mesaTrabajoEnum(payload.mesa_trabajo)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Valor inválido para mesa_trabajo. Debe ser uno de: MESA1, MESA2, ..., MESA10."
+            )
+
+    # Actualizar contraseña si se envía
+    if payload.contrasena is not None:
+        user.contrasena = pwd_context.hash(payload.contrasena)
+
+    db.commit()
+    db.refresh(user)
+
+    return {"detail": "Usuario actualizado correctamente", "usuario": user}
+
 
 # Obtener todos los practicantes MX
 @router.get("/", response_model=List[UserPracticanteResponse])
