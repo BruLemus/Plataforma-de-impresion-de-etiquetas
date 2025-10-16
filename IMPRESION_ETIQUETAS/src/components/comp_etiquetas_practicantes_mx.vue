@@ -328,28 +328,34 @@ async saveUser() {
       return;
     }
 
-    // Solo ejecutar la petición PUT, no necesitamos guardar la respuesta
+    // Ejecutar actualización
     await axios.put(
-`http://127.0.0.1:8000/user_practicantes_mx/${this.practicanteId}`,
+      `http://127.0.0.1:8000/user_practicantes_mx/${this.practicanteId}`,
       {
         nombre: this.editUser.nombre || undefined,
         mesa_trabajo: this.editUser.mesa_trabajo || undefined,
         contrasena: this.editUser.contrasena || undefined,
-        
       },
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       }
     );
+
+    // 🔹 Actualizamos datos locales para reflejar los cambios inmediatos
+    this.username = this.editUser.nombre;
     this.mesa_trabajo = this.editUser.mesa_trabajo;
+
+    localStorage.setItem("username", this.username);
     localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
+
+    // 🔹 Volvemos a cargar la info del usuario desde el backend
+    await this.cargarDatosPracticante();
 
     alert("✅ Perfil actualizado correctamente");
     this.showEditUserModal = false;
-
   } catch (error) {
     console.error("Error al actualizar el perfil:", error.response || error);
     alert("❌ Ocurrió un error al actualizar el perfil");

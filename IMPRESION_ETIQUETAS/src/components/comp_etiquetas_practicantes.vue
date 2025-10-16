@@ -354,10 +354,13 @@ async saveUser() {
       }
     );
 
-    
     this.mesa_trabajo = this.editUser.mesa_trabajo;
+    this.username = this.editUser.nombre;
+    localStorage.setItem("username", this.username);
     localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
 
+    await this.cargarDatosPracticante();
+    
     alert("✅ Perfil actualizado correctamente");
     this.showEditUserModal = false;
 

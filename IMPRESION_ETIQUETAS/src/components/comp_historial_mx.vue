@@ -279,8 +279,8 @@ export default {
       const tipo = this.registroEditando.tipo_pedido;
       const url =
         tipo === "Caja"
-          ? `http://127.0.0.1:8000/registros/caja/${this.registroEditando.id}`
-          : `http://127.0.0.1:8000/registros/tarima/${this.registroEditando.id}`;
+          ? `http://127.0.0.1:8000/registros_mx/caja/${this.registroEditando.id}`
+          : `http://127.0.0.1:8000/registros_mx/tarima/${this.registroEditando.id}`;
       try {
         const token = localStorage.getItem("token");
         await axios.put(url, this.registroEditando, {
@@ -288,7 +288,7 @@ export default {
         });
         this.fetchHistorial();
         this.cerrarModal();
-        alert(`${tipo} actualizada correctamente`);
+        alert(`✅${tipo} actualizada correctamente`);
       } catch (err) {
         console.error(`Error al editar ${tipo}:`, err);
         alert(`No se pudo editar la ${tipo.toLowerCase()}`);
