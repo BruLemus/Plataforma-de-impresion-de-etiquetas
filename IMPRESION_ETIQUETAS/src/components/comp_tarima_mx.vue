@@ -266,7 +266,7 @@ methods: {
     
     // FUNCIÓN CLAVE PARA IMPRIMIR ZEBRA (CORREGIDA Y COMPLETA)
     async imprimirZebra() {
-        const centralApiUrl = "http://127.0.0.1:8000/imprimir/generate";
+        const centralApiUrl = "http://127.0.0.1:8000/imprimir/generate_tarima";
         const localApiUrl = "http://127.0.0.1:8001/print";
         let zplCode = "";
         
