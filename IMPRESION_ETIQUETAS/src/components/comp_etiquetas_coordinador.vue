@@ -271,8 +271,93 @@ export default {
     },
     checkPrinterStatus() { this.impresoraOnline = true; },
    
-    imprimirZebra() { alert("Impresión en Zebra"); },
-    imprimirRemoto() { alert("Impresión Servidor/ZPL"); },
+async imprimirZebra() {
+    // Endpoints de las APIs
+    const centralApiUrl = "http://127.0.0.1:8000/imprimir/generate_caja"; // MODIFICADO para cajas
+    const localApiUrl = "http://127.0.0.1:8001/print";
+    let zplCode = "";
+    
+    // Token de autenticación
+    const token = localStorage.getItem("token");
+    if (!token) {
+        alert("Inicia sesión nuevamente para imprimir.");
+        return;
+    }
+
+    // 1. Validar datos básicos
+    const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
+
+    if (!this.paqueteriaSeleccionada.nombre || !this.factura || this.numCajas <= 0 || !this.claveProducto || totalPiezas <= 0) {
+        alert("Completa todos los campos obligatorios y la cantidad de piezas.");
+        return;
+    }
+
+    // 2. Construir la lista de datos para enviar a la API CENTRAL (Payload)
+    const cajasAImprimir = [];
+    
+    for (let i = 0; i < this.numCajas; i++) { // Usar this.numCajas
+        cajasAImprimir.push({
+            // Los nombres de propiedad DEBEN coincidir con el modelo Pydantic de FastAPI
+            paqueteria: this.paqueteriaSeleccionada.nombre,
+            factura: this.factura,
+            
+            num_cajas: Number(this.numCajas), // Se mantiene 'num_cajas' en el payload
+            caja_actual: i + 1,
+            piezas: Number(this.piezas[i]) || 0,
+            clave_producto: this.claveProducto, 
+
+            // Se usan las variables de caja
+            ancho: Number(this.anchoCaja) || 0,
+            alto: Number(this.altoCaja) || 0,
+            largo: Number(this.largoCaja) || 0,
+            peso: Number(this.peso) || 0,
+            peso_volumetrico: Number(this.pesoVolumetrico.toFixed(2)) || 0,
+            
+            qr_data: this.generateQR(i), 
+        });
+    }
+    
+    // --- PASO A: PRIMERA LLAMADA (API Central) - Obtener ZPL ---
+    try {
+        console.log(`Paso A: Solicitando ZPL a: ${centralApiUrl}`);
+        const generateResponse = await axios.post(
+            centralApiUrl, 
+            cajasAImprimir, // Usar el nuevo array 'cajasAImprimir'
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    accept: "application/json",
+                    token: token, // Agregar el token
+                },
+            }
+        );
+        
+        zplCode = generateResponse.data.zpl_code;
+        // Validar que el código ZPL no esté vacío
+        if (!zplCode || zplCode.length === 0) throw new Error("La API Central devolvió un código ZPL vacío. Revise la consola del servidor 8000.");
+        
+        console.log("Paso A completado: ZPL generado.");
+        
+    } catch (error) {
+        console.error("❌ Error al generar ZPL:", error.response?.data?.detail || error.message || error);
+        const errorMessage = error.response?.data?.detail || "Revise el servidor FastAPI (8000) por errores de Pydantic o sintaxis. Asegúrate que el endpoint 'generate_caja' exista.";
+        alert(`❌ Error al generar ZPL. ¿Está la API Central (${centralApiUrl}) funcionando?\nDetalle: ${errorMessage}`); 
+        return;
+    }
+
+    // --- PASO B: SEGUNDA LLAMADA (Micro-servicio Local) - Enviar ZPL a USB ---
+    try {
+        console.log(`Paso B: Enviando ZPL a servicio local: ${localApiUrl}`);
+        const printResponse = await axios.post(localApiUrl, { zpl_code: zplCode });
+        
+        console.log("✅ Impresión USB exitosa:", printResponse.data);
+        alert(`✅ ${this.numCajas} etiquetas enviadas a la impresora USB. ¡Revisa la Zebra ZT230!`);
+        
+    } catch (error) {
+        console.error("❌ Error al imprimir en servicio local:", error.response?.data?.detail || error.message || error);
+        alert(`❌ Error de impresión local. Asegúrate de que el **Micro-servicio Local** (${localApiUrl}) esté corriendo en la máquina con la impresora USB. \nDetalle: ${error.response?.data?.detail || error.message}`);
+    }
+},
     generateQR(index) { return `Factura:${this.factura || "—"}|Caja:${index+1}|Practicante:${this.nombrePracticante}`; },
 
 async guardarDatos() {

@@ -122,6 +122,7 @@
   </div>
 </template>
 <script>
+import axios from "axios";
 import QrcodeVue from "qrcode.vue";
 export default {
   name: "CompEtiquetas",
@@ -260,9 +261,73 @@ export default {
     generateQR(index) { return `Factura:${this.factura || "—"}|Tarima:${index+1}|Practicante:${this.nombrePracticante}`; },
     
     // ... Tu función imprimir se mantiene igual ...
-    async imprimir() {
-      // ... (código para imprimir) ...
-    },
+    async imprimirZebra() {
+        const centralApiUrl = "http://127.0.0.1:8000/imprimir/generate_tarima";
+        const localApiUrl = "http://127.0.0.1:8001/print";
+        let zplCode = "";
+        
+        // 1. Validar datos básicos
+        if (!this.paqueteriaSeleccionada.nombre || !this.factura || this.numTarimas <= 0 || !this.claveProducto || this.totalPiezas <= 0) {
+            alert("Completa todos los campos obligatorios y la cantidad de piezas.");
+            return;
+        }
+
+        // 2. Construir la lista de datos para enviar a la API CENTRAL (Payload)
+        const tarimasAImprimir = [];
+        
+        for (let i = 0; i < this.numTarimas; i++) {
+            tarimasAImprimir.push({
+                // Los nombres de propiedad DEBEN coincidir con el modelo Pydantic de FastAPI
+                paqueteria: this.paqueteriaSeleccionada.nombre,
+                factura: this.factura,
+                
+                num_cajas: Number(this.numTarimas), 
+                caja_actual: i + 1,
+                piezas: Number(this.piezas[i]) || 0,
+                clave_producto: this.claveProducto, 
+
+                ancho: Number(this.ancho) || 0,
+                alto: Number(this.alto) || 0,
+                largo: Number(this.largo) || 0,
+                peso: Number(this.peso) || 0,
+                peso_volumetrico: Number(this.pesoVolumetrico.toFixed(2)) || 0,
+                
+                qr_data: this.generateQR(i), 
+            });
+        }
+        
+
+        // --- PASO A: PRIMERA LLAMADA (API Central) - Obtener ZPL ---
+        try {
+            console.log(`Paso A: Solicitando ZPL a: ${centralApiUrl}`);
+            const generateResponse = await axios.post(centralApiUrl, tarimasAImprimir);
+            
+            zplCode = generateResponse.data.zpl_code;
+            // Validar que el código ZPL no esté vacío
+            if (!zplCode || zplCode.length === 0) throw new Error("La API Central devolvió un código ZPL vacío. Revise la consola del servidor 8000.");
+            
+            console.log("Paso A completado: ZPL generado.");
+            
+        } catch (error) {
+            console.error("❌ Error al generar ZPL:", error.response?.data?.detail || error.message || error);
+            const errorMessage = error.response?.data?.detail || "Revise el servidor FastAPI (8000) por errores de Pydantic o sintaxis.";
+            alert(`❌ Error al generar ZPL. ¿Está la API Central (${centralApiUrl}) funcionando?\nDetalle: ${errorMessage}`); 
+            return;
+        }
+
+        // --- PASO B: SEGUNDA LLAMADA (Micro-servicio Local) - Enviar ZPL a USB ---
+        try {
+            console.log(`Paso B: Enviando ZPL a servicio local: ${localApiUrl}`);
+            const printResponse = await axios.post(localApiUrl, { zpl_code: zplCode });
+            
+            console.log("✅ Impresión USB exitosa:", printResponse.data);
+            alert(`✅ ${this.numTarimas} etiquetas enviadas a la impresora USB. ¡Revisa la Zebra ZT230!`);
+            
+        } catch (error) {
+            console.error("❌ Error al imprimir en servicio local:", error.response?.data?.detail || error.message || error);
+            alert(`❌ Error de impresión local. Asegúrate de que el **Micro-servicio Local** (${localApiUrl}) esté corriendo en la máquina con la impresora USB. \nDetalle: ${error.response?.data?.detail || error.message}`);
+        }
+    }
   },
 };
 </script>
