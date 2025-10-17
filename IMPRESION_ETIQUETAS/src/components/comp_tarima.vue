@@ -75,7 +75,7 @@
         <i class="fas fa-print"></i> Imprimir
       </button>
 
-      <button @click="guardarDatosPracticante" class="btn btn-save">
+      <button @click="guardarDatos" class="btn btn-save">
         <i class="fas fa-save"></i> Guardar
       </button>
     </div>
