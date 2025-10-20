@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- BARRA SUPERIOR -->
     <header class="header no-print">
       <div class="header-content">
         <h1 class="logo">
@@ -11,22 +10,20 @@
         </h2>
         <div class="user-info">
           🕖 Entrada: <strong v-if="horaEntrada">{{ horaEntrada }}</strong> |
-          Mesa: <strong v-if="mesa_trabajo">{{ mesa_trabajo }}</strong> |
+          <strong v-if="mesa_trabajo">{{ mesa_trabajo }}</strong> |
           <button class="btn-logout" @click="logout"><i class="fas fa-sign-out-alt"></i> Salir</button>
         </div>
       </div>
     </header>
 
-    <!-- LAYOUT -->
     <div class="layout">
-      <!-- SIDEBAR -->
       <aside class="sidebar no-print">
         <nav class="menu">
           <ul>
-            <div class="sidebar-user" @click="setView('crear_practicante')" style="cursor:pointer;">
-            <i class="fas fa-user-circle"></i>
-            <span>{{ username }}</span>
-          </div>
+            <div class="sidebar-user" @click="openEditUserModal" style="cursor:pointer;">
+              <i class="fas fa-user-circle"></i>
+              <span>{{ username }}</span>
+            </div>
 
             <li :class="{active: currentView === 'caja'}" @click="setView('caja')">
               <i class="fas fa-box-open"></i> Etiquetas por Caja
@@ -37,9 +34,7 @@
             <li :class="{active: currentView === 'otras_etiquetas'}" @click="setView('otras_etiquetas')">
               <i class="fas fa-exclamation-triangle"></i> Otras Etiquetas
             </li>
-            <li :class="{active: currentView === 'historial'}" @click="setView('historial')">
-              <i class="fas fa-chart-bar"></i> Registros
-            </li>
+            
             <li :class="{active: currentView === 'info'}" @click="setView('info')">
               <i class="fas fa-info-circle"></i> Acerca de . . .
             </li>
@@ -47,14 +42,11 @@
         </nav>
       </aside>
 
-      <!-- CONTENIDO PRINCIPAL -->
       <main class="content">
-        <!-- ETIQUETAS POR CAJA -->
         <section v-if="currentView === 'caja'">
           <div class="crud-card no-print">
             <h2 class="crud-subtitle">Etiquetas por Caja</h2>
 
-            <!-- FORMULARIO -->
             <div class="form-grid">
               <div class="form-field">
                 <label class="crud-label">Paquetería</label>
@@ -87,7 +79,6 @@
                 <input v-model="claveProducto" type="text" class="crud-input" placeholder="Clave del producto" />
               </div>
 
-              <!-- SOLO PARA ESTAFETA Y PAQUETEXPRESS -->
               <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'" class="form-field">
                 <label class="crud-label">Ancho de la Caja (cm)</label>
                 <input v-model.number="anchoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 40" />
@@ -112,7 +103,6 @@
               </div>
             </div>
 
-            <!-- PIEZAS POR CAJA -->
             <div v-if="numCajas > 0" class="mb-4">
               <h3 class="crud-subtitle">Piezas por Caja</h3>
               <div class="pieces-grid">
@@ -125,11 +115,11 @@
               <div class="crud-total">Total de piezas: {{ totalPiezas }}</div>
 
 
-            <!-- BOTONES CRUD CENTRADOS -->
             <div class="crud-actions centered no-print">
               <button @click="imprimirZebra" class="btn btn-print">
                 <i class="fas fa-print"></i> Imprimir
               </button>
+              
               
               
               <button @click="guardarDatosPracticante" class="btn btn-save">
@@ -138,55 +128,87 @@
             </div>
           </div>
 
-          <!-- ETIQUETAS PARA IMPRESIÓN -->
           <div class="labels-container print-only" v-if="numCajas > 0">
             <div v-for="n in numCajas" :key="'etiqueta-' + n" class="etiqueta">
 
-          <!-- 🔹 Logo FMM en la esquina superior izquierda -->
-          <img src="@/assets/fmm.png" alt="Logo FMM" class="logo-fmm" />
+            <img src="@/assets/fmm.png" alt="Logo FMM" class="logo-fmm" />
 
-          <div class="contenido">
-            <div class="logo-wrapper">
-              <img :src="paqueteriaSeleccionada.logo" class="logo-etiqueta" />
-            </div>
+            <div class="contenido">
+              <div class="logo-wrapper">
+                <img :src="paqueteriaSeleccionada.logo" class="logo-etiqueta" />
+              </div>
 
-            <div class="etiqueta-content">
-              <div class="etiqueta-datos">
-                <div class="dato"><strong>Factura:</strong> {{ factura || '—' }}</div>
-                <div class="dato"><strong>Caja:</strong> {{ n }} de {{ numCajas }}</div>
-                <div class="dato"><strong>Piezas:</strong> {{ piezas[n-1] || 0 }}</div>
+              <div class="etiqueta-content">
+                <div class="etiqueta-datos">
+                  <div class="dato"><strong>Factura:</strong> {{ factura || '—' }}</div>
+                  <div class="dato"><strong>Caja:</strong> {{ n }} de {{ numCajas }}</div>
+                  <div class="dato"><strong>Piezas:</strong> {{ piezas[n-1] || 0 }}</div>
 
-                <div
-                  v-if="
-                    paqueteriaSeleccionada.nombre === 'Estafeta' ||
-                    paqueteriaSeleccionada.nombre === 'Paquetexpress'
-                  "
-                >
-                  <div class="dato">
-                    <strong>Dimensiones (ANxALxL):</strong> {{ anchoCaja }}x{{ altoCaja }}x{{ largoCaja }} cm
-                  </div>
-                  <div class="dato"><strong>Peso:</strong> {{ peso || 0 }} kg</div>
-                  <div class="dato">
-                    <strong>Volumétrico :</strong> {{ pesoVolumetrico.toFixed(2) }} kg
+                  <div
+                    v-if="
+                      paqueteriaSeleccionada.nombre === 'Estafeta' ||
+                      paqueteriaSeleccionada.nombre === 'Paquetexpress'
+                    "
+                  >
+                    <div class="dato">
+                      <strong>Dimensiones (ANxALxL):</strong> {{ anchoCaja }}x{{ altoCaja }}x{{ largoCaja }} cm
+                    </div>
+                    <div class="dato"><strong>Peso:</strong> {{ peso || 0 }} kg</div>
+                    <div class="dato">
+                      <strong>Volumétrico :</strong> {{ pesoVolumetrico.toFixed(2) }} kg
+                    </div>
                   </div>
                 </div>
+              <div class="etiqueta-qr">
+                <qrcode-vue :value="generateQR(n - 1)" :size="100" level="H" />
               </div>
-      <div class="etiqueta-qr">
-        <qrcode-vue :value="generateQR(n - 1)" :size="100" level="H" />
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</div>
-</div>
- </section>
+        </section>
 
-        <!-- OTROS COMPONENTES -->
         <section v-if="currentView === 'tarima'"><comp_tarima_mx /></section>
         <section v-if="currentView === 'otras_etiquetas'"><comp_otras_etiquetas /></section>
         <section v-if="currentView === 'info'"><comp_inf /></section>
       </main>
     </div>
-  </div>
+
+    <div v-if="showEditUserModal" class="modal-overlay" @click.self="closeEditUserModal">
+        <div class="modal-card">
+            <h3 class="crud-subtitle">
+                <i class="fas fa-user-edit"></i> Editar Perfil de Practicante
+            </h3>
+            
+            <div class="form-field">
+                <label class="crud-label">Nombre</label>
+                <input v-model="editUser.nombre" type="text" class="crud-input" />
+            </div>
+
+            <div class="form-field">
+          <label for="edit-mesa">Mesa de Trabajo</label>
+          <select id="edit-mesa" v-model="editUser.mesa_trabajo" class="crud-input">
+            <option disabled value="">-- Selecciona una mesa --</option>
+            <option v-for="n in 10" :key="n" :value="'MESA' + n">Mesa {{ n }}</option>
+          </select>
+        </div>
+
+            <div class="form-field">
+                <label class="crud-label">Contraseña (dejar en blanco para no cambiar)</label>
+                <input v-model="editUser.contrasena" type="password" class="crud-input" placeholder="********" />
+            </div>
+
+            <div class="crud-actions centered">
+                <button @click="saveUser" class="btn btn-save">
+                    <i class="fas fa-check-circle"></i> Guardar Cambios
+                </button>
+                <button @click="closeEditUserModal" class="btn btn-reset" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                    <i class="fas fa-times-circle"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+    </div>
 </template>
 
 
@@ -207,7 +229,8 @@ export default {
       currentView: "caja",
       showEditUserModal: false,
       mesa_trabajo: localStorage.getItem("mesa_trabajo") || "", 
-      editUser: {     practicanteId: null,nombre: "", contrasena: "" , mesa_trabajo: "" },
+      // LIMPIO: Espacios irregulares eliminados
+      editUser: { practicanteId: null,nombre: "", contrasena: "" , mesa_trabajo: "" }, 
       paqueterias: [
         { nombre: "Paquetexpress", logo: new URL("@/assets/pExp.png", import.meta.url).href },
         { nombre: "FedEx", logo: new URL("@/assets/fedex.png", import.meta.url).href },
@@ -246,95 +269,96 @@ export default {
   methods: {
     logout() { localStorage.clear(); this.$router.push("/"); },
     setView(view) { this.currentView = view; },
-async cargarDatosPracticante() {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+    async cargarDatosPracticante() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-      const response = await axios.get("http://127.0.0.1:8000/user_practicantes_mx/me", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+        const response = await axios.get("http://127.0.0.1:8000/user_practicantes_mx/me", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-      const user = response.data;
+        const user = response.data;
 
-      this.username = user.nombre || this.username;
-      this.mesa_trabajo = user.mesa_trabajo || "";
-      localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
-      localStorage.setItem("nombre_practicante", this.username);
+        this.username = user.nombre || this.username;
+        this.mesa_trabajo = user.mesa_trabajo || "";
+        localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
+        localStorage.setItem("nombre_practicante", this.username);
 
-    } catch (error) {
-      console.error("Error al cargar datos del practicante:", error);
-    }
-  },
-async openEditUserModal() {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) throw new Error("No se encontró token");
-
-    const response = await axios.get("http://127.0.0.1:8000/user_practicantes_mx/me", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    const user = response.data;
-
-    this.practicanteId = user.id;  // <-- Guardamos el ID
-    this.editUser.nombre = user.nombre || "";
-    this.editUser.mesa_trabajo = user.mesa_trabajo || "";
-
-     // 🔹 Actualizamos el header y localStorage
-    this.mesa_trabajo = this.editUser.mesa_trabajo;
-    localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
-    
-    this.editUser.contrasena = "";
-    this.showEditUserModal = true;
-
-  } catch (error) {
-    console.error("Error al cargar los datos del usuario:", error);
-    alert("Error al cargar los datos del usuario");
-  }
-},
-    closeEditUserModal() { this.showEditUserModal = false; },
-async saveUser() {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("No se encontró el token de autenticación");
-      return;
-    }
-
-    // Ejecutar actualización
-    await axios.put(
-      `http://127.0.0.1:8000/user_practicantes_mx/${this.practicanteId}`,
-      {
-        nombre: this.editUser.nombre || undefined,
-        mesa_trabajo: this.editUser.mesa_trabajo || undefined,
-        contrasena: this.editUser.contrasena || undefined,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+      } catch (error) {
+        console.error("Error al cargar datos del practicante:", error);
       }
-    );
+    },
+    async openEditUserModal() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("No se encontró token");
 
-    // 🔹 Actualizamos datos locales para reflejar los cambios inmediatos
-    this.username = this.editUser.nombre;
-    this.mesa_trabajo = this.editUser.mesa_trabajo;
+        const response = await axios.get("http://127.0.0.1:8000/user_practicantes_mx/me", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-    localStorage.setItem("username", this.username);
-    localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
+        const user = response.data;
 
-    // 🔹 Volvemos a cargar la info del usuario desde el backend
-    await this.cargarDatosPracticante();
+        // LIMPIO: Espacios irregulares eliminados
+        this.practicanteId = user.id; // <-- Guardamos el ID
+        this.editUser.nombre = user.nombre || "";
+        this.editUser.mesa_trabajo = user.mesa_trabajo || "";
 
-    alert("✅ Perfil actualizado correctamente");
-    this.showEditUserModal = false;
-  } catch (error) {
-    console.error("Error al actualizar el perfil:", error.response || error);
-    alert("❌ Ocurrió un error al actualizar el perfil");
-  }
-},
+          // 🔹 Actualizamos el header y localStorage
+        this.mesa_trabajo = this.editUser.mesa_trabajo;
+        localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
+        
+        this.editUser.contrasena = "";
+        this.showEditUserModal = true;
+
+      } catch (error) {
+        console.error("Error al cargar los datos del usuario:", error);
+        alert("Error al cargar los datos del usuario");
+      }
+    },
+    closeEditUserModal() { this.showEditUserModal = false; },
+    async saveUser() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("No se encontró el token de autenticación");
+          return;
+        }
+
+        // Ejecutar actualización
+        await axios.put(
+          `http://127.0.0.1:8000/user_practicantes_mx/${this.practicanteId}`,
+          {
+            nombre: this.editUser.nombre || undefined,
+            mesa_trabajo: this.editUser.mesa_trabajo || undefined,
+            contrasena: this.editUser.contrasena || undefined,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        // 🔹 Actualizamos datos locales para reflejar los cambios inmediatos
+        this.username = this.editUser.nombre;
+        this.mesa_trabajo = this.editUser.mesa_trabajo;
+
+        localStorage.setItem("username", this.username);
+        localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
+
+        // 🔹 Volvemos a cargar la info del usuario desde el backend
+        await this.cargarDatosPracticante();
+
+        alert("✅ Perfil actualizado correctamente");
+        this.showEditUserModal = false;
+      } catch (error) {
+        console.error("Error al actualizar el perfil:", error.response || error);
+        alert("❌ Revisa tu contraseña, ingresa al menos 6 caracteres ");
+      }
+    },
     reiniciar() {
       this.factura = "";
       this.numCajas = 0;
@@ -350,164 +374,165 @@ async saveUser() {
     generateQR(index) {
       return JSON.stringify({ factura: this.factura, caja: index + 1, piezas: this.piezas[index] || 0, peso: this.peso, mesa: this.numMesa });
     },
-async imprimirZebra() {
-    // Endpoints de las APIs
-    const centralApiUrl = "http://127.0.0.1:8000/imprimir/generate_caja"; // MODIFICADO para cajas
-    const localApiUrl = "http://127.0.0.1:8001/print";
-    let zplCode = "";
-    
-    // Token de autenticación
-    const token = localStorage.getItem("token");
-    if (!token) {
-        alert("Inicia sesión nuevamente para imprimir.");
-        return;
-    }
-
-    // 1. Validar datos básicos
-    const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
-
-    if (!this.paqueteriaSeleccionada.nombre || !this.factura || this.numCajas <= 0 || !this.claveProducto || totalPiezas <= 0) {
-        alert("Completa todos los campos obligatorios y la cantidad de piezas.");
-        return;
-    }
-
-    // 2. Construir la lista de datos para enviar a la API CENTRAL (Payload)
-    const cajasAImprimir = [];
-    
-    for (let i = 0; i < this.numCajas; i++) { // Usar this.numCajas
-        cajasAImprimir.push({
-            // Los nombres de propiedad DEBEN coincidir con el modelo Pydantic de FastAPI
-            paqueteria: this.paqueteriaSeleccionada.nombre,
-            factura: this.factura,
-            
-            num_cajas: Number(this.numCajas), // Se mantiene 'num_cajas' en el payload
-            caja_actual: i + 1,
-            piezas: Number(this.piezas[i]) || 0,
-            clave_producto: this.claveProducto, 
-
-            // Se usan las variables de caja
-            ancho: Number(this.anchoCaja) || 0,
-            alto: Number(this.altoCaja) || 0,
-            largo: Number(this.largoCaja) || 0,
-            peso: Number(this.peso) || 0,
-            peso_volumetrico: Number(this.pesoVolumetrico.toFixed(2)) || 0,
-            
-            qr_data: this.generateQR(i), 
-        });
-    }
-    
-    // --- PASO A: PRIMERA LLAMADA (API Central) - Obtener ZPL ---
-    try {
-        console.log(`Paso A: Solicitando ZPL a: ${centralApiUrl}`);
-        const generateResponse = await axios.post(
-            centralApiUrl, 
-            cajasAImprimir, // Usar el nuevo array 'cajasAImprimir'
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    accept: "application/json",
-                    token: token, // Agregar el token
-                },
-            }
-        );
-        
-        zplCode = generateResponse.data.zpl_code;
-        // Validar que el código ZPL no esté vacío
-        if (!zplCode || zplCode.length === 0) throw new Error("La API Central devolvió un código ZPL vacío. Revise la consola del servidor 8000.");
-        
-        console.log("Paso A completado: ZPL generado.");
-        
-    } catch (error) {
-        console.error("❌ Error al generar ZPL:", error.response?.data?.detail || error.message || error);
-        const errorMessage = error.response?.data?.detail || "Revise el servidor FastAPI (8000) por errores de Pydantic o sintaxis. Asegúrate que el endpoint 'generate_caja' exista.";
-        alert(`❌ Error al generar ZPL. ¿Está la API Central (${centralApiUrl}) funcionando?\nDetalle: ${errorMessage}`); 
-        return;
-    }
-
-    // --- PASO B: SEGUNDA LLAMADA (Micro-servicio Local) - Enviar ZPL a USB ---
-    try {
-        console.log(`Paso B: Enviando ZPL a servicio local: ${localApiUrl}`);
-        const printResponse = await axios.post(localApiUrl, { zpl_code: zplCode });
-        
-        console.log("✅ Impresión USB exitosa:", printResponse.data);
-        alert(`✅ ${this.numCajas} etiquetas enviadas a la impresora USB. ¡Revisa la Zebra ZT230!`);
-        
-    } catch (error) {
-        console.error("❌ Error al imprimir en servicio local:", error.response?.data?.detail || error.message || error);
-        alert(`❌ Error de impresión local. Asegúrate de que el **Micro-servicio Local** (${localApiUrl}) esté corriendo en la máquina con la impresora USB. \nDetalle: ${error.response?.data?.detail || error.message}`);
-    }
-},
-async guardarDatosPracticante() {
-  // Validar campos obligatorios
-  if (!this.paqueteriaSeleccionada.nombre || !this.factura || !this.numCajas || !this.tipoEmbalaje || !this.claveProducto) {
-    alert("Completa los campos obligatorios.");
-    return;
-  }
-
-  // Total de piezas
-  const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
-
-  // IDs desde localStorage
-  const practicante_id = Number(localStorage.getItem("practicante_id")) || 0;
-  const coordinador_id = Number(localStorage.getItem("coordinador_id")) || 5; // por ejemplo
-
-  // Nombres desde localStorage
-  const nombrePracticante = localStorage.getItem("nombre_practicante") || this.nombrePracticante || "string";
-  const nombreCoordinador = localStorage.getItem("nombre_coordinador") || this.nombreCoordinador || "Meli";
-
-  // Token JWT
-  const token = localStorage.getItem("token");
-  if (!token) {
-    alert("Inicia sesión nuevamente.");
-    return;
-  }
-
-  // Estructura del payload
-  const payload = {
-    nombre_user_practicante: nombrePracticante,
-    nombre_user_coordinador: nombreCoordinador,
-    n_facturas: String(this.factura),
-    n_cajas: Number(this.numCajas),
-    paqueteria: this.paqueteriaSeleccionada.nombre,
-    t_embalaje: Number(this.tipoEmbalaje),
-    clave_producto: String(this.claveProducto),
-    cantidad_piezas: totalPiezas,
-    ancho: Number(this.anchoCaja) || 0,
-    largo: Number(this.largoCaja) || 0,
-    alto: Number(this.altoCaja) || 0,
-    peso: Number(this.peso) || 0,
-    peso_volumetrico: Number(this.pesoVolumetrico.toFixed(2)) || 0,
-    practicante_id,
-    coordinador_id
-  };
-
-  try {
-    const response = await axios.post(
-      "http://127.0.0.1:8000/cajas_mx/?sede=mexico&role=practicante",
-      payload,
-      {
-        headers: {
-          "accept": "application/json",
-          "Content-Type": "application/json",
-          "token": token
-        }
+    async imprimirZebra() {
+      // Endpoints de las APIs
+      const centralApiUrl = "http://127.0.0.1:8000/imprimir/generate_caja"; // MODIFICADO para cajas
+      const localApiUrl = "http://127.0.0.1:8001/print";
+      let zplCode = "";
+      
+      // Token de autenticación
+      const token = localStorage.getItem("token");
+      if (!token) {
+          alert("Inicia sesión nuevamente para imprimir.");
+          return;
       }
-    );
 
-    console.log("✅ Respuesta API:", response.data);
-    alert("✅ Datos guardados correctamente");
-    this.reiniciar();
+      // 1. Validar datos básicos
+      const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
 
-  } catch (error) {
-    console.error("❌ Error en API:", error.response || error);
-    const msg = error.response?.data?.detail || "Error al guardar. Revisa los datos.";
-    alert(msg);
-  }
-},
+      if (!this.paqueteriaSeleccionada.nombre || !this.factura || this.numCajas <= 0 || !this.claveProducto || totalPiezas <= 0) {
+          alert("Completa todos los campos obligatorios y la cantidad de piezas.");
+          return;
+      }
+
+      // 2. Construir la lista de datos para enviar a la API CENTRAL (Payload)
+      const cajasAImprimir = [];
+      
+      for (let i = 0; i < this.numCajas; i++) { // Usar this.numCajas
+          cajasAImprimir.push({
+              // Los nombres de propiedad DEBEN coincidir con el modelo Pydantic de FastAPI
+              paqueteria: this.paqueteriaSeleccionada.nombre,
+              factura: this.factura,
+              
+              num_cajas: Number(this.numCajas), // Se mantiene 'num_cajas' en el payload
+              caja_actual: i + 1,
+              piezas: Number(this.piezas[i]) || 0,
+              clave_producto: this.claveProducto, 
+
+              // Se usan las variables de caja
+              ancho: Number(this.anchoCaja) || 0,
+              alto: Number(this.altoCaja) || 0,
+              largo: Number(this.largoCaja) || 0,
+              peso: Number(this.peso) || 0,
+              peso_volumetrico: Number(this.pesoVolumetrico.toFixed(2)) || 0,
+              
+              qr_data: this.generateQR(i), 
+          });
+      }
+      
+      // --- PASO A: PRIMERA LLAMADA (API Central) - Obtener ZPL ---
+      try {
+          console.log(`Paso A: Solicitando ZPL a: ${centralApiUrl}`);
+          const generateResponse = await axios.post(
+              centralApiUrl, 
+              cajasAImprimir, // Usar el nuevo array 'cajasAImprimir'
+              {
+                  headers: {
+                      "Content-Type": "application/json",
+                      accept: "application/json",
+                      token: token, // Agregar el token
+                  },
+              }
+          );
+          
+          zplCode = generateResponse.data.zpl_code;
+          // Validar que el código ZPL no esté vacío
+          if (!zplCode || zplCode.length === 0) throw new Error("La API Central devolvió un código ZPL vacío. Revise la consola del servidor 8000.");
+          
+          console.log("Paso A completado: ZPL generado.");
+          
+      } catch (error) {
+          console.error("❌ Error al generar ZPL:", error.response?.data?.detail || error.message || error);
+          const errorMessage = error.response?.data?.detail || "Revise el servidor FastAPI (8000) por errores de Pydantic o sintaxis. Asegúrate que el endpoint 'generate_caja' exista.";
+          alert(`❌ Error al generar ZPL. ¿Está la API Central (${centralApiUrl}) funcionando?\nDetalle: ${errorMessage}`); 
+          return;
+      }
+
+      // --- PASO B: SEGUNDA LLAMADA (Micro-servicio Local) - Enviar ZPL a USB ---
+      try {
+          console.log(`Paso B: Enviando ZPL a servicio local: ${localApiUrl}`);
+          const printResponse = await axios.post(localApiUrl, { zpl_code: zplCode });
+          
+          console.log("✅ Impresión USB exitosa:", printResponse.data);
+          alert(`✅ ${this.numCajas} etiquetas enviadas a la impresora USB. ¡Revisa la Zebra ZT230!`);
+          
+      } catch (error) {
+          console.error("❌ Error al imprimir en servicio local:", error.response?.data?.detail || error.message || error);
+          alert(`❌ Error de impresión local. Asegúrate de que el **Micro-servicio Local** (${localApiUrl}) esté corriendo en la máquina con la impresora USB. \nDetalle: ${error.response?.data?.detail || error.message}`);
+      }
+    },
+    async guardarDatosPracticante() {
+      // Validar campos obligatorios
+      if (!this.paqueteriaSeleccionada.nombre || !this.factura || !this.numCajas || !this.tipoEmbalaje || !this.claveProducto) {
+        alert("Completa los campos obligatorios.");
+        return;
+      }
+
+      // Total de piezas
+      const totalPiezas = this.piezas.reduce((acc, val) => acc + (Number(val) || 0), 0);
+
+      // IDs desde localStorage
+      const practicante_id = Number(localStorage.getItem("practicante_id")) || 0;
+      const coordinador_id = Number(localStorage.getItem("coordinador_id")) || 5; // por ejemplo
+
+      // Nombres desde localStorage
+      const nombrePracticante = localStorage.getItem("nombre_practicante") || this.nombrePracticante || "string";
+      const nombreCoordinador = localStorage.getItem("nombre_coordinador") || this.nombreCoordinador || "Meli";
+
+      // Token JWT
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Inicia sesión nuevamente.");
+        return;
+      }
+
+      // Estructura del payload
+      const payload = {
+        nombre_user_practicante: nombrePracticante,
+        nombre_user_coordinador: nombreCoordinador,
+        n_facturas: String(this.factura),
+        n_cajas: Number(this.numCajas),
+        paqueteria: this.paqueteriaSeleccionada.nombre,
+        t_embalaje: Number(this.tipoEmbalaje),
+        clave_producto: String(this.claveProducto),
+        cantidad_piezas: totalPiezas,
+        ancho: Number(this.anchoCaja) || 0,
+        largo: Number(this.largoCaja) || 0,
+        alto: Number(this.altoCaja) || 0,
+        peso: Number(this.peso) || 0,
+        peso_volumetrico: Number(this.pesoVolumetrico.toFixed(2)) || 0,
+        practicante_id,
+        coordinador_id
+      };
+
+      try {
+        const response = await axios.post(
+          "http://127.0.0.1:8000/cajas_mx/?sede=mexico&role=practicante",
+          payload,
+          {
+            headers: {
+              "accept": "application/json",
+              "Content-Type": "application/json",
+              "token": token
+            }
+          }
+        );
+
+        console.log("✅ Respuesta API:", response.data);
+        alert("✅ Datos guardados correctamente");
+        this.reiniciar();
+
+      } catch (error) {
+        console.error("❌ Error en API:", error.response || error);
+        const msg = error.response?.data?.detail || "Inicia sesion nuevamente";
+        alert(msg);
+      }
+    },
     async getUserInfo() {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://127.0.0.1:8000/user_practicantes_mx/me", {  headers: { Authorization: `Bearer ${token}` } });
+        // LIMPIO: Espacios irregulares eliminados
+        const response = await axios.get("http://127.0.0.1:8000/user_practicantes_mx/me", { headers: { Authorization: `Bearer ${token}` } });
         if (response.data) {
           this.username = response.data.username || this.username;
           this.numMesa = response.data.mesa_trabajo || this.numMesa;
@@ -529,7 +554,7 @@ async guardarDatosPracticante() {
 .green-dot {
   color: #22c55e;
   font-weight: bold;
- 
+  
 }
 .crud-total {
   font-weight: bold;
@@ -801,7 +826,8 @@ async guardarDatosPracticante() {
   body * { visibility: hidden; background: none !important; box-shadow: none !important; }
   .labels-container, .labels-container * { visibility: visible; background: none !important; box-shadow: none !important; color: black !important; }
   .labels-container { position: absolute; top: 0; left: 0; width: 100%; }
-  .etiqueta { display: block; margin: 0; width: 100%; background: none !important; box-shadow: none !important; }  
+  /* LIMPIO: Espacios irregulares eliminados */
+  .etiqueta { display: block; margin: 0; width: 100%; background: none !important; box-shadow: none !important; } 
   .no-print { display: none !important; }
   .logo-fmm {
     width: 70px;
@@ -816,7 +842,7 @@ async guardarDatosPracticante() {
 .online { color: #22c55e; font-weight: bold; }
 .offline { color: #ef4444; font-weight: bold; }
 
-/* ==== MODAL ==== */
+/* ==== MODAL RESTAURADO ==== */
 .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 200; }
 .modal-card { background: #fff; padding: 20px; border-radius: 16px; width: 400px; max-width: 90%; box-shadow: 8px 8px 20px var(--shadow-light), -8px -8px 20px #ffffff; }
 .modal-card h3 { margin-bottom: 16px; color: #1e40af; }

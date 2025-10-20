@@ -76,7 +76,7 @@ export default {
           headers: { "Content-Type": "application/json" }
         });
 
-        alert(`Coordinador ${res.data.nombre} registrado correctamente`);
+        alert(`✅ Coordinador ${res.data.nombre} registrado correctamente`);
         this.$router.push("/"); // Redirige al login
 
       } catch (error) {

@@ -231,7 +231,7 @@ export default {
             };
 
             const response = await fetch(
-                `http://127.0.0.1:8000/tarimas_mx/?sede=${sede}&role=${role}`,
+                `http://127.0.0.1:8000/tarimas/?sede=${sede}&role=${role}`,
                 {
                     method: "POST",
                     headers: {

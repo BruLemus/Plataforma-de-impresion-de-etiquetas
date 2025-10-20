@@ -1,33 +1,29 @@
-
 <template>
   <div class="app-container">
-    <!-- BARRA SUPERIOR -->
     <header class="header no-print">
       <div class="header-content">
         <h1 class="logo">
-          <i class="fas fa-box"></i> Proceso de Embalaje <span class="green-dot">MX</span>
+          <i class="fas fa-box"></i> Proceso de Embalaje <span class="green-dot">GDL</span>
         </h1>
         <h2 class="coordinador-title">
           <i class="fas fa-user-tie"></i> Practicante
         </h2>
         <div class="user-info">
           🕖 Entrada: <strong v-if="horaEntrada">{{ horaEntrada }}</strong> |
-          Mesa: <strong v-if="mesa_trabajo">{{ mesa_trabajo }}</strong> |
+           <strong v-if="mesa_trabajo">{{ mesa_trabajo }}</strong> |
           <button class="btn-logout" @click="logout"><i class="fas fa-sign-out-alt"></i> Salir</button>
         </div>
       </div>
     </header>
 
-    <!-- LAYOUT -->
     <div class="layout">
-      <!-- SIDEBAR -->
       <aside class="sidebar no-print">
         <nav class="menu">
           <ul>
-            <div class="sidebar-user" @click="setView('crear_practicante')" style="cursor:pointer;">
-            <i class="fas fa-user-circle"></i>
-            <span>{{ username }}</span>
-          </div>
+            <div class="sidebar-user" @click="openEditUserModal" style="cursor:pointer;">
+              <i class="fas fa-user-circle"></i>
+              <span>{{ username }}</span>
+            </div>
 
             <li :class="{active: currentView === 'caja'}" @click="setView('caja')">
               <i class="fas fa-box-open"></i> Etiquetas por Caja
@@ -38,9 +34,7 @@
             <li :class="{active: currentView === 'otras_etiquetas'}" @click="setView('otras_etiquetas')">
               <i class="fas fa-exclamation-triangle"></i> Otras Etiquetas
             </li>
-            <li :class="{active: currentView === 'historial'}" @click="setView('historial')">
-              <i class="fas fa-chart-bar"></i> Registros
-            </li>
+            
             <li :class="{active: currentView === 'info'}" @click="setView('info')">
               <i class="fas fa-info-circle"></i> Acerca de . . .
             </li>
@@ -48,14 +42,11 @@
         </nav>
       </aside>
 
-      <!-- CONTENIDO PRINCIPAL -->
       <main class="content">
-        <!-- ETIQUETAS POR CAJA -->
         <section v-if="currentView === 'caja'">
           <div class="crud-card no-print">
             <h2 class="crud-subtitle">Etiquetas por Caja</h2>
 
-            <!-- FORMULARIO -->
             <div class="form-grid">
               <div class="form-field">
                 <label class="crud-label">Paquetería</label>
@@ -88,7 +79,6 @@
                 <input v-model="claveProducto" type="text" class="crud-input" placeholder="Clave del producto" />
               </div>
 
-              <!-- SOLO PARA ESTAFETA Y PAQUETEXPRESS -->
               <div v-if="paqueteriaSeleccionada.nombre === 'Estafeta' || paqueteriaSeleccionada.nombre === 'Paquetexpress'" class="form-field">
                 <label class="crud-label">Ancho de la Caja (cm)</label>
                 <input v-model.number="anchoCaja" type="number" min="0" class="crud-input" placeholder="Ej: 40" />
@@ -113,7 +103,6 @@
               </div>
             </div>
 
-            <!-- PIEZAS POR CAJA -->
             <div v-if="numCajas > 0" class="mb-4">
               <h3 class="crud-subtitle">Piezas por Caja</h3>
               <div class="pieces-grid">
@@ -123,14 +112,14 @@
                 </div>
               </div>
             </div>
-              <div class="crud-total">Total de piezas: {{ totalPiezas }}</div>
+            <div class="crud-total">Total de piezas: {{ totalPiezas }}</div>
 
 
-            <!-- BOTONES CRUD CENTRADOS -->
             <div class="crud-actions centered no-print">
               <button @click="imprimirZebra" class="btn btn-print">
                 <i class="fas fa-print"></i> Imprimir
               </button>
+              
               
               
               <button @click="guardarDatosPracticante" class="btn btn-save">
@@ -139,11 +128,9 @@
             </div>
           </div>
 
-          <!-- ETIQUETAS PARA IMPRESIÓN -->
-         <div class="labels-container print-only" v-if="numCajas > 0">
+          <div class="labels-container print-only" v-if="numCajas > 0">
             <div v-for="n in numCajas" :key="'etiqueta-' + n" class="etiqueta">
 
-            <!-- 🔹 Logo FMM en la esquina superior izquierda -->
             <img src="@/assets/fmm.png" alt="Logo FMM" class="logo-fmm" />
 
             <div class="contenido">
@@ -174,20 +161,52 @@
               </div>
             <div class="etiqueta-qr">
             <qrcode-vue :value="generateQR(n - 1)" :size="100" level="H" />
-         </div>
+           </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-</div>
- </section>
+  </section>
 
-        <!-- OTROS COMPONENTES -->
         <section v-if="currentView === 'tarima'"><comp_tarima /></section>
         <section v-if="currentView === 'otras_etiquetas'"><comp_otras_etiquetas /></section>
         <section v-if="currentView === 'info'"><comp_inf /></section>
       </main>
     </div>
-  </div>
+
+    <div v-if="showEditUserModal" class="modal-overlay" @click.self="closeEditUserModal">
+      <div class="modal-card">
+        <h3><i class="fas fa-user-edit"></i> Editar Perfil de Practicante</h3>
+        
+        <div class="form-field">
+          <label for="edit-nombre">Nombre de Usuario</label>
+          <input id="edit-nombre" v-model="editUser.nombre" type="text" class="crud-input" placeholder="Tu nombre" />
+        </div>
+
+        <div class="form-field">
+          <label for="edit-mesa">Mesa de Trabajo</label>
+          <select id="edit-mesa" v-model="editUser.mesa_trabajo" class="crud-input">
+            <option disabled value="">-- Selecciona una mesa --</option>
+            <option v-for="n in 10" :key="n" :value="'MESA' + n">Mesa {{ n }}</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="edit-password">Contraseña (dejar vacío para no cambiar)</label>
+          <input id="edit-password" v-model="editUser.contrasena" type="password" class="crud-input" placeholder="Nueva contraseña" />
+        </div>
+
+        <div class="crud-actions centered" style="margin-top: 20px;">
+          <button @click="saveUser" class="btn btn-save">
+            <i class="fas fa-save"></i> Guardar Cambios
+          </button>
+          <button @click="closeEditUserModal" class="btn btn-reset" style="background: #ef4444;">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+    </div>
 </template>
 
 
@@ -209,7 +228,9 @@ export default {
       currentView: "caja",
       showEditUserModal: false,
       mesa_trabajo: localStorage.getItem("mesa_trabajo") || "", 
-      editUser: {     practicanteId: null,nombre: "", contrasena: "" , mesa_trabajo: "" },
+      // 💡 Se inicializa correctamente editUser, incluyendo practicanteId
+      editUser: { practicanteId: null, nombre: "", contrasena: "" , mesa_trabajo: "" },
+      practicanteId: null, // 💡 Nuevo dato para almacenar el ID del practicante
       paqueterias: [
         { nombre: "Paquetexpress", logo: new URL("@/assets/pExp.png", import.meta.url).href },
         { nombre: "FedEx", logo: new URL("@/assets/fedex.png", import.meta.url).href },
@@ -281,6 +302,9 @@ async cargarDatosPracticante() {
 
       this.username = user.nombre || this.username;
       this.mesa_trabajo = user.mesa_trabajo || "";
+      // 💡 Almacenar el ID del practicante
+      this.practicanteId = user.id; 
+      localStorage.setItem("practicante_id", user.id);
       localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
       localStorage.setItem("nombre_practicante", this.username);
 
@@ -288,50 +312,57 @@ async cargarDatosPracticante() {
       console.error("Error al cargar datos del practicante:", error);
     }
   },
+  // 💡 FUNCIÓN PARA ABRIR EL MODAL (MODIFICADA DEL PASO ANTERIOR)
 async openEditUserModal() {
   try {
     const token = localStorage.getItem("token");
     if (!token) throw new Error("No se encontró token");
 
+    // 1. Obtener los datos actuales del practicante
     const response = await axios.get("http://127.0.0.1:8000/user_practicantes/me", {
       headers: { Authorization: `Bearer ${token}` }
     });
 
     const user = response.data;
 
-    this.practicanteId = user.id;  // Guardamos el ID
+    // 2. Cargar datos al formulario del modal
+    this.practicanteId = user.id; 
     this.editUser.nombre = user.nombre || "";
     this.editUser.mesa_trabajo = user.mesa_trabajo || "";
     
-    // 🔹 Actualizamos el header y localStorage
-    this.mesa_trabajo = this.editUser.mesa_trabajo;
-    localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
-
+    // 3. Limpiar contraseña y mostrar modal
     this.editUser.contrasena = "";
     this.showEditUserModal = true;
 
   } catch (error) {
     console.error("Error al cargar los datos del usuario:", error);
-    alert("Error al cargar los datos del usuario");
+    alert("Error al cargar los datos del usuario. ¿Está el servidor 8000 activo?");
   }
 },
 
     closeEditUserModal() { this.showEditUserModal = false; },
+// 💡 FUNCIÓN PARA GUARDAR LOS CAMBIOS
 async saveUser() {
   try {
     const token = localStorage.getItem("token");
-    if (!token) {
-      alert("No se encontró el token de autenticación");
+    // Asegurarse de tener el ID del practicante antes de hacer el PUT
+    const userId = this.practicanteId || localStorage.getItem("practicante_id"); 
+
+    if (!token || !userId) {
+      alert("No se encontró el token o el ID del usuario.");
       return;
     }
 
+    const payload = {
+      nombre: this.editUser.nombre || undefined,
+      mesa_trabajo: this.editUser.mesa_trabajo || undefined,
+      // Solo enviar la contraseña si se ha escrito algo (para no sobreescribir con vacío)
+      contrasena: this.editUser.contrasena || undefined,
+    };
+
     await axios.put(
-      `http://127.0.0.1:8000/user_practicantes/${this.practicanteId}`,
-      {
-        nombre: this.editUser.nombre || undefined,
-        mesa_trabajo: this.editUser.mesa_trabajo || undefined,
-        contrasena: this.editUser.contrasena || undefined,
-      },
+      `http://127.0.0.1:8000/user_practicantes/${userId}`,
+      payload,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -340,11 +371,13 @@ async saveUser() {
       }
     );
 
+    // 4. Actualizar estado local y localStorage tras el éxito
     this.mesa_trabajo = this.editUser.mesa_trabajo;
     this.username = this.editUser.nombre;
     localStorage.setItem("username", this.username);
     localStorage.setItem("mesa_trabajo", this.mesa_trabajo);
 
+    // 5. Recargar datos para asegurar la consistencia (opcional, pero buena práctica)
     await this.cargarDatosPracticante();
     
     alert("✅ Perfil actualizado correctamente");
@@ -352,13 +385,11 @@ async saveUser() {
 
   } catch (error) {
     console.error("Error al actualizar el perfil:", error.response || error);
-    alert("❌ Ocurrió un error al actualizar el perfil");
+    alert("❌ Revisa tu contraseña, ingresa al menos 6 caracteres ");
   }
 },
 
-
-
-
+    // ... el resto de los métodos ...
     logout() { localStorage.clear();this.$router.push("/") },
     goToCrearPracticante() {
       this.$router.push('/crearpracticante');
@@ -453,7 +484,7 @@ async imprimirZebra() {
     }
 
 },
-   
+    
     generateQR(index) { return `Factura:${this.factura || "—"}|Caja:${index+1}|Practicante:${this.nombrePracticante}`; },
 
 async guardarDatosPracticante() {
@@ -535,11 +566,16 @@ async guardarDatosPracticante() {
 
 
 <style scoped>
+/*
+  * NOTA: No se realizaron cambios en la sección <style> ya que las clases .modal-overlay,
+  * .modal-card y sus estilos ya estaban definidas y son correctas para el funcionamiento
+  * del modal de edición de usuario.
+*/
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 .green-dot {
   color: #22c55e;
   font-weight: bold;
- 
+  
 }
 .crud-total {
   font-weight: bold;

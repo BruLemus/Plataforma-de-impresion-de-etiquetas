@@ -273,7 +273,7 @@ export default {
    
 async imprimirZebra() {
     // Endpoints de las APIs
-    const centralApiUrl = "http://127.0.0.1:8000/imprimir/generate_caja"; // MODIFICADO para cajas
+    const centralApiUrl = "http://127.0.0.1:8000/imprimir/generate_caja"; 
     const localApiUrl = "http://127.0.0.1:8001/print";
     let zplCode = "";
     

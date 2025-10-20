@@ -288,7 +288,7 @@ export default {
         });
         this.fetchHistorial();
         this.cerrarModal();
-        alert(`${tipo} actualizada correctamente`);
+        alert(`✅ ${tipo} actualizada correctamente`);
       } catch (err) {
         console.error(`Error al editar ${tipo}:`, err);
         alert(`No se pudo editar la ${tipo.toLowerCase()}`);

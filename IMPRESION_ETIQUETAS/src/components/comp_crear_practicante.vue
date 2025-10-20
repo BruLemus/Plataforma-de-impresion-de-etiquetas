@@ -123,21 +123,7 @@ export default {
     const coordinador = ref({ nombre: "", id: "" });
     const username = localStorage.getItem("username") || "";
 
-    const cargarPerfil = async () => {
-      try {
-        const res = await axios.get("http://127.0.0.1:8000/user_coordinadors/perfil", { headers });
-        coordinador.value.nombre = res.data?.nombre || "Nombre no disponible";
-        coordinador.value.id = res.data?.id || "";
-      } catch (error) {
-        console.error("Error al cargar perfil:", error);
-        coordinador.value.nombre = "Error al cargar";
-        if (error.response?.status === 401) {
-          alert("Token inválido o expirado");
-          localStorage.removeItem("token");
-          window.location.href = "/login";
-        }
-      }
-    };
+    
 
     const practicantes = ref([]);
     const nuevoPracticante = ref({ nombre: "", contrasena: "", mesa_trabajo: "" });
@@ -166,7 +152,7 @@ export default {
         };
 
         await axios.post("http://127.0.0.1:8000/user_practicantes/", payload, { headers });
-        alert("Practicante creado correctamente");
+        alert("✅ Practicante creado correctamente");
 
         // Limpiar formulario
         nuevoPracticante.value = { nombre: "", contrasena: "", mesa_trabajo: "" };
@@ -185,7 +171,7 @@ export default {
           mesa_trabajo: p.mesa_trabajo.toUpperCase() // 🔹 Ajuste
         };
         await axios.put(`http://127.0.0.1:8000/user_practicantes/${p.id}`, cambios, { headers });
-        alert(`Practicante "${p.nombre}" actualizado correctamente`);
+        alert(`✅ Practicante "${p.nombre}" actualizado correctamente`);
         await cargarPracticantes();
       } catch (error) {
         console.error("Error al editar practicante:", error);
@@ -199,7 +185,7 @@ export default {
       try {
         await axios.delete(`http://127.0.0.1:8000/user_practicantes/${id}`, { headers });
         practicantes.value = practicantes.value.filter(p => p.id !== id);
-        alert("Practicante eliminado correctamente");
+        alert("⚠️ Practicante eliminado correctamente");
       } catch (error) {
         console.error("Error al eliminar practicante:", error);
         alert("Ocurrió un error al eliminar el practicante");
@@ -207,7 +193,6 @@ export default {
     };
 
     onMounted(() => {
-      cargarPerfil();
       cargarPracticantes();
     });
 
